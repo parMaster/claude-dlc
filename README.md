@@ -11,7 +11,7 @@ Personal Claude Code plugins and skills.
 Then install individual plugins:
 
 ```
-/plugin install parmaster/claude-dlc/<plugin-name>
+/plugin install <plugin-name>@parmaster-claude-dlc
 ```
 
 ## Plugins

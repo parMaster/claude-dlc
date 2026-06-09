@@ -14,7 +14,7 @@ Add the marketplace and install individual plugins:
 
 ```
 /plugin marketplace add parmaster/claude-dlc
-/plugin install parmaster/claude-dlc/<plugin-name>
+/plugin install <plugin-name>@parmaster-claude-dlc
 ```
 
 ## Key Rules
