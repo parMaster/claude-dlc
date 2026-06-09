@@ -27,6 +27,7 @@ Structured implementation plan creation.
 | Skill | Description |
 |-------|-------------|
 | `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering, approach exploration, and revdiff review loop. Single summary commit baked in. |
+| `pr` | Open a draft PR from the plan file — interactive title (`[feat\|fix\|chore]: TICKET-ID - title`) and plan-based description following writing-style. |
 
 ---
 

@@ -190,6 +190,7 @@ func FunctionName(input Type) ReturnType {
 - [ ] update CLAUDE.md if new patterns discovered
 - [ ] move this plan to `docs/plans/completed/`
 - [ ] single summary commit: all implementation changes + plan move in one commit
+- [ ] open draft PR — invoke `planning:pr`
 
 ## Post-Completion
 *Items requiring manual intervention or external systems*

@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.1.0 - 2026-06-09
+
+### New Features
+
+- `pr` — draft PR creation skill; interactive title composition (type/ticket/title), description generated from plan file following writing-style principles
+- plan template: final task now includes `planning:pr` invocation step
+
 ## planning v1.0.0 - 2026-06-09
 
 ### New Features
