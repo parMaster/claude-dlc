@@ -4,6 +4,18 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.0.0 - 2026-06-09
+
+### New Features
+
+- `plan` — implementation plan creation skill with context gathering, approach exploration, revdiff review loop; adapted from cc-thingz (MIT), exec machinery and custom rules removed, single-summary-commit constraint baked in
+
+## brainstorm v1.0.0 - 2026-06-09
+
+### New Features
+
+- `brainstorm` — collaborative design dialogue skill; adapted from cc-thingz (MIT), custom rules machinery removed
+
 ## style v1.0.0 - 2026-06-09
 
 ### New Features

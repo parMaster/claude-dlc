@@ -16,6 +16,34 @@ Then install individual plugins:
 
 ## Plugins
 
+### planning
+
+Structured implementation plan creation.
+
+```
+/plugin install parmaster/claude-dlc/planning
+```
+
+| Skill | Description |
+|-------|-------------|
+| `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering, approach exploration, and revdiff review loop. Single summary commit baked in. |
+
+---
+
+### brainstorm
+
+Collaborative design dialogue before implementation.
+
+```
+/plugin install parmaster/claude-dlc/brainstorm
+```
+
+| Skill | Description |
+|-------|-------------|
+| `brainstorm` | Turn ideas into designs through one-at-a-time questions, approach exploration, and incremental validation. |
+
+---
+
 ### style
 
 Writing style for technical communication.

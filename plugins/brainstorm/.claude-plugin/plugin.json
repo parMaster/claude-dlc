@@ -1,0 +1,11 @@
+{
+  "name": "brainstorm",
+  "description": "Collaborative design dialogue — turn ideas into designs through incremental questions and approach exploration",
+  "version": "1.0.0",
+  "author": {
+    "name": "parmaster"
+  },
+  "homepage": "https://github.com/parmaster/claude-dlc",
+  "repository": "https://github.com/parmaster/claude-dlc",
+  "license": "MIT"
+}

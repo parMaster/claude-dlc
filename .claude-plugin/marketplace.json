@@ -10,6 +10,16 @@
       "description": "Go development guards — blocks Explore agent in Go projects, enforces gosymdb for symbol lookups, prevents gosymdb output piping"
     },
     {
+      "name": "planning",
+      "source": "./plugins/planning",
+      "description": "Structured implementation plan creation with context gathering, approach exploration, and revdiff review"
+    },
+    {
+      "name": "brainstorm",
+      "source": "./plugins/brainstorm",
+      "description": "Collaborative design dialogue — turn ideas into designs through incremental questions and approach exploration"
+    },
+    {
       "name": "style",
       "source": "./plugins/style",
       "description": "Writing style guides for technical communication — PR descriptions, issue comments, commit messages"
