@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, Skill, AskUserQuestio
 
 # Implementation Plan Creation
 
-Create an implementation plan in `docs/plans/yyyymmdd-<task-name>.md` with interactive context gathering.
+Create an implementation plan in `docs/plans/yyyymmdd-<task-name>.md`. Write as if the engineer implementing it has zero context about the codebase — document everything they need: which files to touch, actual code to write, exact commands to run, how to test it. Assume they are skilled but know nothing about this toolset or problem domain.
 
 ## Step 0: Parse intent and gather context
 
@@ -88,15 +88,29 @@ Use AskUserQuestion to select the preferred approach before creating the plan.
 
 Check `docs/plans/` for existing files, then create `docs/plans/yyyymmdd-<task-name>.md` (use current date).
 
+### File structure first
+
+Before defining tasks, map out which files will be created or modified and what each one is responsible for. This is where decomposition decisions get locked in.
+
+- Design units with clear boundaries and well-defined interfaces — each file should have one clear responsibility
+- Prefer smaller, focused files; you reason best about code you can hold in context at once
+- Files that change together should live together; split by responsibility, not by technical layer
+- In existing codebases, follow established patterns; if a file is unwieldy, a split in the plan is reasonable
+
+This structure informs task decomposition — each task should produce self-contained changes that make sense independently.
+
 ### Plan structure
 
 ```markdown
 # [Plan Title]
 
-## Overview
-- clear description of the feature/change being implemented
-- problem it solves and key benefits
-- how it integrates with existing system
+**Goal:** [one sentence describing what this builds]
+
+**Architecture:** [2-3 sentences about the approach]
+
+**Tech Stack:** [key technologies/libraries involved]
+
+---
 
 ## Context (from discovery)
 - files/components involved: [list from step 0]
@@ -110,23 +124,25 @@ Check `docs/plans/` for existing files, then create `docs/plans/yyyymmdd-<task-n
 - **CRITICAL: every task MUST include new/updated tests** for code changes
 - **CRITICAL: all tests must pass before starting next task**
 - **CRITICAL: update this plan file when scope changes during implementation**
-- **CRITICAL: single summary commit at the end** — no per-task commits; one commit covers all implementation when complete
+- **CRITICAL: single summary commit at the end** — no per-task commits; one commit covers all implementation + plan move when complete
+- **CRITICAL: run `golangci-lint run ./...` before committing** — fix all linter issues first
 - run tests after each change
 - maintain backward compatibility
-
-## Progress Tracking
-- mark completed items with `[x]` immediately when done
-- add newly discovered tasks with ➕ prefix
-- document issues/blockers with ⚠️ prefix
 
 ## Solution Overview
 - high-level approach and architecture chosen
 - key design decisions and rationale
+- how it fits into the existing system
 
 ## Technical Details
 - data structures and changes
 - parameters and formats
 - processing flow
+
+## Progress Tracking
+- mark completed items with `[x]` immediately when done
+- add newly discovered tasks with ➕ prefix
+- document issues/blockers with ⚠️ prefix
 
 ## Implementation Steps
 
@@ -136,29 +152,72 @@ Check `docs/plans/` for existing files, then create `docs/plans/yyyymmdd-<task-n
 - Create: `exact/path/to/new_file`
 - Modify: `exact/path/to/existing`
 
-- [ ] [specific action]
-- [ ] [specific action]
-- [ ] write tests for new/changed functionality (success cases)
-- [ ] write tests for error/edge cases
-- [ ] run tests - must pass before next task
+- [ ] **Write the failing test**
+
+```go
+func TestSpecificBehavior(t *testing.T) {
+    result := FunctionName(input)
+    assert.Equal(t, expected, result)
+}
+```
+
+- [ ] **Run test to verify it fails**
+
+  Run: `go test ./path/... -run TestSpecificBehavior -v`
+  Expected: FAIL
+
+- [ ] **Write minimal implementation**
+
+```go
+func FunctionName(input Type) ReturnType {
+    // implementation
+}
+```
+
+- [ ] **Run test to verify it passes**
+
+  Run: `go test ./path/... -run TestSpecificBehavior -v`
+  Expected: PASS
 
 ### Task N-1: Verify acceptance criteria
-- [ ] verify all requirements from Overview are implemented
-- [ ] run full test suite: `<project test command>`
+- [ ] verify all requirements from Goal are implemented
+- [ ] run full test suite: `go test ./...`
+- [ ] run `golangci-lint run ./...` — fix all issues before proceeding
 - [ ] verify test coverage meets project standard
 
-### Task N: [Final] Update documentation
+### Task N: [Final] Wrap up and commit
 - [ ] update README.md if needed
 - [ ] update CLAUDE.md if new patterns discovered
 - [ ] move this plan to `docs/plans/completed/`
+- [ ] single summary commit: all implementation changes + plan move in one commit
 
 ## Post-Completion
 *Items requiring manual intervention or external systems*
 ```
 
+### No placeholders
+
+Every step must contain the actual content an engineer needs. These are plan failures — never write them:
+- "TBD", "TODO", "implement later", "fill in details"
+- "Add appropriate error handling" / "add validation" / "handle edge cases" (without showing the code)
+- "Write tests for the above" (without actual test code)
+- "Similar to Task N" (repeat the code — the engineer may read tasks out of order)
+- Steps that describe what to do without showing how — if a step changes code, show the code
+- References to types, functions, or methods not defined in any task
+
+## Step 2.5: Self-review
+
+After writing the complete plan, check it yourself before offering next steps:
+
+1. **Spec coverage** — skim each requirement. Can you point to a task that implements it? Add tasks for any gaps.
+2. **Placeholder scan** — search for any patterns from the "No placeholders" section above. Fix them.
+3. **Type consistency** — do method signatures and names used in later tasks match what's defined in earlier tasks? A function called `ParseConfig()` in Task 3 but `LoadConfig()` in Task 7 is a bug.
+
+Fix issues inline. No need to re-review after fixing.
+
 ## Step 3: Next steps
 
-After creating the file, tell the user: "created plan: `docs/plans/yyyymmdd-<task-name>.md`"
+After self-review, tell the user: "created plan: `docs/plans/yyyymmdd-<task-name>.md`"
 
 Then use AskUserQuestion:
 
@@ -181,9 +240,11 @@ Then use AskUserQuestion:
 
 ## Key principles
 
+- **Zero context** — write as if the implementer knows nothing about this codebase; show the code, show the commands, show expected output
 - **One question at a time** — do not overwhelm with multiple questions
 - **Multiple choice preferred** — easier than open-ended when possible
 - **YAGNI ruthlessly** — minimal scope, no unnecessary features
 - **Lead with recommendation** — have an opinion, explain why, but let user decide
 - **Explore alternatives** — always propose 2-3 approaches before settling
 - **Single summary commit** — never commit per task; one commit at the end covers everything
+- **Complete code in every step** — if a step changes code, include the actual code block
