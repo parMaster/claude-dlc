@@ -1,0 +1,18 @@
+{
+  "name": "parmaster-claude-dlc",
+  "owner": {
+    "name": "parmaster"
+  },
+  "plugins": [
+    {
+      "name": "go-tools",
+      "source": "./plugins/go-tools",
+      "description": "Go development guards — blocks Explore agent in Go projects, enforces gosymdb for symbol lookups, prevents gosymdb output piping"
+    },
+    {
+      "name": "style",
+      "source": "./plugins/style",
+      "description": "Writing style guides for technical communication — PR descriptions, issue comments, commit messages"
+    }
+  ]
+}

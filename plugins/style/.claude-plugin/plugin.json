@@ -1,0 +1,11 @@
+{
+  "name": "style",
+  "description": "Writing style guides for technical communication — PR descriptions, issue comments, commit messages",
+  "version": "1.0.0",
+  "author": {
+    "name": "parmaster"
+  },
+  "homepage": "https://github.com/parmaster/claude-dlc",
+  "repository": "https://github.com/parmaster/claude-dlc",
+  "license": "MIT"
+}

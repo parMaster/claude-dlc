@@ -1,0 +1,11 @@
+{
+  "name": "go-tools",
+  "description": "Go development guards — blocks Explore agent in Go projects, enforces gosymdb for symbol lookups, prevents gosymdb output piping",
+  "version": "1.0.0",
+  "author": {
+    "name": "parmaster"
+  },
+  "homepage": "https://github.com/parmaster/claude-dlc",
+  "repository": "https://github.com/parmaster/claude-dlc",
+  "license": "MIT"
+}
