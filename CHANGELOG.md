@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## statusline v1.0.2 - 2026-06-10
+
+### Bug Fixes
+
+- Replace non-functional `statusLine` key in hooks.json with a `Setup` hook that writes the correct `statusLine` entry to `~/.claude/settings.json` on install
+- Uses stable marketplace path so version bumps don't break the config
+
 ## statusline v1.0.1 - 2026-06-10
 
 ### Bug Fixes

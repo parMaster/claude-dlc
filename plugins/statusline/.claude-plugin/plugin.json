@@ -1,7 +1,7 @@
 {
   "name": "statusline",
   "description": "Custom status line — dir, git branch/dirty state, model, context %, usage rates (robbyrussell-style)",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": {
     "name": "parmaster"
   },

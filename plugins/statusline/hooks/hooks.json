@@ -1,7 +1,14 @@
 {
-  "hooks": {},
-  "statusLine": {
-    "type": "command",
-    "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/statusline.sh"
+  "hooks": {
+    "Setup": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh"
+          }
+        ]
+      }
+    ]
   }
 }
