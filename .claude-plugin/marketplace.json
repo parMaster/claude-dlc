@@ -10,6 +10,11 @@
       "description": "Go development guards — blocks Explore agent in Go projects, enforces gosymdb for symbol lookups, prevents gosymdb output piping"
     },
     {
+      "name": "statusline",
+      "source": "./plugins/statusline",
+      "description": "Custom status line — dir, git branch/dirty state, model, context %, usage rates (robbyrussell-style)"
+    },
+    {
       "name": "planning",
       "source": "./plugins/planning",
       "description": "Structured implementation plan creation with context gathering, approach exploration, and revdiff review"

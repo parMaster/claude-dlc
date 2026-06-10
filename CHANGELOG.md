@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## statusline v1.0.0 - 2026-06-09
+
+### New Features
+
+- custom status line script (robbyrussell-style): dir, git branch + dirty indicator, model name, context %, 5h/7d usage rates with reset time
+
 ## planning v1.1.0 - 2026-06-09
 
 ### New Features

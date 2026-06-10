@@ -16,6 +16,23 @@ Then install individual plugins:
 
 ## Plugins
 
+### statusline
+
+Custom status line (robbyrussell-style).
+
+```
+/plugin install statusline@parmaster-claude-dlc
+```
+
+Shows: current dir, git branch + dirty state (`✗`), model name, context %, 5h/7d usage rates with reset time.
+
+> **Note:** If the plugin doesn't register the status line automatically, add this to `~/.claude/settings.json`:
+> ```json
+> "statusLine": { "type": "command", "command": "bash ~/.claude/plugins/marketplaces/parmaster-claude-dlc/statusline/scripts/statusline.sh" }
+> ```
+
+---
+
 ### planning
 
 Structured implementation plan creation.
