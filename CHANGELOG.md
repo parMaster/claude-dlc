@@ -11,6 +11,13 @@ Entries sorted newest first.
 - Replace non-functional `statusLine` key in hooks.json with a `Setup` hook that writes the correct `statusLine` entry to `~/.claude/settings.json` on install
 - Uses stable marketplace path so version bumps don't break the config
 
+## global-rules v1.0.0 - 2026-06-10
+
+### New Features
+
+- setup hook appends `@import` line to `~/.claude/CLAUDE.md` on install — non-destructive, idempotent
+- ships plan-first workflow, commit hygiene, Go tooling (gosymdb), CLI best practices rules
+
 ## statusline v1.0.1 - 2026-06-10
 
 ### Bug Fixes

@@ -86,6 +86,20 @@ Go development guards.
 | `block-explore-in-go` | `Agent` tool with `subagent_type=Explore` in a Go project | Denies and redirects to `gosymdb:sym` / `gosymdb:trace` / `gosymdb:impact` |
 | `block-gosymdb-pipe` | `Bash` command containing `gosymdb \| python` or `gosymdb \| jq` | Denies with a reminder to read gosymdb JSON directly |
 
+### global-rules
+
+Shared global CLAUDE.md rules distributed across machines.
+
+```
+/plugin install global-rules@parmaster-claude-dlc
+```
+
+The setup hook appends a single `@import` line to `~/.claude/CLAUDE.md` pointing at the plugin file. Existing content on any machine is untouched. Machine-specific rules stay in `~/.claude/CLAUDE.md` directly; shared rules live in the plugin and are updated on reinstall.
+
+Includes: plan-first workflow, commit hygiene, Go tooling (gosymdb), CLI best practices.
+
+---
+
 ## Local Development
 
 ```
