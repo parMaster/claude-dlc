@@ -21,7 +21,7 @@ Then install individual plugins:
 Structured implementation plan creation.
 
 ```
-/plugin install parmaster/claude-dlc/planning
+/plugin install planning@parmaster-claude-dlc
 ```
 
 | Skill | Description |
@@ -36,7 +36,7 @@ Structured implementation plan creation.
 Collaborative design dialogue before implementation.
 
 ```
-/plugin install parmaster/claude-dlc/brainstorm
+/plugin install brainstorm@parmaster-claude-dlc
 ```
 
 | Skill | Description |
@@ -50,7 +50,7 @@ Collaborative design dialogue before implementation.
 Writing style for technical communication.
 
 ```
-/plugin install parmaster/claude-dlc/style
+/plugin install style@parmaster-claude-dlc
 ```
 
 | Skill | Description |
@@ -64,7 +64,7 @@ Writing style for technical communication.
 Go development guards.
 
 ```
-/plugin install parmaster/claude-dlc/go-tools
+/plugin install go-tools@parmaster-claude-dlc
 ```
 
 | Hook | Trigger | Effect |
