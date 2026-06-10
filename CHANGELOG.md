@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## statusline v1.0.3 - 2026-06-10
+
+### Bug Fixes
+
+- hooks.json: add `matcher: "init"` to Setup hook — fires on install/init only, not on maintenance runs
+- README: document that `claude --init-only` must be run once after install to activate setup
+
+## global-rules v1.0.1 - 2026-06-10
+
+### Bug Fixes
+
+- hooks.json: add `matcher: "init"` to Setup hook — fires on install/init only, not on maintenance runs
+- README: document that `claude --init-only` must be run once after install to activate setup
+
 ## statusline v1.0.2 - 2026-06-10
 
 ### Bug Fixes

@@ -26,7 +26,7 @@ Custom status line (robbyrussell-style).
 
 Shows: current dir, git branch + dirty state (`✗`), model name, context %, 5h/7d usage rates with reset time.
 
-The setup hook writes `statusLine` into `~/.claude/settings.json` automatically on install.
+After install, run `claude --init-only` once to trigger the setup hook — it writes `statusLine` into `~/.claude/settings.json`. Then relaunch Claude normally.
 
 ---
 
@@ -94,7 +94,7 @@ Shared global CLAUDE.md rules distributed across machines.
 /plugin install global-rules@parmaster-claude-dlc
 ```
 
-The setup hook appends a single `@import` line to `~/.claude/CLAUDE.md` pointing at the plugin file. Existing content on any machine is untouched. Machine-specific rules stay in `~/.claude/CLAUDE.md` directly; shared rules live in the plugin and are updated on reinstall.
+After install, run `claude --init-only` once to trigger the setup hook — it appends a single `@import` line to `~/.claude/CLAUDE.md` pointing at the plugin file. Existing content on any machine is untouched. Machine-specific rules stay in `~/.claude/CLAUDE.md` directly; shared rules live in the plugin and are updated on reinstall.
 
 Includes: plan-first workflow, commit hygiene, Go tooling (gosymdb), CLI best practices.
 
