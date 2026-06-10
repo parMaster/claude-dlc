@@ -26,10 +26,7 @@ Custom status line (robbyrussell-style).
 
 Shows: current dir, git branch + dirty state (`✗`), model name, context %, 5h/7d usage rates with reset time.
 
-> **Note:** If the plugin doesn't register the status line automatically, add this to `~/.claude/settings.json`:
-> ```json
-> "statusLine": { "type": "command", "command": "bash ~/.claude/plugins/marketplaces/parmaster-claude-dlc/statusline/scripts/statusline.sh" }
-> ```
+The setup hook writes `statusLine` into `~/.claude/settings.json` automatically on install.
 
 ---
 
