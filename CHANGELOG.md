@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## statusline v1.0.1 - 2026-06-10
+
+### Bug Fixes
+
+- hooks.json: add required `hooks` key to satisfy plugin schema validator (was causing "Hook load failed" on install)
+
 ## statusline v1.0.0 - 2026-06-09
 
 ### New Features
