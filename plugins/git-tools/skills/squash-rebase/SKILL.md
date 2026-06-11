@@ -42,7 +42,7 @@ When a feature branch is started from another feature branch (e.g. `feat/A`), an
    - The commits that WILL be replayed onto main (the new work)
    - The commits that will be DROPPED (already in main via squash)
 
-6. Ask for confirmation. If the auto-detected cut point looks wrong, ask the user to identify the correct last commit from the old feature branch.
+6. Ask for confirmation. If the auto-detected cut point looks wrong, run `git log --oneline <parent-branch>` (if the parent branch still exists locally) to show the user the candidate commits, and ask them to pick the correct cut point.
 
 7. Run:
    ```
