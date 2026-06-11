@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## git-tools v1.0.1 - 2026-06-11
+
+### Bug Fixes
+
+- `squash-rebase`: when heuristic cut point looks wrong, show `git log --oneline <parent-branch>` to help user pick the correct one manually
+
 ## git-tools v1.0.0 - 2026-06-11
 
 ### New Features

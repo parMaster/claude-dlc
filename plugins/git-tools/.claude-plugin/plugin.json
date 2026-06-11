@@ -1,7 +1,7 @@
 {
   "name": "git-tools",
   "description": "Git workflow skills — squash-rebase onto main after a squash-merged parent branch",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "parmaster"
   },
