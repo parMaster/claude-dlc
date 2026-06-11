@@ -100,6 +100,20 @@ Includes: plan-first workflow, commit hygiene, Go tooling (gosymdb), CLI best pr
 
 ---
 
+### git-tools
+
+Git workflow skills.
+
+```
+/plugin install git-tools@parmaster-claude-dlc
+```
+
+| Skill | Description |
+|-------|-------------|
+| `squash-rebase` | Rebase onto main after a parent branch was squash-merged — auto-detects the cut point via file overlap heuristic, shows what will be dropped vs replayed, asks for confirmation before running `git rebase --onto`. |
+
+---
+
 ## Local Development
 
 ```

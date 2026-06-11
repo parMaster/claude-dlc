@@ -1,0 +1,11 @@
+{
+  "name": "git-tools",
+  "description": "Git workflow skills — squash-rebase onto main after a squash-merged parent branch",
+  "version": "1.0.0",
+  "author": {
+    "name": "parmaster"
+  },
+  "homepage": "https://github.com/parmaster/claude-dlc",
+  "repository": "https://github.com/parmaster/claude-dlc",
+  "license": "MIT"
+}

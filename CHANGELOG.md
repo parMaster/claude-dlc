@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## git-tools v1.0.0 - 2026-06-11
+
+### New Features
+
+- `squash-rebase` — rebase current branch onto main after its parent was squash-merged; auto-detects cut point via file overlap heuristic, confirms with user before running `git rebase --onto`
+
 ## statusline v1.0.3 - 2026-06-10
 
 ### Bug Fixes
