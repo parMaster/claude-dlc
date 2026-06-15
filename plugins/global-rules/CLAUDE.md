@@ -6,6 +6,7 @@
 
 ## Verification Before Commit
 - NEVER commit until all tests pass locally (run `go test ./...` first)
+- NEVER commit until the linter passes — run the appropriate linter for the project (e.g. `golangci-lint run ./...` for Go, `eslint .` for JS/TS) and fix any failures before committing
 - NEVER auto-commit when the user is mid-review or has indicated they'll commit manually
 - For config/setting name changes, verify all references (grep or gosymdb references) and update plan docs, memory, AND application code
 - For multi-file refactors, verify no duplicate declarations across files in the same package before claiming done
