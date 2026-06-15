@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.0.2 - 2026-06-15
+
+### New Features
+
+- Verification Before Commit: require linter check before committing (e.g. `golangci-lint run ./...` for Go, `eslint .` for JS/TS)
+
 ## git-tools v1.0.1 - 2026-06-11
 
 ### Bug Fixes
