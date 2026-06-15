@@ -37,6 +37,7 @@ Add the marketplace and install individual plugins:
 - Hook scripts use `${CLAUDE_PLUGIN_ROOT}` for path resolution — plugin files are copied to a cache on install, so absolute/relative paths fail.
 - **Versioning** — each plugin has its own `version` in `plugins/<name>/.claude-plugin/plugin.json`. Use semver: patch for fixes, minor for new components, major for breaking changes. Bump on *any* change to bundled content (skills, scripts, references, hooks) — not just plugin.json.
 - **Changelog** — when bumping a version, update `CHANGELOG.md` in the same commit. Heading format: `## plugin-name vX.Y.Z - YYYY-MM-DD`.
+- **Version bump is part of the change** — NEVER make a content change to a plugin without bumping its version and updating `CHANGELOG.md` in the same commit. Do not leave version bumps for a follow-up commit.
 - **Cross-references** — within the same plugin: `/skill-name`. Across plugins: `/plugin-name:skill-name`.
 - **Skill files** — `plugins/<plugin>/skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description`, `allowed-tools`).
 
