@@ -40,8 +40,8 @@ Structured implementation plan creation.
 
 | Skill | Description |
 |-------|-------------|
-| `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering, approach exploration, and revdiff review loop. Single summary commit baked in. |
-| `pr` | Open a draft PR from the plan file — interactive title (`[feat\|fix\|chore]: TICKET-ID - title`) and plan-based description following writing-style. |
+| `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering and approach exploration. After creation, prints the `/revdiff:revdiff <plan-file>` command to review with inline annotations — then waits for you to return with feedback. |
+| `pr` | Open a draft PR from the plan file — interactive title (`[feat\|fix\|chore]: TICKET-ID - title`) and plan-based description. If a PR already exists on the branch, reads the current description and amends it with the new plan's changes rather than replacing it. |
 
 ---
 
@@ -96,7 +96,7 @@ Shared global CLAUDE.md rules distributed across machines.
 
 After install, run `claude --init-only` once to trigger the setup hook — it appends a single `@import` line to `~/.claude/CLAUDE.md` pointing at the plugin file. Existing content on any machine is untouched. Machine-specific rules stay in `~/.claude/CLAUDE.md` directly; shared rules live in the plugin and are updated on reinstall.
 
-Includes: plan-first workflow, commit hygiene, Go tooling (gosymdb), CLI best practices.
+Includes: plan-first workflow, commit hygiene (tests + linter before commit), Go tooling (gosymdb), CLI best practices.
 
 ---
 
