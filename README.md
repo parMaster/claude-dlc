@@ -117,8 +117,20 @@ Git workflow skills.
 
 ## Local Development
 
+Test a plugin from your local working tree without installing it:
+
 ```
 claude --plugin-dir plugins/<name>
 ```
 
-Use `/reload-plugins` inside a session to pick up file changes without restarting.
+This loads the plugin directly from the repo directory. Skills, hooks, and commands are picked up from there instead of the installed cache, so edits take effect immediately.
+
+Use `/reload-plugins` inside an active session to pick up file changes without restarting Claude.
+
+Skills are invokable by full name (e.g. `/planning:plan`) but won't appear in the `/` autocomplete dropdown — only `commands/*.md` files do. Invoke them by typing the full name or via natural language.
+
+To test the marketplace catalog itself (adding/removing plugins), edit `.claude-plugin/marketplace.json` and re-add the marketplace:
+
+```
+/plugin marketplace add parmaster/claude-dlc
+```
