@@ -50,9 +50,9 @@ Before asking questions, understand what the user is working on:
 Show the discovered context, then ask questions **one at a time** using AskUserQuestion:
 
 1. **Plan purpose**: "what is the main goal?" — multiple choice with suggested answer based on discovered intent
-2. **Scope**: "which components/files are involved?" — multiple choice with discovered files
-3. **Constraints**: "any specific requirements or limitations?"
-4. **Testing approach**: "TDD or regular?" — options: "TDD (tests first)" / "Regular (code first, then tests)"
+2. **Testing approach**: "TDD or regular?" — options: "TDD (tests first)" / "Regular (code first, then tests)". Ask this early because it shapes the task structure throughout the plan.
+3. **Scope**: "which components/files are involved?" — multiple choice with discovered files
+4. **Constraints**: "any specific requirements or limitations?"
 5. **Plan title**: "short descriptive title?" — suggest based on intent
 
 ## Step 1.5: Explore approaches
@@ -152,18 +152,19 @@ This structure informs task decomposition — each task should produce self-cont
 - Create: `exact/path/to/new_file`
 - Modify: `exact/path/to/existing`
 
-- [ ] **Write the failing test**
+**If TDD:**
+
+- [ ] **Write failing tests** — happy path + error cases + edge cases
 
 ```go
-func TestSpecificBehavior(t *testing.T) {
-    result := FunctionName(input)
-    assert.Equal(t, expected, result)
-}
+func TestFunctionName_HappyPath(t *testing.T) { ... }
+func TestFunctionName_InvalidInput(t *testing.T) { ... }
+func TestFunctionName_EmptyResult(t *testing.T) { ... }
 ```
 
-- [ ] **Run test to verify it fails**
+- [ ] **Run tests to verify they fail**
 
-  Run: `go test ./path/... -run TestSpecificBehavior -v`
+  Run: `go test ./path/... -run TestFunctionName -v`
   Expected: FAIL
 
 - [ ] **Write minimal implementation**
@@ -174,9 +175,32 @@ func FunctionName(input Type) ReturnType {
 }
 ```
 
-- [ ] **Run test to verify it passes**
+- [ ] **Run tests to verify all pass**
 
-  Run: `go test ./path/... -run TestSpecificBehavior -v`
+  Run: `go test ./path/... -run TestFunctionName -v`
+  Expected: PASS
+
+**If Regular:**
+
+- [ ] **Write implementation**
+
+```go
+func FunctionName(input Type) ReturnType {
+    // implementation
+}
+```
+
+- [ ] **Write tests** — happy path + error cases + edge cases
+
+```go
+func TestFunctionName_HappyPath(t *testing.T) { ... }
+func TestFunctionName_InvalidInput(t *testing.T) { ... }
+func TestFunctionName_EmptyResult(t *testing.T) { ... }
+```
+
+- [ ] **Run tests to verify all pass**
+
+  Run: `go test ./path/... -run TestFunctionName -v`
   Expected: PASS
 
 ### Task N-1: Verify acceptance criteria
@@ -202,6 +226,7 @@ Every step must contain the actual content an engineer needs. These are plan fai
 - "TBD", "TODO", "implement later", "fill in details"
 - "Add appropriate error handling" / "add validation" / "handle edge cases" (without showing the code)
 - "Write tests for the above" (without actual test code)
+- A single happy-path test when error cases or edge cases clearly exist — always enumerate: what inputs cause errors? what are the boundary values? what does the function return when there's nothing to return? Each scenario that can fail Sonar coverage gets its own named test function.
 - "Similar to Task N" (repeat the code — the engineer may read tasks out of order)
 - Steps that describe what to do without showing how — if a step changes code, show the code
 - References to types, functions, or methods not defined in any task

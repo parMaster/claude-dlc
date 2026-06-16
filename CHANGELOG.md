@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.2.0 - 2026-06-16
+
+### New Features
+
+- `plan`: testing approach (TDD vs Regular) is now asked as Q2 — before scope — since it shapes every task in the plan
+- `plan`: task template has two explicit variants based on the chosen approach: TDD (failing tests → implementation → passing tests) vs Regular (implementation → tests → passing tests)
+- `plan`: "No placeholders" rule now explicitly bans single happy-path tests — all test blocks must enumerate error cases, boundary values, and edge cases by name
+
 ## planning v1.1.3 - 2026-06-16
 
 ### Bug Fixes
