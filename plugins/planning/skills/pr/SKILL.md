@@ -129,7 +129,15 @@ Rules:
 - Include exact file paths or function names where they add context
 - Bullet points for changes, not prose
 
-## Step 6: Create the PR
+## Step 6: Create or update the PR
+
+First, check if a PR already exists for the current branch:
+
+```bash
+gh pr view --json url,title,number,body 2>/dev/null
+```
+
+**If no PR exists** — create it:
 
 ```bash
 gh pr create --draft --title "[type]: TICKET-ID - title" --body "$(cat <<'EOF'
@@ -138,4 +146,22 @@ EOF
 )"
 ```
 
-Output the PR URL to the user after creation.
+**If a PR already exists** — amend the description rather than replacing it:
+
+1. Read the current PR body from the `gh pr view` output above
+2. Read the new plan file (already done in Step 1)
+3. Determine what the current description is missing or what has changed:
+   - Are there new tasks/changes in the plan not yet reflected in the `## Changes` section?
+   - Has the testing approach changed?
+   - Are there new files or components involved?
+4. Compose an amended body that incorporates the additions — keep what's already there, add or update only what's new. Do not rewrite sections that are still accurate.
+5. Update the PR:
+
+```bash
+gh pr edit --body "$(cat <<'EOF'
+[amended description]
+EOF
+)"
+```
+
+Output the PR URL to the user after creation or update.
