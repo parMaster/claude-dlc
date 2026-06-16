@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.3.0 - 2026-06-16
+
+### New Features
+
+- `review-plan` — new skill: structured agent-based plan critique loop; spawns a general-purpose agent (gosymdb-capable) that checks correctness, over-engineering, test coverage, task granularity, and convention adherence; presents findings by severity (Critical/Important/Minor) with APPROVE/NEEDS REVISION verdict; iterates up to 3 rounds on user approval; invocable manually on any plan file
+- `plan`: "Auto-review" added as a third post-creation option alongside revdiff and Done
+
 ## planning v1.2.0 - 2026-06-16
 
 ### New Features

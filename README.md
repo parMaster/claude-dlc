@@ -40,7 +40,8 @@ Structured implementation plan creation.
 
 | Skill | Description |
 |-------|-------------|
-| `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering and approach exploration. Offers inline revdiff review at the end — select "Review with revdiff" to open the plan in the TUI annotation loop. |
+| `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering and approach exploration. Offers auto-review and/or revdiff annotation at the end. |
+| `review-plan` | Structured agent-based plan critique — correctness, over-engineering, test coverage, conventions. Presents findings by severity (Critical/Important/Minor) with APPROVE/NEEDS REVISION verdict. Iterates up to 3 rounds. Invoke on any plan: `/review-plan docs/plans/foo.md` |
 | `pr` | Open a draft PR from the plan file — interactive title (`[feat\|fix\|chore]: TICKET-ID - title`) and plan-based description. If a PR already exists on the branch, reads the current description and amends it with the new plan's changes rather than replacing it. |
 
 ---

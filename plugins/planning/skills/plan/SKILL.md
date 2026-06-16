@@ -253,6 +253,7 @@ Then use AskUserQuestion:
     "question": "Plan created. What's next?",
     "header": "Next step",
     "options": [
+      {"label": "Auto-review", "description": "Run structured agent review — checks correctness, over-engineering, test coverage"},
       {"label": "Review with revdiff", "description": "Open plan in revdiff for inline annotations"},
       {"label": "Done", "description": "Stop here"}
     ],
@@ -261,6 +262,7 @@ Then use AskUserQuestion:
 }
 ```
 
+- **Auto-review**: invoke the `planning:review-plan` skill on the plan file — it handles the review/fix loop internally. When it returns, planning is done.
 - **Review with revdiff**: invoke the `revdiff:revdiff` skill on the plan file — it handles the full annotation and revision loop internally. When it returns, planning is done.
 - **Done**: stop.
 
