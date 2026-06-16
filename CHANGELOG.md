@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.1.1 - 2026-06-16
+
+### Bug Fixes
+
+- `plan`: stop invoking `revdiff:revdiff` as a nested skill — instead tell the user to run `/revdiff:revdiff <plan-file>` directly; fixes overlay not opening due to timeout/terminal detection issues in nested skill context
+- `plan`: remove auto-commit of plan file after creation — user decides if/when to commit
+
 ## global-rules v1.0.2 - 2026-06-15
 
 ### New Features
