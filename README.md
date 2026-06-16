@@ -40,7 +40,7 @@ Structured implementation plan creation.
 
 | Skill | Description |
 |-------|-------------|
-| `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering and approach exploration. After creation, prints the `/revdiff:revdiff <plan-file>` command to review with inline annotations — then waits for you to return with feedback. |
+| `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering and approach exploration. Offers inline revdiff review at the end — select "Review with revdiff" to open the plan in the TUI annotation loop. |
 | `pr` | Open a draft PR from the plan file — interactive title (`[feat\|fix\|chore]: TICKET-ID - title`) and plan-based description. If a PR already exists on the branch, reads the current description and amends it with the new plan's changes rather than replacing it. |
 
 ---
