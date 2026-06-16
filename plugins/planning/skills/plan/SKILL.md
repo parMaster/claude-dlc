@@ -218,18 +218,26 @@ Fix issues inline. No need to re-review after fixing.
 
 ## Step 3: Next steps
 
-After self-review, tell the user:
+After self-review, tell the user: "created plan: `docs/plans/yyyymmdd-<task-name>.md`"
 
-"Plan created: `docs/plans/yyyymmdd-<task-name>.md`
+Then use AskUserQuestion:
 
-To review with inline annotations, run:
-`/revdiff:revdiff docs/plans/yyyymmdd-<task-name>.md`
+```json
+{
+  "questions": [{
+    "question": "Plan created. What's next?",
+    "header": "Next step",
+    "options": [
+      {"label": "Review with revdiff", "description": "Open plan in revdiff for inline annotations"},
+      {"label": "Done", "description": "Stop here"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
 
-When you're done annotating, come back and I'll revise the plan."
-
-Then stop — wait for the user to return after reviewing, or to say they're ready to implement.
-
-When the user returns with feedback: apply the annotations to the plan, then remind them to run revdiff again if they want another pass.
+- **Review with revdiff**: invoke the `revdiff:revdiff` skill on the plan file — it handles the full annotation and revision loop internally. When it returns, planning is done.
+- **Done**: stop.
 
 ## Key principles
 

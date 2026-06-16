@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.1.3 - 2026-06-16
+
+### Bug Fixes
+
+- `plan`: restore "Review with revdiff" question at end of planning — invokes `revdiff:revdiff` skill and lets it handle the full annotation loop; no longer manages the loop from the planning side
+
 ## planning v1.1.2 - 2026-06-16
 
 ### Bug Fixes
