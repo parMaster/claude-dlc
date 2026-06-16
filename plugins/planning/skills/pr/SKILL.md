@@ -16,13 +16,23 @@ Open a draft PR with a structured title and plan-based description.
 
 Read the plan file. Extract the **Goal** line and task list for use in the description.
 
-## Step 2: Detect ticket ID from branch
+## Step 2: Check for existing PR
+
+```bash
+gh pr view --json url,title,number,body 2>/dev/null
+```
+
+**If a PR already exists** — skip Steps 3–5 entirely and go straight to Step 6 (amend flow). The title and ticket were already set when the PR was created.
+
+**If no PR exists** — continue to Step 3.
+
+## Step 3: Detect ticket ID from branch
 
 Run: `git branch --show-current`
 
 If the branch name contains a pattern like `BP-1234`, `PROJ-42`, or similar (`[A-Z]+-[0-9]+`), extract it as the candidate ticket ID.
 
-## Step 3: Ask for PR details — one question at a time
+## Step 4: Ask for PR details — one question at a time
 
 **Question 1 — PR type:**
 
@@ -95,14 +105,14 @@ Suggest the title from the plan's **Goal** line (strip the "Goal:" prefix). Let 
 }
 ```
 
-## Step 4: Compose the PR title
+## Step 5: Compose the PR title
 
 Format: `[type]: TICKET-ID - ticket title`
 
 - With ticket: `[feat]: BP-1234 - Add user authentication`
 - Without ticket: `[feat]: Add user authentication`
 
-## Step 5: Generate PR description
+## Step 6: Generate PR description (new PR only)
 
 From the plan file, write a description following writing-style principles — direct, brief, no AI-speak:
 
@@ -129,15 +139,9 @@ Rules:
 - Include exact file paths or function names where they add context
 - Bullet points for changes, not prose
 
-## Step 6: Create or update the PR
+## Step 7: Create or update the PR
 
-First, check if a PR already exists for the current branch:
-
-```bash
-gh pr view --json url,title,number,body 2>/dev/null
-```
-
-**If no PR exists** — create it:
+**If no PR exists** — create it using the title from Step 5 and description from Step 6:
 
 ```bash
 gh pr create --draft --title "[type]: TICKET-ID - title" --body "$(cat <<'EOF'
@@ -148,7 +152,7 @@ EOF
 
 **If a PR already exists** — amend the description rather than replacing it:
 
-1. Read the current PR body from the `gh pr view` output above
+1. Read the current PR body from the `gh pr view` output in Step 2
 2. Read the new plan file (already done in Step 1)
 3. Determine what the current description is missing or what has changed:
    - Are there new tasks/changes in the plan not yet reflected in the `## Changes` section?

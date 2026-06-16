@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.3.1 - 2026-06-16
+
+### Bug Fixes
+
+- `pr`: move existing-PR check to Step 2, before any questions — skip type/ticket/title prompts entirely when PR already exists and go straight to amending the description
+
 ## planning v1.3.0 - 2026-06-16
 
 ### New Features
