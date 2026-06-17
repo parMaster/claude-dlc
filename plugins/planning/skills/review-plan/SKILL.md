@@ -26,11 +26,18 @@ READ-ONLY: Do not create, edit, or delete any files.
 Plan file: PLAN_FILE  
 Review round: ROUND
 
+**Go symbol lookup rule — CRITICAL:**
+NEVER use grep, rg, or find to locate Go symbols (functions, types, methods, interfaces).
+ALWAYS use gosymdb skills instead:
+- `gosymdb:sym --auto-reindex` — find where a symbol is defined
+- `gosymdb:trace --auto-reindex` — full profile: definition + callers + callees
+These are available as Skill tool calls. Grep for Go symbols will be wrong or incomplete — use gosymdb.
+
 Steps:
 1. Read the plan file fully
 2. Read `CLAUDE.md` for project conventions
 3. Identify the source files and packages the plan touches — read 2–4 of the most relevant ones to understand current patterns and interfaces
-4. For Go code: use `gosymdb:sym` and `gosymdb:trace` skills to verify that types, functions, and interfaces mentioned in the plan actually exist in the codebase. Flag plans that reference non-existent symbols as CRITICAL.
+4. For Go code: use `gosymdb:sym` and `gosymdb:trace` skills (with `--auto-reindex`) to verify that types, functions, and interfaces mentioned in the plan actually exist in the codebase. Flag plans that reference non-existent symbols as CRITICAL.
 5. If ROUND > 1: note that fixes were applied since the last round — re-evaluate all areas independently, do not assume previous fixes are correct or complete.
 
 Review checklist:

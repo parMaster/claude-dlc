@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.3.2 - 2026-06-17
+
+### Bug Fixes
+
+- `review-plan`: bake gosymdb rule directly into agent prompt — subagents don't inherit CLAUDE.md, so the "never grep Go symbols" rule wasn't enforced; now explicitly blocks grep/rg/find for symbol lookup and requires gosymdb:sym/gosymdb:trace with --auto-reindex
+
 ## planning v1.3.1 - 2026-06-16
 
 ### Bug Fixes
