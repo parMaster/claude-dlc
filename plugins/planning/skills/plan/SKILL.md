@@ -99,6 +99,18 @@ Before defining tasks, map out which files will be created or modified and what 
 
 This structure informs task decomposition — each task should produce self-contained changes that make sense independently.
 
+### Dependency contract check
+
+**Skip this step** if the plan introduces net-new code with no existing dependencies to verify.
+
+Otherwise, before writing tasks: identify every external function, method, or API the plan's correctness depends on — things the plan will CALL, not things it will CREATE. For each one:
+
+1. Read its body (not just its name or signature)
+2. Record what it actually guarantees: privileges granted, errors returned and how they're wrapped, side effects, state left behind after it runs
+3. Flag any gap between the name's implied behavior and the body's actual behavior — these are the places plans silently go wrong
+
+This is a focused pass — typically 3–6 functions, not broad exploration. Record findings in the "Verified Dependency Behaviors" section of the plan.
+
 ### Plan structure
 
 ```markdown
@@ -116,6 +128,12 @@ This structure informs task decomposition — each task should produce self-cont
 - files/components involved: [list from step 0]
 - related patterns found: [patterns discovered]
 - dependencies identified: [dependencies]
+
+## Verified Dependency Behaviors
+*External functions/APIs this plan calls — verified by reading their bodies, not inferred from names. Omit if plan is net-new with no existing dependencies.*
+
+- `FunctionName` (`path/to/file.go:NN`): [what it actually does — privileges granted, errors returned/wrapped, side effects, state left behind]
+- ...
 
 ## Development Approach
 - **testing approach**: [TDD / Regular - from user preference]
@@ -238,6 +256,7 @@ After writing the complete plan, check it yourself before offering next steps:
 1. **Spec coverage** — skim each requirement. Can you point to a task that implements it? Add tasks for any gaps.
 2. **Placeholder scan** — search for any patterns from the "No placeholders" section above. Fix them.
 3. **Type consistency** — do method signatures and names used in later tasks match what's defined in earlier tasks? A function called `ParseConfig()` in Task 3 but `LoadConfig()` in Task 7 is a bug.
+4. **Dependency behavior check** — for each entry in "Verified Dependency Behaviors": does the plan's logic actually hold given what that function does? A function that grants USAGE+DML but not CREATE is not "full access" even if named that way.
 
 Fix issues inline. No need to re-review after fixing.
 

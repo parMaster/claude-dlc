@@ -4,6 +4,17 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.4.0 - 2026-06-17
+
+### New Features
+
+- `plan`: add "Dependency contract check" step before task writing — for external functions the plan calls, read their bodies and record actual guarantees (privileges, error wrapping, side effects, state); skip for net-new plans with no existing dependencies
+- `plan`: add "Verified Dependency Behaviors" section to plan template — quotes source behavior, not names
+- `plan`: add dependency behavior check to Step 2.5 self-review
+- `review-plan`: replace existence check with behavior verification — read function bodies, confirm plan's claims match implementation
+- `review-plan`: add 4 standing checks: (1) behavioral claim vs body, (2) error/status tracing end-to-end through wrapping chain, (3) test setup against API preconditions/ordering, (4) multi-phase state inspection
+- `review-plan`: add "Verified Dependency Behaviors" section check to review checklist
+
 ## planning v1.3.2 - 2026-06-17
 
 ### Bug Fixes
