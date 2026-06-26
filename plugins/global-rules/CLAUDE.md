@@ -30,5 +30,6 @@ gosymdb index --root . --db gosymdb.sqlite
 
 ## CLI Best Practices
 - Don't put `sleep` in front of curl or other CLIs, i.e. `sleep 3 && curl -f ....`
+- Don't prepend `cd <path>` to a Bash command when the session is already rooted in that directory — the shell resets to the working dir each call, so it's redundant noise. Only `cd` (or use `make -C <dir>`) when the command must operate outside the session root.
 
 - Never include "co-authored..." tag line into commit messages

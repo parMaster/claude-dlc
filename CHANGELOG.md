@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.0.3 - 2026-06-26
+
+### New Features
+
+- CLI Best Practices: don't prepend `cd <path>` to a Bash command when the session is already rooted in that directory — the shell resets to the working dir each call, so it's redundant. Only `cd` (or `make -C`) when operating outside the session root.
+
 ## statusline v1.0.4 - 2026-06-26
 
 ### Changes
