@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.0.5 - 2026-06-26
+
+### Bug Fixes
+
+- Plan-First rule: name the mechanism explicitly — use the `planning:plan` skill (writes `docs/plans/`), even when planning arises organically without the trigger words, and do NOT substitute built-in plan mode (which only prints the plan and saves no document). Closes the trigger-word gap that let the model fall back to plan mode.
+
 ## global-rules v1.0.4 - 2026-06-26
 
 ### New Features

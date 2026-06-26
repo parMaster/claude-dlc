@@ -1,5 +1,5 @@
 ## Workflow: Plan-First Development
-- For non-trivial changes, ALWAYS produce a plan document FIRST before writing implementation code
+- For non-trivial changes, ALWAYS produce a plan document FIRST before writing implementation code — create it with the `planning:plan` skill (writes `docs/plans/<date>-<name>.md`), even when the conversation reaches planning organically without an explicit "write a plan" request. Do NOT substitute the built-in plan mode (EnterPlanMode) for this; it only prints the plan into the conversation and does not save the `docs/plans/` document that `review-plan` and `pr` depend on.
 - Save plans under the project's plans/ directory following existing naming conventions
 - Wait for user review (often via revdiff annotations) before implementing
 - After implementation is completed, before the last commit, move the plan to a completed/ subfolder
