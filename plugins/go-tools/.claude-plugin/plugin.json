@@ -1,7 +1,7 @@
 {
   "name": "go-tools",
   "description": "Go development guards — blocks Explore agent in Go projects, enforces gosymdb for symbol lookups, prevents gosymdb output piping",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "parmaster"
   },

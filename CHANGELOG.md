@@ -4,6 +4,16 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## go-tools v1.1.0 - 2026-06-26
+
+### New Features
+
+- `block-go-symbol-grep`: new Bash PreToolUse hook that enforces the "never grep Go symbols" rule. Denies grep/rg/egrep/git-grep when it targets `.go` files, or searches for a Go declaration keyword (`func`/`type`/`interface`/`struct`) inside a Go module, and redirects to `gosymdb:sym` / `gosymdb:trace` / `gosymdb:impact`. The existing `block-gosymdb-pipe` hook only covered gosymdb output piping, so raw symbol greps slipped through with nothing but CLAUDE.md guidance behind them. The go.mod gate keeps it from firing on non-Go projects (e.g. `grep type styles.css`).
+
+### Changes
+
+- `block-explore-in-go`: narrowed from blocking *every* Explore agent in a Go project to only blocking when the Explore prompt/description signals Go-symbol intent (mentions `func`/`type`/`interface`/`struct`/`method`/`receiver`/`symbol`/`caller`/`implementation`/`signature`/`definition`/`.go`, etc.). General exploration of a Go repo (docs, YAML/CI config, Dockerfiles, frontend) is no longer over-blocked.
+
 ## planning v1.4.0 - 2026-06-17
 
 ### New Features
