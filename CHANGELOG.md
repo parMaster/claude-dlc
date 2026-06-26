@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.0.4 - 2026-06-26
+
+### New Features
+
+- Go codebases: add "Vendored dependencies" rule — on stale/inconsistent vendoring (after branch switches or merges), run `go mod tidy && go mod vendor` to resync instead of investigating. Stops agents burning tokens on investigations the user has to interrupt.
+
 ## planning v1.4.1 - 2026-06-26
 
 ### Bug Fixes
