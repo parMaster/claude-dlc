@@ -46,7 +46,7 @@ fi
 if [ -n "$session_pct" ] && [ -n "$week_pct" ]; then
   reset_time=""
   if [ -n "$reset_at" ]; then
-    reset_time=$(date -r "$reset_at" "+%l%p" 2>/dev/null | tr -d ' ' | tr '[:upper:]' '[:lower:]')
+    reset_time=$(date -r "$reset_at" "+%l:%M%p" 2>/dev/null | tr -d ' ' | tr '[:upper:]' '[:lower:]')
   fi
   if [ -n "$reset_time" ]; then
     printf ' \033[2m(usage: %.0f%%/%.0f%% ↺%s)\033[0m' "$session_pct" "$week_pct" "$reset_time"

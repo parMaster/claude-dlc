@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## statusline v1.0.4 - 2026-06-26
+
+### Changes
+
+- statusline: show minutes in the rate-limit reset time — `↺3pm` becomes `↺3:51pm` (format `%l:%M%p`). The epoch was already available; only the hour was being rendered.
+
 ## go-tools v1.1.0 - 2026-06-26
 
 ### New Features
