@@ -14,6 +14,22 @@ Then install individual plugins:
 /plugin install <plugin-name>@parmaster-claude-dlc
 ```
 
+### Updating a plugin
+
+Installed plugins stay pinned to their version. A session restart or `/reload-plugins` reloads the *currently pinned* version — neither pulls a newer one. To upgrade to a version you've pushed:
+
+```
+/plugin marketplace update parmaster-claude-dlc    # refresh the catalog so it sees the new version
+/plugin install <plugin-name>@parmaster-claude-dlc # upgrades in place to the latest
+/reload-plugins                                     # apply in the current session
+```
+
+The `marketplace update` step is the one that's easy to miss: without it, `/plugin install` reports "already installed" and no-ops, because the catalog still thinks your installed version is the latest. There's no separate `/plugin update` command — re-running `install` *is* the upgrade, once the catalog is refreshed. `/reload-plugins` prints a hook/skill/agent count, handy for confirming new components loaded (e.g. an added hook bumps the count).
+
+To skip the manual steps, enable auto-update for the marketplace (off by default for third-party marketplaces): `/plugin` → **Marketplaces** → select `parmaster-claude-dlc` → **Enable auto-update**, or set `"autoUpdate": true` on the marketplace entry in `~/.claude/settings.json`. Claude then refreshes and upgrades at startup and prompts you to `/reload-plugins`.
+
+For local development, `claude --plugin-dir plugins/<name>` bypasses the cache and loads straight from the working tree.
+
 ## Plugins
 
 ### statusline
