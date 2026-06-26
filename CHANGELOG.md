@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.4.1 - 2026-06-26
+
+### Bug Fixes
+
+- `plan`: the final "move this plan to completed/" task now specifies plain `mkdir -p && mv` instead of leaving it open (the model was reaching for `git mv`, which fails because the plan is untracked until the single summary commit at the end). Plain `mv` + the final `git add -A` stages the move whether or not the plan was already tracked.
+
 ## global-rules v1.0.3 - 2026-06-26
 
 ### New Features

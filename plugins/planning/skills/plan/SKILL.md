@@ -230,7 +230,7 @@ func TestFunctionName_EmptyResult(t *testing.T) { ... }
 ### Task N: [Final] Wrap up and commit
 - [ ] update README.md if needed
 - [ ] update CLAUDE.md if new patterns discovered
-- [ ] move this plan to `docs/plans/completed/`
+- [ ] move this plan to `docs/plans/completed/` — use `mkdir -p docs/plans/completed && mv <plan> docs/plans/completed/` (plain `mv`, not `git mv`: the plan is usually untracked, and the final `git add -A` stages the move either way)
 - [ ] single summary commit: all implementation changes + plan move in one commit
 - [ ] open draft PR — invoke `planning:pr`
 
