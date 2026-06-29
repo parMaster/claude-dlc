@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, Skill, AskUserQuestio
 
 # Implementation Plan Creation
 
-Create an implementation plan in `docs/plans/yyyymmdd-<task-name>.md`. Write as if the engineer implementing it has zero context about the codebase — document everything they need: which files to touch, actual code to write, exact commands to run, how to test it. Assume they are skilled but know nothing about this toolset or problem domain.
+Create an implementation plan in `docs/plans/yyyy-mm-dd-<task-name>.md`. Write as if the engineer implementing it has zero context about the codebase — document everything they need: which files to touch, actual code to write, exact commands to run, how to test it. Assume they are skilled but know nothing about this toolset or problem domain.
 
 ## Step 0: Parse intent and gather context
 
@@ -86,7 +86,7 @@ Use AskUserQuestion to select the preferred approach before creating the plan.
 
 ## Step 2: Create plan file
 
-Check `docs/plans/` for existing files, then create `docs/plans/yyyymmdd-<task-name>.md` (use current date).
+Check `docs/plans/` for existing files, then create `docs/plans/yyyy-mm-dd-<task-name>.md` (use current date).
 
 ### File structure first
 
