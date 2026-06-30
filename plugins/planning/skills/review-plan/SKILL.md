@@ -110,7 +110,7 @@ Show the agent's full report to the user.
 
 ## Step 3: Decide next action
 
-**If verdict is APPROVE**: inform the user the plan passed review. Done.
+**If verdict is APPROVE**: inform the user the plan passed review. Stop completely — do NOT suggest or begin implementation. The user will explicitly request that.
 
 **If verdict is NEEDS REVISION**: use AskUserQuestion:
 
@@ -133,4 +133,4 @@ Show the agent's full report to the user.
 
 ## Step 4: Round limit
 
-After 3 rounds, stop regardless of verdict. Show any remaining issues and tell the user: "Review limit reached (3 rounds). Remaining issues listed above."
+After 3 rounds, stop regardless of verdict. Show any remaining issues and tell the user: "Review limit reached (3 rounds). Remaining issues listed above." Stop completely — do NOT suggest or begin implementation.

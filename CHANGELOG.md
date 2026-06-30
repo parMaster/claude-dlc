@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.4.2 - 2026-06-30
+
+### Bug Fixes
+
+- `plan` + `review-plan`: after a review completes (APPROVE verdict, round limit, or revdiff with no annotations), stop completely — do NOT proceed to implementation. The model was treating "planning is done" as a cue to begin implementing; now both skills have an explicit hard stop with "do NOT suggest or begin implementation."
+
 ## global-rules v1.0.5 - 2026-06-26
 
 ### Bug Fixes

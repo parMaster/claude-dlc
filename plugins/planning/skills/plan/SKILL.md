@@ -281,8 +281,8 @@ Then use AskUserQuestion:
 }
 ```
 
-- **Auto-review**: invoke the `planning:review-plan` skill on the plan file — it handles the review/fix loop internally. When it returns, planning is done.
-- **Review with revdiff**: invoke the `revdiff:revdiff` skill on the plan file — it handles the full annotation and revision loop internally. When it returns, planning is done.
+- **Auto-review**: invoke the `planning:review-plan` skill on the plan file — it handles the review/fix loop internally. When it returns, stop completely. Do NOT proceed to implementation.
+- **Review with revdiff**: invoke the `revdiff:revdiff` skill on the plan file — it handles the full annotation and revision loop internally. When it returns, stop completely. Do NOT proceed to implementation.
 - **Done**: stop.
 
 ## Key principles
