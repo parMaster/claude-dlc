@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.4.5 - 2026-07-01
+
+### Bug Fixes
+
+- `review-plan`: removed the inline gosymdb rule and its use in the dependency-behavior-verification step. The review subagent already inherits the gosymdb rule from global-rules CLAUDE.md, so restating it here was redundant — and gosymdb is temporarily disabled, so the explicit instruction was steering the agent toward a tool it can't use. Falls back to grep/Read for symbol lookup.
+
 ## planning v1.4.4 - 2026-07-01
 
 ### Bug Fixes
