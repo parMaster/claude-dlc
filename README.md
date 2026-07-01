@@ -79,7 +79,7 @@ Structured implementation plan creation.
 | Skill | Description |
 |-------|-------------|
 | `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering and approach exploration. Offers auto-review and/or revdiff annotation at the end. |
-| `review-plan` | Structured agent-based plan critique — correctness, over-engineering, test coverage, conventions. Presents findings by severity (Critical/Important/Minor) with APPROVE/NEEDS REVISION verdict. Iterates up to 3 rounds. Invoke on any plan: `/review-plan docs/plans/foo.md` |
+| `review-plan` | Structured agent-based plan critique — correctness, over-engineering, test coverage, conventions. Presents findings by severity (Critical/Important/Minor) with APPROVE/NEEDS REVISION verdict. Iterates up to 3 rounds, then lands on a "what's next" menu (re-run auto-review, switch to revdiff, or Done) that keeps re-asking until Done is explicitly chosen. Invoke on any plan: `/review-plan docs/plans/foo.md` |
 | `pr` | Open a draft PR from the plan file — interactive title (`[feat\|fix\|chore]: TICKET-ID - title`) and plan-based description. If a PR already exists on the branch, reads the current description and amends it with the new plan's changes rather than replacing it. |
 
 **`plan` — flow**
@@ -111,13 +111,17 @@ flowchart TD
     B --> C["read plan + relevant source files"]
     C --> D["verify dependency behaviors end-to-end"]
     D --> E{"verdict"}
-    E -->|APPROVE| F(["done ✓"])
-    E -->|"NEEDS REVISION"| G{"user choice"}
-    G -->|"Fix and re-review"| H{"round < 3?"}
-    H -->|yes| I["apply fixes to plan"]
-    I --> B
-    H -->|no| J(["round limit — stop"])
-    G -->|Done| K(["stop"])
+    E -->|"NEEDS REVISION, round < 3"| G{"user choice"}
+    G -->|"Fix and re-review"| H["apply fixes to plan"]
+    H --> B
+    G -->|"Switch to revdiff"| RD(["revdiff:revdiff"])
+    G -->|Done| STOP(["stop"])
+    E -->|APPROVE| M{"post-review menu"}
+    E -->|"round limit hit"| M
+    M -->|"Run auto-review"| B
+    M -->|"Review with revdiff"| RD
+    RD --> M
+    M -->|Done| STOP2(["stop ✓ ready for implementation"])
 ```
 
 **`pr` — flow**

@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.4.3 - 2026-07-01
+
+### Bug Fixes
+
+- `review-plan`: after an APPROVE verdict or hitting the round limit, the skill used to stop silently with "ready for implementation," dead-ending the review loop. It now lands on a "what's next" menu (run auto-review again, switch to revdiff, or Done) and keeps re-asking after every revdiff pass — only an explicit "Done" ends the loop.
+
 ## planning v1.4.2 - 2026-06-30
 
 ### Bug Fixes

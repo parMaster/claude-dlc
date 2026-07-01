@@ -1,7 +1,7 @@
 ---
 name: review-plan
 description: Review an implementation plan for completeness, correctness, over-engineering, and test coverage. Iterates review rounds until no critical issues remain or round limit hit. Activates on "review plan", "check the plan", "critique this plan", or as an optional step after planning:plan.
-allowed-tools: Read, Glob, Grep, Bash, Agent, AskUserQuestion, Edit
+allowed-tools: Read, Glob, Grep, Bash, Agent, AskUserQuestion, Edit, Skill
 ---
 
 # Plan Review
@@ -110,9 +110,7 @@ Show the agent's full report to the user.
 
 ## Step 3: Decide next action
 
-**If verdict is APPROVE**: inform the user the plan passed review. Stop completely — do NOT suggest or begin implementation. The user will explicitly request that.
-
-**If verdict is NEEDS REVISION**: use AskUserQuestion:
+**If verdict is NEEDS REVISION and round < 3**: use AskUserQuestion:
 
 ```json
 {
@@ -121,6 +119,7 @@ Show the agent's full report to the user.
     "header": "Next step",
     "options": [
       {"label": "Fix and re-review", "description": "Apply fixes from the findings, then run another review round"},
+      {"label": "Switch to revdiff", "description": "Open the plan in revdiff for manual inline annotation instead"},
       {"label": "Done", "description": "Stop here — I'll handle the fixes manually"}
     ],
     "multiSelect": false
@@ -129,8 +128,36 @@ Show the agent's full report to the user.
 ```
 
 - **Fix and re-review**: apply fixes to the plan file based on the findings (Edit tool), increment round counter, go to Step 1
-- **Done**: stop
+- **Switch to revdiff**: invoke the `revdiff:revdiff` skill on the plan file. When it returns, go to Step 5
+- **Done**: stop completely — do NOT suggest or begin implementation
+
+**If verdict is APPROVE**: go to Step 5.
 
 ## Step 4: Round limit
 
-After 3 rounds, stop regardless of verdict. Show any remaining issues and tell the user: "Review limit reached (3 rounds). Remaining issues listed above." Stop completely — do NOT suggest or begin implementation.
+After 3 rounds without APPROVE, stop the auto-review loop. Show any remaining issues and tell the user: "Review limit reached (3 rounds). Remaining issues listed above." Then go to Step 5.
+
+## Step 5: Post-review menu
+
+This is the hub every review path returns to — auto-review approval, round limit, or a revdiff pass finishing. Never stop silently here; always ask. Only "Done" ends the loop.
+
+Use AskUserQuestion:
+
+```json
+{
+  "questions": [{
+    "question": "Plan review complete. What would you like to do next?",
+    "header": "Next step",
+    "options": [
+      {"label": "Run auto-review", "description": "Run another round of structured agent review"},
+      {"label": "Review with revdiff", "description": "Open plan in revdiff for inline annotations"},
+      {"label": "Done", "description": "Stop here — plan is ready for implementation"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+- **Run auto-review**: reset the round counter to 1, go to Step 1
+- **Review with revdiff**: invoke the `revdiff:revdiff` skill on the plan file. When it returns, repeat Step 5
+- **Done**: stop completely — do NOT suggest or begin implementation
