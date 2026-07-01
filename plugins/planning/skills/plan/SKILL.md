@@ -47,11 +47,11 @@ Before asking questions, understand what the user is working on:
 
 ## Step 1: Present context and ask focused questions
 
-Show the discovered context, then ask questions **one at a time** using AskUserQuestion:
+Show the discovered context, then ask questions **one at a time** — a separate AskUserQuestion tool call per question, never multiple questions batched into one call's `questions` array:
 
 1. **Plan purpose**: "what is the main goal?" — multiple choice with suggested answer based on discovered intent
 2. **Testing approach**: "TDD or regular?" — options: "TDD (tests first)" / "Regular (code first, then tests)". Ask this early because it shapes the task structure throughout the plan.
-3. **Scope**: "which components/files are involved?" — multiple choice with discovered files
+3. **Scope**: "which components/files are involved?" — multiple choice with discovered files. The tool requires ≥2 options per question — if discovery turned up only one file/component, do not force a second fabricated option; ask this one as free text instead.
 4. **Constraints**: "any specific requirements or limitations?"
 5. **Plan title**: "short descriptive title?" — suggest based on intent
 

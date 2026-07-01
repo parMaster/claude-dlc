@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.4.4 - 2026-07-01
+
+### Bug Fixes
+
+- `plan`: Step 1 questions must each go through their own AskUserQuestion call — the tool's schema requires ≥2 options per question, and batching several questions into one call risked one of them (e.g. "Scope," built from discovered files) landing with a single fabricated option and failing validation. The Scope question now falls back to free text when discovery finds only one file/component.
+
 ## planning v1.4.3 - 2026-07-01
 
 ### Bug Fixes
