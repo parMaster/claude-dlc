@@ -144,6 +144,7 @@ Use AskUserQuestion:
     "options": [
       {"label": "Run auto-review", "description": "Run another round of structured agent review"},
       {"label": "Review with revdiff", "description": "Open plan in revdiff for inline annotations"},
+      {"label": "Implement in a Subagent", "description": "Hand off implementation to a background subagent — reports back when done, keeps this session clean"},
       {"label": "Done", "description": "Stop here — plan is ready for implementation"}
     ],
     "multiSelect": false
@@ -153,4 +154,17 @@ Use AskUserQuestion:
 
 - **Run auto-review**: reset the round counter to 1, go to Step 1
 - **Review with revdiff**: invoke the `revdiff:revdiff` skill on the plan file. When it returns, repeat Step 5
+- **Implement in a Subagent**: use the Agent tool with `subagent_type: general-purpose` and `run_in_background: true` to dispatch the plan below. Do NOT add task-by-task review scaffolding or extra process — this is a plain hand-off, matching what a fresh session would get:
+
+  ```
+  You have a new implementation plan to execute: PLAN_FILE
+
+  Read it fully, then implement every task in order, following its stated
+  testing approach. Run the project's tests and linter before treating any
+  task as done. When the whole plan is implemented, report a concise
+  summary of what changed, and flag any deviations from the plan or open
+  concerns.
+  ```
+
+  Tell the user implementation has been handed off to a background subagent and they'll be notified when it completes. Stop completely — do NOT continue the review loop.
 - **Done**: stop completely — do NOT suggest or begin implementation

@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.5.0 - 2026-07-02
+
+### New Features
+
+- `review-plan`: added "Implement in a Subagent" to the post-review menu — dispatches a background `general-purpose` agent with the plan file and a plain hand-off prompt (no per-task review scaffolding), reports back on completion. Lighter-weight alternative to superpowers' `subagent-driven-development` for people who found the per-task review loop token-heavy for little visible benefit.
+
 ## planning v1.4.5 - 2026-07-01
 
 ### Bug Fixes
