@@ -195,7 +195,7 @@ Shared global CLAUDE.md rules distributed across machines.
 
 After install, run `claude --init-only` once to trigger the setup hook — it appends a single `@import` line to `~/.claude/CLAUDE.md` pointing at the plugin file. Existing content on any machine is untouched. Machine-specific rules stay in `~/.claude/CLAUDE.md` directly; shared rules live in the plugin and are updated on reinstall.
 
-Includes: plan-first workflow, commit hygiene (tests + linter before commit), Go tooling (gosymdb), CLI best practices.
+Includes: plan-first workflow, commit hygiene (tests + linter before commit), git hygiene (stale-branch resync before planning and before the final commit), CLI best practices.
 
 ---
 

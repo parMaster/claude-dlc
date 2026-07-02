@@ -4,6 +4,16 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.0.6 - 2026-07-02
+
+### New Features
+
+- Add "Git Hygiene" section with a "Stale branch" rule — check `git fetch`/`git status` against the remote tracking branch before planning/implementing and again right before the final commit, resyncing (`git pull --rebase`) immediately instead of discovering drift only when `git push` is rejected.
+
+### Bug Fixes
+
+- Removed the "Go codebases" gosymdb rule and its stray reference under "Verification Before Commit" — gosymdb is temporarily disabled, so the instruction was steering every project (Go or not, gosymdb-equipped or not) toward a tool that isn't available. The unrelated "Vendored dependencies" rule stays, since it doesn't depend on gosymdb.
+
 ## planning v1.5.0 - 2026-07-02
 
 ### New Features

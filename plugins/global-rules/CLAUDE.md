@@ -4,11 +4,14 @@
 - Wait for user review (often via revdiff annotations) before implementing
 - After implementation is completed, before the last commit, move the plan to a completed/ subfolder
 
+## Git Hygiene
+- **Stale branch** — before starting to plan or implement, and again right before the final commit, check whether the current branch is behind its remote tracking branch (`git fetch` then `git status`). If it's behind, resync immediately — `git pull --rebase` (or plain `git pull` if there are no local commits yet) — instead of discovering it later when `git push` is rejected as non-fast-forward. Resolve any conflicts the resync surfaces as part of finishing the work, not as a follow-up.
+
 ## Verification Before Commit
 - NEVER commit until all tests pass locally (run `go test ./...` first)
 - NEVER commit until the linter passes — run the appropriate linter for the project (e.g. `golangci-lint run ./...` for Go, `eslint .` for JS/TS) and fix any failures before committing
 - NEVER auto-commit when the user is mid-review or has indicated they'll commit manually
-- For config/setting name changes, verify all references (grep or gosymdb references) and update plan docs, memory, AND application code
+- For config/setting name changes, verify all references (grep) and update plan docs, memory, AND application code
 - For multi-file refactors, verify no duplicate declarations across files in the same package before claiming done
 
 ## Honesty About Uncertainty
@@ -17,16 +20,6 @@
 - When asked about a library's capabilities (e.g., slog support in controller-runtime), check the actual source rather than asserting from memory
 
 ## Go codebases
-NEVER use grep, rg, or find to locate Go symbols (functions, types, methods, interfaces, implementations).
-ALWAYS use the gosymdb skills instead:
-- `gosymdb:sym` — find a definition
-- `gosymdb:trace` — full profile (definition + callers + callees)
-- `gosymdb:impact` — blast radius before any refactor or deletion
-
-ALWAYS pass `--auto-reindex` on every gosymdb query — it handles stale detection automatically.
-
-If no database exists yet (`env.db` empty in agent-context output), bootstrap it first:
-gosymdb index --root . --db gosymdb.sqlite
 
 **Vendored dependencies** — when a vendored Go repo (has a `vendor/` dir) shows stale/inconsistent vendoring (e.g. `inconsistent vendoring`, missing/extra packages in `vendor/`, or build/import errors right after switching branches or merging), do NOT investigate — just run `go mod tidy && go mod vendor` to resync. Only dig deeper if that doesn't resolve it.
 
