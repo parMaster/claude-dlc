@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.0.7 - 2026-07-03
+
+### New Features
+
+- Setup hook now also ensures `CLAUDE_AFK_TIMEOUT_MS` is set to `86400000` (24h) in `~/.claude/settings.json`, so `AskUserQuestion` dialogs (e.g. review-plan's post-review menu) don't auto-submit after the 60s default on every machine the plugin is installed/updated on. Idempotent and non-destructive — only sets it if the user hasn't already configured their own value.
+
 ## global-rules v1.0.6 - 2026-07-02
 
 ### New Features
