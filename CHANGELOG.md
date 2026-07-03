@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.5.1 - 2026-07-03
+
+### Bug Fixes
+
+- `review-plan`: Step 4 ("Behavior verification") now tells the review subagent to check `vendor/` (or `go env GOMODCACHE`) for dependency source before grepping, and explicitly forbids whole-filesystem `find /` searches. Without this, a fresh `general-purpose` subagent had no way to know dependencies are vendored in-repo and resorted to scanning the entire filesystem to locate a library's source.
+
 ## global-rules v1.0.8 - 2026-07-03
 
 ### New Features
