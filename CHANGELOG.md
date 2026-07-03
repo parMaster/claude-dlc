@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.0.9 - 2026-07-03
+
+### New Features
+
+- Add "Response Brevity" rule — short answers to simple questions, plain vocabulary over jargon, small text diagrams instead of prose for describing flows/relationships, no recaps or restating the question before acting. Owner reported feeling overwhelmed by multi-paragraph, jargon-heavy responses across both Opus and Sonnet 5.
+
 ## planning v1.5.1 - 2026-07-03
 
 ### Bug Fixes

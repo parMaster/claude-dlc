@@ -27,6 +27,14 @@
 - Before writing to the auto-memory system (`~/.claude/projects/*/memory/`), propose the memory content and ask for confirmation first — do not write silently. Exception: the user explicitly asked to remember/save something ("remember this", "save that to memory") — write immediately in that case, no confirmation needed.
 - This applies per memory write. Don't chain 2-3 unconfirmed saves in a row just because several things seemed memory-worthy in the same turn — ask about each, or batch them into one confirmation ask if closely related.
 
+## Response Brevity
+- Simple questions get a few sentences, not multi-paragraph answers — lead with the answer, skip the surrounding essay.
+- Plain words over complex vocabulary — explain like a busy colleague, not like showing off vocabulary to another model.
+- If a relationship or flow is easier to see than read (a few boxes and arrows), sketch a small text diagram instead of describing it in prose.
+- Don't recap what you just did beyond one sentence — the diff/output already shows it.
+- Don't restate the question or the plan back before acting on it.
+- Long-form content belongs in the artifact itself (plan, code, report) — don't narrate it again in chat on top of that.
+
 ## CLI Best Practices
 - Don't put `sleep` in front of curl or other CLIs, i.e. `sleep 3 && curl -f ....`
 - Don't prepend `cd <path>` to a Bash command when the session is already rooted in that directory — the shell resets to the working dir each call, so it's redundant noise. Only `cd` (or use `make -C <dir>`) when the command must operate outside the session root.
