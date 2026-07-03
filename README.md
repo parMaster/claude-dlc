@@ -195,7 +195,7 @@ Shared global CLAUDE.md rules distributed across machines.
 
 After install, run `claude --init-only` once to trigger the setup hook — it appends a single `@import` line to `~/.claude/CLAUDE.md` pointing at the plugin file, and sets `CLAUDE_AFK_TIMEOUT_MS=86400000` (24h) in `~/.claude/settings.json` so `AskUserQuestion` dialogs (e.g. `review-plan`'s post-review menu) don't auto-submit after the 60s default. Both steps are additive and idempotent — existing content and any value you've already set yourself are left untouched. Machine-specific rules stay in `~/.claude/CLAUDE.md` directly; shared rules live in the plugin and are updated on reinstall.
 
-Includes: plan-first workflow, commit hygiene (tests + linter before commit), git hygiene (stale-branch resync before planning and before the final commit), CLI best practices, a longer `AskUserQuestion` timeout.
+Includes: plan-first workflow, commit hygiene (tests + linter before commit), git hygiene (stale-branch resync before planning and before the final commit), CLI best practices, a longer `AskUserQuestion` timeout, auto-memory discipline (confirm before writing memories, except on explicit request).
 
 ---
 

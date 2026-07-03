@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.0.8 - 2026-07-03
+
+### New Features
+
+- Add "Auto-Memory Discipline" rule — confirm with the user before writing to the auto-memory system instead of saving silently, except when the user explicitly asked to remember something. Prevents unconfirmed memory writes from stacking up several at a time.
+
 ## global-rules v1.0.7 - 2026-07-03
 
 ### New Features

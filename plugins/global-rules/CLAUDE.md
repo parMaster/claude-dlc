@@ -23,6 +23,10 @@
 
 **Vendored dependencies** — when a vendored Go repo (has a `vendor/` dir) shows stale/inconsistent vendoring (e.g. `inconsistent vendoring`, missing/extra packages in `vendor/`, or build/import errors right after switching branches or merging), do NOT investigate — just run `go mod tidy && go mod vendor` to resync. Only dig deeper if that doesn't resolve it.
 
+## Auto-Memory Discipline
+- Before writing to the auto-memory system (`~/.claude/projects/*/memory/`), propose the memory content and ask for confirmation first — do not write silently. Exception: the user explicitly asked to remember/save something ("remember this", "save that to memory") — write immediately in that case, no confirmation needed.
+- This applies per memory write. Don't chain 2-3 unconfirmed saves in a row just because several things seemed memory-worthy in the same turn — ask about each, or batch them into one confirmation ask if closely related.
+
 ## CLI Best Practices
 - Don't put `sleep` in front of curl or other CLIs, i.e. `sleep 3 && curl -f ....`
 - Don't prepend `cd <path>` to a Bash command when the session is already rooted in that directory — the shell resets to the working dir each call, so it's redundant noise. Only `cd` (or use `make -C <dir>`) when the command must operate outside the session root.
