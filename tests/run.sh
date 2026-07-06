@@ -109,6 +109,46 @@ assert_eq "skips if @import already present (idempotent)" "1" "$count"
 rm -rf "$TEST_HOME"
 
 # ---------------------------------------------------------------------------
+# global-rules/block-root-find.sh
+# ---------------------------------------------------------------------------
+
+BLOCK_ROOT_FIND_SCRIPT="${REPO_ROOT}/plugins/global-rules/scripts/block-root-find.sh"
+
+run_hook() {
+  local script="$1" command="$2"
+  printf '%s' "$command" | jq -Rn '{tool_input:{command: input}}' | bash "$script"
+}
+
+echo "global-rules/block-root-find.sh"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'gem_path=$(find / -type d -path "*bibook-rails-base-models*" -not -path "*/node_modules/*" 2>/dev/null | head -5); echo "$gem_path"')
+assert_contains "blocks root find embedded in \$(...) assignment" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find /')
+assert_contains "blocks bare find / with no trailing args" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find -H / -type f')
+assert_contains "blocks find / with flags before the path" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'echo hi && find / -name foo.txt')
+assert_contains "blocks find / chained after &&" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'echo `find / -name foo.txt`')
+assert_contains "blocks find / inside backtick substitution" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find /Users/gusto/go/src/claude-dlc -name "*.go"')
+assert_eq "allows find rooted at a real absolute project path" "" "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find . -name "*.go"')
+assert_eq "allows relative find" "" "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'myfind / -name foo')
+assert_eq "allows commands where find is a substring of a longer word" "" "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'grep -rn "find /" .')
+assert_eq "allows unrelated commands merely mentioning find /" "" "$result"
+
+# ---------------------------------------------------------------------------
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

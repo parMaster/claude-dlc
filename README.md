@@ -197,6 +197,10 @@ After install, run `claude --init-only` once to trigger the setup hook — it ap
 
 Includes: plan-first workflow, commit hygiene (tests + linter before commit), git hygiene (stale-branch resync before planning and before the final commit), CLI best practices, a longer `AskUserQuestion` timeout, auto-memory discipline (confirm before writing memories, except on explicit request), response brevity (short answers, plain words, text diagrams over prose).
 
+| Hook | Trigger | Effect |
+|------|---------|--------|
+| `block-root-find` | `Bash` command running `find` rooted at `/` (e.g. `find / -type d ...`), including inside `$(...)` command substitution or a variable assignment | Denies — full-filesystem scans aren't a normal part of any task; scope the search to a specific directory instead |
+
 ---
 
 ### git-tools

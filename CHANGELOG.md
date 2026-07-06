@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.1.0 - 2026-07-06
+
+### New Features
+
+- Add `block-root-find` — PreToolUse hook on Bash that denies `find` commands rooted at `/` (a full-filesystem scan). Regex-matches the raw command string, so it catches the pattern even inside `$(...)` command substitution or a variable assignment, which a plain `permissions.deny` rule can't see into. Triggered by an owner catching an agent running `find / -type d ...` unprompted. Covered by `tests/run.sh`.
+
 ## global-rules v1.0.9 - 2026-07-03
 
 ### New Features
