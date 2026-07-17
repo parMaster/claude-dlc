@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.5.2 - 2026-07-17
+
+### Improvements
+
+- `review-plan`: added a "When NOT to flag" counter-list (reasonable abstractions, domain-inherent complexity, patterns matching existing conventions) and a confidence-framing rule — uncertain over-engineering calls should be raised as a question, not a finding. Adapted from cc-thingz's `plan-review` agent, which had this as an explicit checklist but our skill only had a one-line "do not nitpick style" reminder.
+
 ## global-rules v1.1.0 - 2026-07-06
 
 ### New Features

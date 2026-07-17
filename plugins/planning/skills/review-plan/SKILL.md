@@ -67,6 +67,14 @@ Review checklist:
 - No scope creep — unrelated features bundled in?
 - Task dependencies are logical?
 
+When NOT to flag:
+- Reasonable abstractions that solve a real, current problem
+- Testing infrastructure the plan will actually use
+- Complexity that's inherent to the problem domain, not added by the plan
+- Patterns that match existing codebase conventions
+
+If unsure whether something is over-engineering, phrase it as a question in the review, not a finding.
+
 Output format (use exactly this structure):
 
 ```
