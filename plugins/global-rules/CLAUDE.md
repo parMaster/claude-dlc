@@ -23,6 +23,8 @@
 
 **Vendored dependencies** — when a vendored Go repo (has a `vendor/` dir) shows stale/inconsistent vendoring (e.g. `inconsistent vendoring`, missing/extra packages in `vendor/`, or build/import errors right after switching branches or merging), do NOT investigate — just run `go mod tidy && go mod vendor` to resync. Only dig deeper if that doesn't resolve it.
 
+**Dependency source lookup** — to read a dependency's actual source (verifying behavior, checking a function body, etc.), check `./vendor/<module-path>` in the current repo FIRST. Only fall back to `go env GOMODCACHE` if the repo has no `vendor/` dir or the package isn't vendored there — these repos are vendored essentially 100% of the time.
+
 ## Auto-Memory Discipline
 - Before writing to the auto-memory system (`~/.claude/projects/*/memory/`), propose the memory content and ask for confirmation first — do not write silently. Exception: the user explicitly asked to remember/save something ("remember this", "save that to memory") — write immediately in that case, no confirmation needed.
 - This applies per memory write. Don't chain 2-3 unconfirmed saves in a row just because several things seemed memory-worthy in the same turn — ask about each, or batch them into one confirmation ask if closely related.

@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.1.1 - 2026-07-17
+
+### Improvements
+
+- Added a "Dependency source lookup" rule to the Go codebases section: check `./vendor/<module-path>` in the current repo before falling back to `go env GOMODCACHE` when reading a dependency's source. Owner kept catching Claude going straight to GOMODCACHE despite the repo already having the dependency vendored.
+
 ## planning v1.5.2 - 2026-07-17
 
 ### Improvements
