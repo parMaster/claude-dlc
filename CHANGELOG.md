@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.6.0 - 2026-07-21
+
+### Features
+
+- `review-plan`: the "Implement in a Subagent" hand-off now asks which model the implementer should run on (Inherit / Opus / Sonnet / Haiku) and passes it via the Agent tool's `model` parameter. Previously the subagent always inherited the main session's model with no way to choose.
+
 ## global-rules v1.1.1 - 2026-07-17
 
 ### Improvements

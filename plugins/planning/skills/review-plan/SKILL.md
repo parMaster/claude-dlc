@@ -162,7 +162,25 @@ Use AskUserQuestion:
 
 - **Run auto-review**: reset the round counter to 1, go to Step 1
 - **Review with revdiff**: invoke the `revdiff:revdiff` skill on the plan file. When it returns, repeat Step 5
-- **Implement in a Subagent**: use the Agent tool with `subagent_type: general-purpose` and `run_in_background: true` to dispatch the plan below. Do NOT add task-by-task review scaffolding or extra process — this is a plain hand-off, matching what a fresh session would get:
+- **Implement in a Subagent**: first ask which model the implementer should run on, using AskUserQuestion:
+
+  ```json
+  {
+    "questions": [{
+      "question": "Which model should the implementer subagent use?",
+      "header": "Model",
+      "options": [
+        {"label": "Inherit", "description": "Use the same model as this session (default)"},
+        {"label": "Opus", "description": "Most capable — best for complex or subtle implementations"},
+        {"label": "Sonnet", "description": "Faster and cheaper — good for straightforward plans"},
+        {"label": "Haiku", "description": "Fastest and cheapest — for simple mechanical changes"}
+      ],
+      "multiSelect": false
+    }]
+  }
+  ```
+
+  Then use the Agent tool with `subagent_type: general-purpose` and `run_in_background: true` to dispatch the plan below. Pass `model` set to the chosen tier (`opus`, `sonnet`, or `haiku`); for **Inherit**, omit the `model` parameter entirely. Do NOT add task-by-task review scaffolding or extra process — this is a plain hand-off, matching what a fresh session would get:
 
   ```
   You have a new implementation plan to execute: PLAN_FILE
@@ -174,5 +192,5 @@ Use AskUserQuestion:
   concerns.
   ```
 
-  Tell the user implementation has been handed off to a background subagent and they'll be notified when it completes. Stop completely — do NOT continue the review loop.
+  Tell the user implementation has been handed off to a background subagent (noting the chosen model) and they'll be notified when it completes. Stop completely — do NOT continue the review loop.
 - **Done**: stop completely — do NOT suggest or begin implementation
