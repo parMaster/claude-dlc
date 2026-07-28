@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.7.0 - 2026-07-28
+
+### Features
+
+- `review-plan`: reviewer now classifies each finding as MECHANICAL (provable by a command — counts, stale identifiers, un-updated locations) or REASONED (needs judgment), and every MECHANICAL finding must ship a `verify:` command with expected output.
+- `review-plan`: after a fix pass, the orchestrating session re-runs the `verify:` command for every MECHANICAL finding before continuing — an unverified mechanical fix can't trigger a new round.
+- `review-plan`: if a round's findings were all MECHANICAL, the loop skips spawning another review agent (all fixes are already verified by command) and goes straight to the post-review menu instead of burning a full round on bookkeeping.
+- `review-plan`: round 2+ prompts now carry a concrete "fixes applied since last round" list, and the reviewer must return a correct/incomplete/introduced-a-new-problem verdict per fix instead of a vague independence reminder.
+- `review-plan`: added a "Decision conflict" checklist item (Critical) — flags plans that contradict a recorded decision elsewhere in the repo (decision log, WBS scope note, prior plan) without a full, command-backed enumeration of every stale location.
+
+### Why
+
+Owner reported that after the Opus 4.8 → 5 upgrade, later review rounds stopped finding real issues and instead manufactured minor nitpicks to justify NEEDS REVISION — because the reviewer reasons well but never counts, and fix passes mostly introduce bookkeeping errors (missed locations, stale references) that reasoning alone doesn't reliably catch. Distinguishing provable findings from judgment calls, and gating rounds on actually running the proof, targets that failure mode directly.
+
 ## planning v1.6.0 - 2026-07-21
 
 ### Features

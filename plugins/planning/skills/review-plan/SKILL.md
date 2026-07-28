@@ -16,7 +16,7 @@ Iterative structured critique of an implementation plan. A read-only review agen
 
 ## Step 1: Spawn review agent
 
-Track the current round (start at 1, max 3). Use the Agent tool with `subagent_type: general-purpose` and the prompt below. Replace `PLAN_FILE` with the actual path and `ROUND` with the current round number.
+Track the current round (start at 1, max 3). Use the Agent tool with `subagent_type: general-purpose` and the prompt below. Replace `PLAN_FILE` with the actual path and `ROUND` with the current round number. For ROUND > 1, append the "Fixes applied since last round" list (built in Step 3) to the prompt, each line as `[finding] → [what you did]`.
 
 ---
 You are reviewing an implementation plan before implementation begins. Find real problems — do not nitpick style.
@@ -34,7 +34,7 @@ Steps:
 5. **Error/status tracing:** For every asserted error outcome or HTTP status code in the plan, trace it end-to-end: follow the sentinel or error from where it originates, through each `%w` re-wrap, to the handler that maps it to a response. Flag as CRITICAL if the plan's expected outcome doesn't match what the handler actually returns.
 6. **Test setup preconditions:** Walk the test setup steps in execution order. For each step, check it against the API's enforced preconditions — state-transition rules, creation-order constraints, required prior state. Flag as CRITICAL any step that would be rejected because it violates ordering requirements.
 7. **Multi-phase state:** For anything touching a multi-phase process (migrations, workflows, staged operations), inspect what earlier phases leave in place before asserting on later state. Flag as CRITICAL if the plan assumes absent state that an earlier phase already established.
-8. If ROUND > 1: note that fixes were applied since the last round — re-evaluate all areas independently, do not assume previous fixes are correct or complete.
+8. If ROUND > 1: you will be given a list of fixes applied since the last round. Do not assume any of them are correct or complete — re-evaluate all areas independently. For each listed fix, state a verdict: correct / incomplete / introduced a new problem.
 
 Review checklist:
 
@@ -43,6 +43,9 @@ Review checklist:
 - Proposed solution actually solves it — no missing steps?
 - Edge cases considered?
 - Does the "Verified Dependency Behaviors" section exist and does each entry's actual behavior support the plan's logic? (A function named "GrantAccess" that grants USAGE+DML but not CREATE is not "full access.")
+
+**Decision conflict (Critical)**
+- Does the plan contradict a recorded decision elsewhere in the repo — a `Decision:` line, a decision-log entry, a WBS scope note, a prior plan's stated approach? A plan may reverse an earlier decision, but it may not leave the repo disagreeing with itself. Treat any such conflict as CRITICAL, and enumerate every location that still carries the old decision (see classification rule below — this is a MECHANICAL finding, back it with a command).
 
 **Over-engineering (Critical)**
 - Unnecessary abstractions or interfaces for a single implementation?
@@ -75,6 +78,12 @@ When NOT to flag:
 
 If unsure whether something is over-engineering, phrase it as a question in the review, not a finding.
 
+**Classify every finding as MECHANICAL or REASONED:**
+- MECHANICAL = provable by a command: a count, a stale identifier, a location the plan didn't update, "appears in N places but only M were changed." If you can write a `grep`/`rg` command whose output confirms the problem, it's mechanical.
+- REASONED = needs judgment: a logic gap, a wrong assumption about behavior, a missing edge case. No single command settles it.
+
+Every MECHANICAL finding must include a `verify:` command with its expected output (e.g. expect 0 matches, or expect a specific count). This lets the fix be checked mechanically instead of by re-reading prose.
+
 Output format (use exactly this structure):
 
 ```
@@ -85,15 +94,20 @@ Output format (use exactly this structure):
 
 ### Critical Issues
 [omit section if none]
-1. **[Section › Task/subsection]** — [what's wrong] — [how to fix it]
+1. [MECHANICAL] **[Section › Task/subsection]** — [what's wrong] — [how to fix it] — verify: `<command>` → expect [result]
+2. [REASONED] **[Section › Task/subsection]** — [what's wrong] — [how to fix it]
 
 ### Important Issues
-[omit section if none]
+[omit section if none — same [MECHANICAL]/[REASONED] tagging as above]
 1. **[Section › Task/subsection]** — [what's wrong] — [how to fix it]
 
 ### Minor Issues
 [omit section if none]
 1. **[Section › Task/subsection]** — [suggestion]
+
+### Fix verdicts (ROUND > 1 only)
+[omit section if ROUND == 1 — one line per fix you were told was applied since the last round]
+1. [fix description] — **correct** / **incomplete** / **introduced a new problem** — [one line why]
 
 ### Verdict
 **APPROVE** or **NEEDS REVISION**
@@ -128,7 +142,11 @@ Show the agent's full report to the user.
 }
 ```
 
-- **Fix and re-review**: apply fixes to the plan file based on the findings (Edit tool), increment round counter, go to Step 1
+- **Fix and re-review**:
+  1. Apply fixes to the plan file based on the findings (Edit tool). Keep a running list of what you changed, phrased as one line per finding: `[finding] → [what you did]`.
+  2. For every MECHANICAL finding, re-run its `verify:` command and compare against the expected result. Any that still fail must be fixed before continuing — do not spawn a new round with an unverified mechanical fix.
+  3. If **every** finding in this round was MECHANICAL (no REASONED findings at all): do not spawn a new agent round. All fixes are now verified by command, which is strictly stronger evidence than another read of the plan. Report the verify results to the user and go to Step 5.
+  4. Otherwise (at least one REASONED finding was present): increment the round counter, and go to Step 1. Pass the fix list from step 1 into the round prompt as "Fixes applied since last round" — this is what step 8 of the reviewer's instructions and the "Fix verdicts" output section require.
 - **Switch to revdiff**: invoke the `revdiff:revdiff` skill on the plan file. When it returns, go to Step 5
 - **Done**: stop completely — do NOT suggest or begin implementation
 
