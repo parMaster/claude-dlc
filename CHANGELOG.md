@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.1.2 - 2026-07-30
+
+### Improvements
+
+- Removed the "never include co-authored tag line" prompt rule — superseded by the `attribution.commit`/`attribution.pr` settings (see `~/.claude/settings.json`), which is the mechanism Claude Code actually consults to build the commit/PR trailer, rather than a prompt instruction that has to be re-followed every commit.
+
 ## planning v1.7.0 - 2026-07-28
 
 ### Features
