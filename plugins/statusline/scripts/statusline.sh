@@ -40,7 +40,11 @@ if [ -n "$model" ]; then
 fi
 
 if [ -n "$used_pct" ]; then
-  printf ' \033[2mctx:%.0f%%\033[0m' "$used_pct"
+  ctx_color='\033[2m'
+  if awk -v p="$used_pct" 'BEGIN { exit !(p > 30) }'; then
+    ctx_color='\033[0;35m'
+  fi
+  printf " ${ctx_color}ctx:%.0f%%\033[0m" "$used_pct"
 fi
 
 if [ -n "$session_pct" ] && [ -n "$week_pct" ]; then

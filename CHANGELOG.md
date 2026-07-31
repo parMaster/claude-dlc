@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## statusline v1.0.5 - 2026-08-01
+
+### Improvements
+
+- `ctx:N%` now renders in magenta once context usage exceeds 30% (was always dim), as an early visual warning before compaction.
+
 ## global-rules v1.1.2 - 2026-07-30
 
 ### Improvements
