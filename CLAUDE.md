@@ -29,7 +29,8 @@ Add the marketplace and install individual plugins:
 - `.claude-plugin/marketplace.json` — marketplace catalog listing all available plugins
 - `plugins/` — each subdirectory is an independent plugin:
   - Each plugin has `.claude-plugin/plugin.json` with name, description, version, author
-  - Standard subdirs (use only what's needed): `skills/`, `commands/`, `hooks/`, `scripts/`, `references/`
+  - Standard subdirs (use only what's needed): `skills/`, `commands/`, `hooks/`, `scripts/`, `references/`, `agents/`
+  - `agents/<name>.md` defines a custom subagent (frontmatter: `name`, `description`, `tools`). Use this — not a prompt-only "don't touch files" instruction inside a skill — whenever a spawned agent must actually be prevented from writing/editing/deleting: the `tools:` list is enforced at the tool-permission layer, so Write/Edit/NotebookEdit simply aren't callable if omitted from it.
 - `CHANGELOG.md` — version history, one section per plugin version bump
 
 ## Conventions

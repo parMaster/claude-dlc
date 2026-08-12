@@ -10,6 +10,13 @@ Entries sorted newest first.
 
 - `ctx:N%` now renders in magenta once context usage exceeds 30% (was always dim), as an early visual warning before compaction.
 
+## planning v1.9.0 - 2026-08-13
+
+### Fixes
+
+- `review-plan`: the review agent ran as `general-purpose` (all tools), so its prompt-only "READ-ONLY" instruction was advisory, not enforced — it was observed writing plan-derived `.go` files and tests, running them, then deleting them, in the name of "verification." It's now a dedicated `plan-review` subagent (`plugins/planning/agents/plan-review.md`) restricted to Read/Glob/Grep/Bash — Write, Edit, and NotebookEdit aren't in its tool list, so it cannot create, modify, or delete files regardless of what its prompt says. Its instructions also now explicitly forbid executing code (`go run`/`go test`/etc.) or redirecting Bash output to a file, even "to check."
+- `review-plan`: round > 1 was re-running the expensive verification steps (dependency behavior, error tracing, test preconditions, multi-phase state) against the *entire* plan every time, on top of a fresh full read of source and vendor code — burning hundreds of thousands of tokens per round for mostly-repeat findings. Rounds > 1 now scope those steps to just the sections/tasks the last round's fixes touched (plus shared dependencies); the cheap checklist pass still covers the whole plan.
+
 ## planning v1.8.0 - 2026-08-13
 
 ### Features
