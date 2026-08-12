@@ -10,6 +10,18 @@ Entries sorted newest first.
 
 - `ctx:N%` now renders in magenta once context usage exceeds 30% (was always dim), as an early visual warning before compaction.
 
+## planning v1.8.0 - 2026-08-13
+
+### Features
+
+- `review-plan`: every time the review agent is about to spawn — first review, a "Fix and re-review" continuation, or "Run auto-review" from the post-review menu — asks which model should run that round (Inherit/Opus/Sonnet/Haiku), matching the existing model choice for the implementer handoff.
+
+## global-rules v1.1.3 - 2026-08-13
+
+### Improvements
+
+- Response Brevity: the "plain words" rule now names concrete swaps (utilize→use, leverage→use, facilitate→help, ...), caps technical terms at one per sentence, and requires a reread-before-send check — the old wording was a soft aspiration that kept fading back into jargon over the course of a session. Added a stickiness clause: a correction on this holds for the rest of the session, not just the next reply.
+
 ## global-rules v1.1.2 - 2026-07-30
 
 ### Improvements

@@ -79,7 +79,7 @@ Structured implementation plan creation.
 | Skill | Description |
 |-------|-------------|
 | `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering and approach exploration. Offers auto-review and/or revdiff annotation at the end. |
-| `review-plan` | Structured agent-based plan critique — correctness, over-engineering, test coverage, conventions. Every finding is tagged MECHANICAL (backed by a `verify:` command) or REASONED (needs judgment); a fix pass that leaves only MECHANICAL findings gets its fixes verified by command and skips straight to the post-review menu instead of spawning another round. Presents findings by severity (Critical/Important/Minor) with APPROVE/NEEDS REVISION verdict. Iterates up to 3 rounds, then lands on a "what's next" menu (re-run auto-review, switch to revdiff, hand off to a background implementation subagent — choosing which model it runs on — or Done) that keeps re-asking until Done is explicitly chosen. Invoke on any plan: `/review-plan docs/plans/foo.md` |
+| `review-plan` | Structured agent-based plan critique — correctness, over-engineering, test coverage, conventions. Asks which model should run each review round (Inherit/Opus/Sonnet/Haiku) before every spawn — first review, "Fix and re-review", or "Run auto-review". Every finding is tagged MECHANICAL (backed by a `verify:` command) or REASONED (needs judgment); a fix pass that leaves only MECHANICAL findings gets its fixes verified by command and skips straight to the post-review menu instead of spawning another round. Presents findings by severity (Critical/Important/Minor) with APPROVE/NEEDS REVISION verdict. Iterates up to 3 rounds, then lands on a "what's next" menu (re-run auto-review, switch to revdiff, hand off to a background implementation subagent — choosing which model it runs on — or Done) that keeps re-asking until Done is explicitly chosen. Invoke on any plan: `/review-plan docs/plans/foo.md` |
 | `pr` | Open a draft PR from the plan file — interactive title (`[feat\|fix\|chore]: TICKET-ID - title`) and plan-based description. If a PR already exists on the branch, reads the current description and amends it with the new plan's changes rather than replacing it. |
 
 **`plan` — flow**
@@ -107,7 +107,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["find plan file"] --> B["spawn review agent — Round N"]
+    A["find plan file"] --> B["ask review model → spawn review agent — Round N"]
     B --> C["read plan + relevant source files"]
     C --> D["verify dependency behaviors end-to-end"]
     D --> E{"verdict"}

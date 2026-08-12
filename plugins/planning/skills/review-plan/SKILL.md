@@ -16,7 +16,25 @@ Iterative structured critique of an implementation plan. A read-only review agen
 
 ## Step 1: Spawn review agent
 
-Track the current round (start at 1, max 3). Use the Agent tool with `subagent_type: general-purpose` and the prompt below. Replace `PLAN_FILE` with the actual path and `ROUND` with the current round number. For ROUND > 1, append the "Fixes applied since last round" list (built in Step 3) to the prompt, each line as `[finding] → [what you did]`.
+Track the current round (start at 1, max 3). Every time this step runs — first review, a "Fix and re-review" continuation, or "Run auto-review" from the post-review menu — first ask which model should run this round, using AskUserQuestion:
+
+```json
+{
+  "questions": [{
+    "question": "Which model should review this round?",
+    "header": "Model",
+    "options": [
+      {"label": "Inherit", "description": "Use the same model as this session (default)"},
+      {"label": "Opus", "description": "Most capable — best for catching subtle logic gaps or over-engineering"},
+      {"label": "Sonnet", "description": "Faster and cheaper — good for most plans"},
+      {"label": "Haiku", "description": "Fastest and cheapest — for a quick mechanical pass"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+Use the Agent tool with `subagent_type: general-purpose` and the prompt below. Pass `model` set to the chosen tier (`opus`, `sonnet`, or `haiku`); for **Inherit**, omit the `model` parameter entirely. Replace `PLAN_FILE` with the actual path and `ROUND` with the current round number. For ROUND > 1, append the "Fixes applied since last round" list (built in Step 3) to the prompt, each line as `[finding] → [what you did]`.
 
 ---
 You are reviewing an implementation plan before implementation begins. Find real problems — do not nitpick style.
