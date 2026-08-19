@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules v1.1.4 - 2026-08-19
+
+### Fixes
+
+- Response Brevity: added "Conclusion before justification, always" and "No self-critique preamble" rules — responses were leaking self-correction monologue and process commentary ("You're right, that was made up...", "I made this harder than it needed to be...") before the actual answer, forcing the user to read through it to reach content that turned out not to matter. Conclusion now leads unconditionally; any reasoning trail worth keeping goes after it, and self-critique of the prior turn gets cut rather than fronted.
+
 ## statusline v1.0.5 - 2026-08-01
 
 ### Improvements
