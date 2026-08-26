@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.10.1 - 2026-08-26
+
+### Fixes
+
+- `review-plan`: fixed `subagent_type` — the skill called `plan-review`, but plugin agents are namespaced (`planning:plan-review`), causing an "Agent type not found" error before the harness fell back to the correct name.
+
 ## planning v1.10.0 - 2026-08-26
 
 ### Features

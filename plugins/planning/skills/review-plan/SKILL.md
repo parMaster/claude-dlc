@@ -34,7 +34,7 @@ Track the current round (start at 1, max 3). Every time this step runs — first
 }
 ```
 
-Use the Agent tool with `subagent_type: plan-review` — a dedicated read-only agent (`plugins/planning/agents/plan-review.md`) that only has Read/Glob/Grep/Bash; it cannot call Write, Edit, or NotebookEdit, so it cannot create, modify, or delete files no matter what its prompt says. Pass `model` set to the chosen tier (`opus`, `sonnet`, or `haiku`); for **Inherit**, omit the `model` parameter entirely. The review methodology, checklist, and output format live in the agent definition — this step only supplies what changes per call:
+Use the Agent tool with `subagent_type: planning:plan-review` — a dedicated read-only agent (`plugins/planning/agents/plan-review.md`) that only has Read/Glob/Grep/Bash; it cannot call Write, Edit, or NotebookEdit, so it cannot create, modify, or delete files no matter what its prompt says. Pass `model` set to the chosen tier (`opus`, `sonnet`, or `haiku`); for **Inherit**, omit the `model` parameter entirely. The review methodology, checklist, and output format live in the agent definition — this step only supplies what changes per call:
 
 ```
 Plan file: PLAN_FILE
