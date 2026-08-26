@@ -140,22 +140,7 @@ Use AskUserQuestion:
   Tell the user implementation has been handed off to a background subagent (noting the chosen model) and they'll be notified when it completes. Stop completely — do NOT continue the review loop.
 - **Implement in a Separate Session**: hand off to a fresh agterm session in this same workspace — no model-tier question (agterm has no model picker; the new session runs whatever `claude` launches with by default).
 
-  Run the whole handoff as **one Bash tool call** — `session new` always steals UI focus (no flag suppresses it), so splitting this into several calls forces the user to approve one, get yanked to the new session, switch back to approve the rest, then switch again to actually watch it. One chained call means one approval, and the UI lands on the new session — already running — when it's done:
+  Run: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE"` (substitute the real plan path for `PLAN_FILE`).
 
-  ```bash
-  PROJECT_ROOT=$(git rev-parse --show-toplevel) && \
-  SLUG=$(basename "PLAN_FILE" .md | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2}-//') && \
-  SID=$(agtermctl session new --cwd "$PROJECT_ROOT" --workspace "$AGTERM_WORKSPACE_ID" --name "Implement: $SLUG" --json | jq -r '.result.id') && \
-  [ -n "$SID" ] && [ "$SID" != "null" ] && \
-  agtermctl session type "claude 'You have a new implementation plan to execute: PLAN_FILE
-
-  Read it fully, then implement every task in order, following its stated
-  testing approach. Run the project'\''s tests and linter before treating any
-  task as done.'" --target "$SID" && \
-  agtermctl session type $'\n' --target "$SID"
-  ```
-
-  Substitute the real plan path for both occurrences of `PLAN_FILE`. If the command's exit status is non-zero (`session new` failed, or `SID` came back empty/`null` — `agtermctl` present but the socket unreachable, or some other agterm-side error), the `&&` chain short-circuits before typing anything into a nonexistent target; tell the user the handoff failed with the captured error output, and stop. Do not fall back to a subagent silently.
-
-  Then tell the user: implementation has been handed off to a new agterm session (named `Implement: SLUG`) in this same workspace — they can switch to it to watch or drive it directly. Stop completely — do NOT continue the review loop.
+  On success (exit 0), the script's last stdout line is the new session's display name (e.g. `Implement: foo`) — tell the user implementation has been handed off to a new agterm session with that name, in this same workspace, and they can switch to it to watch or drive it directly. On failure (non-zero exit), tell the user the handoff failed, quoting the script's stderr output. Do not fall back to a subagent silently. Either way, stop completely — do NOT continue the review loop.
 - **Done**: stop completely — do NOT suggest or begin implementation

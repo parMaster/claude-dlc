@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.11.1 - 2026-08-26
+
+### Fixes
+
+- Deduped the agterm hand-off sequence: `plan`, `review-plan`, and `implement-in-session` each embedded their own copy of the `agtermctl` session-creation/type sequence. All three now call one shared `plugins/planning/scripts/agterm-handoff.sh`. A `Skill`-tool-based dedup (having `plan`/`review-plan` invoke `implement-in-session` directly) wasn't possible: `implement-in-session` has `disable-model-invocation: true`, which blocks any Claude-initiated `Skill` call, not just natural-language auto-triggering — a bundled shell script has no such gate.
+
 ## planning v1.11.0 - 2026-08-26
 
 ### Features
