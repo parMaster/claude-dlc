@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.11.0 - 2026-08-26
+
+### Features
+
+- Added `implement-in-session` — an explicit-only skill (`disable-model-invocation: true`) that hands a plan straight to a fresh agterm session, skipping `plan`'s and `review-plan`'s menus entirely. Resolves the plan file from an argument or falls back to the most recently modified plan under `docs/plans/`, then runs the same agterm hand-off sequence those two skills already offer inline.
+
 ## planning v1.10.1 - 2026-08-26
 
 ### Fixes

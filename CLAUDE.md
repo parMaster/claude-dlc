@@ -54,9 +54,8 @@ The sibling repo `../cc-thingz` (MIT, Umputun) is the upstream reference. When p
 
 - Test a plugin locally: `claude --plugin-dir plugins/<name>`
 - Reload without restarting: `/reload-plugins`
-- Skills are invokable by full name (e.g., `/planning:exec`) — they don't appear in `/` autocomplete dropdown (only `commands/*.md` files do)
+- Skills appear in `/` autocomplete the same as `commands/*.md` files — `commands/` is legacy-only now; use `skills/<name>/SKILL.md` for anything new. Both share one frontmatter schema (`description`, `argument-hint`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, ...) and the same `$ARGUMENTS`/`$0`/`$name` argument substitution.
 
 ## Known Claude Code Limitations
 
-- Plugin skills don't appear in `/` autocomplete. Invoke by typing the full name or via natural language.
 - PreToolUse hook denials render as "blocking error" in TUI — cosmetic issue, not fixable from the plugin side.

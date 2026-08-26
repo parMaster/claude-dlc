@@ -81,6 +81,7 @@ Structured implementation plan creation.
 | `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering and approach exploration. Offers auto-review, revdiff annotation, hand off to a background subagent, or hand off to a fresh agterm session at the end. |
 | `review-plan` | Structured plan critique, run by a dedicated `plan-review` subagent (`agents/plan-review.md`) restricted to Read/Glob/Grep/Bash — no Write/Edit/NotebookEdit, so it can't create, modify, or delete files no matter what its prompt says. Checks correctness, over-engineering, test coverage, conventions. Asks which model should run each review round (Inherit/Opus/Sonnet/Haiku) before every spawn — first review, "Fix and re-review", or "Run auto-review". Every finding is tagged MECHANICAL (backed by a `verify:` command) or REASONED (needs judgment); a fix pass that leaves only MECHANICAL findings gets its fixes verified by command and skips straight to the post-review menu instead of spawning another round. Rounds after the first scope the expensive dependency/error-tracing checks to just the sections the last round's fixes touched, instead of redoing the whole plan. Presents findings by severity (Critical/Important/Minor) with APPROVE/NEEDS REVISION verdict. Iterates up to 3 rounds, then lands on a "what's next" menu (re-run auto-review, switch to revdiff, hand off to a background implementation subagent — choosing which model it runs on, hand off to a fresh agterm session, or Done) that keeps re-asking until Done is explicitly chosen. The agterm hand-off only appears when the session is actually running inside agterm (`AGTERM_ENABLED=1`) and `agtermctl` is on PATH — it's silently omitted otherwise. Invoke on any plan: `/review-plan docs/plans/foo.md` |
 | `pr` | Open a draft PR from the plan file — interactive title (`[feat\|fix\|chore]: TICKET-ID - title`) and plan-based description. If a PR already exists on the branch, reads the current description and amends it with the new plan's changes rather than replacing it. |
+| `implement-in-session` | Explicit-only hand-off of a plan straight to a fresh agterm session, skipping `plan`/`review-plan`'s menus entirely — `/planning:implement-in-session [plan-file]` (defaults to the most recent plan under `docs/plans/` if omitted). Never triggers from natural language (`disable-model-invocation: true`). |
 
 **`plan` — flow**
 
@@ -103,6 +104,7 @@ flowchart TD
     K -->|"implement in subagent"| SUB(["background subagent — hand off & stop"])
     K -->|"implement in separate session"| SESS(["new agterm session — hand off & stop"])
     K -->|done| N(["stop"])
+    EXT(["/planning:implement-in-session"]) -.->|direct, bypasses menu| SESS
 ```
 
 **`review-plan` — flow**
@@ -128,6 +130,7 @@ flowchart TD
     M -->|"Implement in a Subagent"| SUB(["background subagent — hand off & stop"])
     M -->|"Implement in a Separate Session"| SESS(["new agterm session — hand off & stop"])
     M -->|Done| STOP2(["stop ✓ ready for implementation"])
+    EXT(["/planning:implement-in-session"]) -.->|direct, bypasses menu| SESS
 ```
 
 **`pr` — flow**
@@ -234,7 +237,7 @@ This loads the plugin directly from the repo directory. Skills, hooks, and comma
 
 Use `/reload-plugins` inside an active session to pick up file changes without restarting Claude.
 
-Skills are invokable by full name (e.g. `/planning:plan`) but won't appear in the `/` autocomplete dropdown — only `commands/*.md` files do. Invoke them by typing the full name or via natural language.
+Skills are invokable by full name (e.g. `/planning:plan`) and appear in the `/` autocomplete dropdown the same as `commands/*.md` files — `commands/` is legacy-only now.
 
 To test the marketplace catalog itself (adding/removing plugins), edit `.claude-plugin/marketplace.json` and re-add the marketplace:
 
