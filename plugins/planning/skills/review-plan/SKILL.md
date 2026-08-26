@@ -84,6 +84,8 @@ After 3 rounds without APPROVE, stop the auto-review loop. Show any remaining is
 
 This is the hub every review path returns to — auto-review approval, round limit, or a revdiff pass finishing. Never stop silently here; always ask. Only "Done" ends the loop.
 
+Before building this menu, check availability: `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1`. Only include the "Implement in a Separate Session" option below when that check succeeds; omit it otherwise (the other four options are always shown).
+
 Use AskUserQuestion:
 
 ```json
@@ -95,6 +97,7 @@ Use AskUserQuestion:
       {"label": "Run auto-review", "description": "Run another round of structured agent review"},
       {"label": "Review with revdiff", "description": "Open plan in revdiff for inline annotations"},
       {"label": "Implement in a Subagent", "description": "Hand off implementation to a background subagent — reports back when done, keeps this session clean"},
+      {"label": "Implement in a Separate Session", "description": "Hand off implementation to a fresh agterm session, in the same workspace as this one — runs interactively, you can watch and drive it directly"},
       {"label": "Done", "description": "Stop here — plan is ready for implementation"}
     ],
     "multiSelect": false
@@ -135,4 +138,24 @@ Use AskUserQuestion:
   ```
 
   Tell the user implementation has been handed off to a background subagent (noting the chosen model) and they'll be notified when it completes. Stop completely — do NOT continue the review loop.
+- **Implement in a Separate Session**: hand off to a fresh agterm session in this same workspace — no model-tier question (agterm has no model picker; the new session runs whatever `claude` launches with by default).
+
+  Run the whole handoff as **one Bash tool call** — `session new` always steals UI focus (no flag suppresses it), so splitting this into several calls forces the user to approve one, get yanked to the new session, switch back to approve the rest, then switch again to actually watch it. One chained call means one approval, and the UI lands on the new session — already running — when it's done:
+
+  ```bash
+  PROJECT_ROOT=$(git rev-parse --show-toplevel) && \
+  SLUG=$(basename "PLAN_FILE" .md | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2}-//') && \
+  SID=$(agtermctl session new --cwd "$PROJECT_ROOT" --workspace "$AGTERM_WORKSPACE_ID" --name "Implement: $SLUG" --json | jq -r '.result.id') && \
+  [ -n "$SID" ] && [ "$SID" != "null" ] && \
+  agtermctl session type "claude 'You have a new implementation plan to execute: PLAN_FILE
+
+  Read it fully, then implement every task in order, following its stated
+  testing approach. Run the project'\''s tests and linter before treating any
+  task as done.'" --target "$SID" && \
+  agtermctl session type $'\n' --target "$SID"
+  ```
+
+  Substitute the real plan path for both occurrences of `PLAN_FILE`. If the command's exit status is non-zero (`session new` failed, or `SID` came back empty/`null` — `agtermctl` present but the socket unreachable, or some other agterm-side error), the `&&` chain short-circuits before typing anything into a nonexistent target; tell the user the handoff failed with the captured error output, and stop. Do not fall back to a subagent silently.
+
+  Then tell the user: implementation has been handed off to a new agterm session (named `Implement: SLUG`) in this same workspace — they can switch to it to watch or drive it directly. Stop completely — do NOT continue the review loop.
 - **Done**: stop completely — do NOT suggest or begin implementation

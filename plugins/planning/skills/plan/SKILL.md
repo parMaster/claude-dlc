@@ -264,6 +264,8 @@ Fix issues inline. No need to re-review after fixing.
 
 After self-review, tell the user: "created plan: `docs/plans/yyyymmdd-<task-name>.md`"
 
+Before building this menu, check availability: `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1`. Only include the "Implement in a Separate Session" option below when that check succeeds; omit it otherwise (the other four options are always shown).
+
 Then use AskUserQuestion:
 
 ```json
@@ -274,6 +276,8 @@ Then use AskUserQuestion:
     "options": [
       {"label": "Auto-review", "description": "Run structured agent review — checks correctness, over-engineering, test coverage"},
       {"label": "Review with revdiff", "description": "Open plan in revdiff for inline annotations"},
+      {"label": "Implement in a Subagent", "description": "Hand off implementation to a background subagent — reports back when done, keeps this session clean"},
+      {"label": "Implement in a Separate Session", "description": "Hand off implementation to a fresh agterm session, in the same workspace as this one — runs interactively, you can watch and drive it directly"},
       {"label": "Done", "description": "Stop here"}
     ],
     "multiSelect": false
@@ -283,6 +287,57 @@ Then use AskUserQuestion:
 
 - **Auto-review**: invoke the `planning:review-plan` skill on the plan file — it handles the review/fix loop internally. When it returns, stop completely. Do NOT proceed to implementation.
 - **Review with revdiff**: invoke the `revdiff:revdiff` skill on the plan file — it handles the full annotation and revision loop internally. When it returns, stop completely. Do NOT proceed to implementation.
+- **Implement in a Subagent**: first ask which model the implementer should run on, using AskUserQuestion:
+
+  ```json
+  {
+    "questions": [{
+      "question": "Which model should the implementer subagent use?",
+      "header": "Model",
+      "options": [
+        {"label": "Inherit", "description": "Use the same model as this session (default)"},
+        {"label": "Opus", "description": "Most capable — best for complex or subtle implementations"},
+        {"label": "Sonnet", "description": "Faster and cheaper — good for straightforward plans"},
+        {"label": "Haiku", "description": "Fastest and cheapest — for simple mechanical changes"}
+      ],
+      "multiSelect": false
+    }]
+  }
+  ```
+
+  Then use the Agent tool with `subagent_type: general-purpose` and `run_in_background: true` to dispatch the plan below. Pass `model` set to the chosen tier (`opus`, `sonnet`, or `haiku`); for **Inherit**, omit the `model` parameter entirely. Do NOT add task-by-task review scaffolding or extra process — this is a plain hand-off, matching what a fresh session would get:
+
+  ```
+  You have a new implementation plan to execute: PLAN_FILE
+
+  Read it fully, then implement every task in order, following its stated
+  testing approach. Run the project's tests and linter before treating any
+  task as done. When the whole plan is implemented, report a concise
+  summary of what changed, and flag any deviations from the plan or open
+  concerns.
+  ```
+
+  Tell the user implementation has been handed off to a background subagent (noting the chosen model) and they'll be notified when it completes. Stop completely — do NOT continue.
+- **Implement in a Separate Session**: hand off to a fresh agterm session in this same workspace — no model-tier question.
+
+  Run the whole handoff as **one Bash tool call** — `session new` always steals UI focus (no flag suppresses it), so splitting this into several calls forces the user to approve one, get yanked to the new session, switch back to approve the rest, then switch again to actually watch it. One chained call means one approval, and the UI lands on the new session — already running — when it's done:
+
+  ```bash
+  PROJECT_ROOT=$(git rev-parse --show-toplevel) && \
+  SLUG=$(basename "PLAN_FILE" .md | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2}-//') && \
+  SID=$(agtermctl session new --cwd "$PROJECT_ROOT" --workspace "$AGTERM_WORKSPACE_ID" --name "Implement: $SLUG" --json | jq -r '.result.id') && \
+  [ -n "$SID" ] && [ "$SID" != "null" ] && \
+  agtermctl session type "claude 'You have a new implementation plan to execute: PLAN_FILE
+
+  Read it fully, then implement every task in order, following its stated
+  testing approach. Run the project'\''s tests and linter before treating any
+  task as done.'" --target "$SID" && \
+  agtermctl session type $'\n' --target "$SID"
+  ```
+
+  Substitute the real plan path for both occurrences of `PLAN_FILE`. If the command's exit status is non-zero, the `&&` chain short-circuits before typing anything into a nonexistent target; tell the user the handoff failed with the captured error output, and stop. Do not fall back to a subagent silently.
+
+  Then tell the user: implementation has been handed off to a new agterm session (named `Implement: SLUG`) in this same workspace — they can switch to it to watch or drive it directly. Stop completely.
 - **Done**: stop.
 
 ## Key principles

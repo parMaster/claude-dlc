@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning v1.10.0 - 2026-08-26
+
+### Features
+
+- `plan` and `review-plan`: added "Implement in a Separate Session" alongside the existing "Implement in a Subagent" option — hands off implementation to a brand-new agterm terminal session (a fresh `claude` CLI invocation) in the same workspace, instead of a background subagent. Runs interactively; the user can switch to it and watch or drive it directly. `plan`'s Step 3 menu also gained "Implement in a Subagent" itself (copied verbatim from `review-plan`'s), so both menus now offer the same four terminal options. Both hand-offs are gated on `AGTERM_ENABLED=1` and `agtermctl` resolving on PATH — silently omitted from the menu when the session isn't running inside agterm.
+
 ## global-rules v1.1.4 - 2026-08-19
 
 ### Fixes
