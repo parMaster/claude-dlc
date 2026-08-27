@@ -153,23 +153,6 @@ flowchart TD
 
 ---
 
-### agterm-hooks
-
-Flags Claude Code's session status in agterm's sidebar.
-
-```
-/plugin install agterm-hooks@parmaster-claude-dlc
-```
-
-Applies to any Claude Code session running inside agterm — not tied to `planning`'s hand-off flow. No-op outside agterm (`AGTERM_SESSION_ID` unset). Resolves `agtermctl` via known install paths (`$AGTERMCTL` override, `/usr/local/bin`, the bundled `agterm.app` binary, then `PATH` as a last resort) rather than trusting `PATH` alone — a Claude Code hook's PATH is more restricted than an interactive shell's.
-
-| Hook | Trigger | Effect |
-|------|---------|--------|
-| `stop-status` | `Stop` — Claude Code finishes responding | Flags the session `completed` in agterm's sidebar, with the system alert sound. `--auto-reset` clears it back to idle once you next look at the session. |
-| `notification-status` | `Notification` — Claude Code needs permission or has been idle-waiting for input | Flags the session `blocked` in agterm's sidebar. No sound is forced — agterm plays your own configured "Blocked sound" setting (Settings ▸ Appearance ▸ Agent Status) if you've set one. |
-
----
-
 ### brainstorm
 
 Collaborative design dialogue before implementation.

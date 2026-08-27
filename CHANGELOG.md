@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm-hooks — removed 2026-08-27
+
+Removed the plugin entirely. Its `Stop`/`Notification` sidebar-status hooks
+duplicated agterm's own built-in agent-status glyphs (`~/.config/agterm/agent-status/`,
+wired directly into `~/.claude/settings.json`, predating this plugin), and the
+one thing it added on top — a completion sound — never worked. Only the
+auto-flag-on-hand-off change (`planning` v1.12.0, `agterm-handoff.sh`) is kept.
+
 ## agterm-hooks v1.0.1 - 2026-08-27
 
 ### Fixes
