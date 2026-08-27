@@ -181,20 +181,6 @@ Writing style for technical communication.
 
 ---
 
-### go-tools
-
-Go development guards.
-
-```
-/plugin install go-tools@parmaster-claude-dlc
-```
-
-| Hook | Trigger | Effect |
-|------|---------|--------|
-| `block-explore-in-go` | `Agent` tool with `subagent_type=Explore` in a Go project **and** a prompt signalling Go-symbol intent (`func`/`type`/`interface`/`struct`/`method`/`symbol`/`caller`/`implementation`/`.go`, …) | Denies and redirects to `gosymdb:sym` / `gosymdb:trace` / `gosymdb:impact`. General non-symbol exploration passes through. |
-| `block-gosymdb-pipe` | `Bash` command containing `gosymdb \| python` or `gosymdb \| jq` | Denies with a reminder to read gosymdb JSON directly |
-| `block-go-symbol-grep` | `Bash` grep/rg/git-grep that targets `.go` files, or searches for a Go declaration keyword (`func`/`type`/`interface`/`struct`) inside a Go module | Denies and redirects to `gosymdb:sym` / `gosymdb:trace` / `gosymdb:impact` |
-
 ### global-rules
 
 Shared global CLAUDE.md rules distributed across machines.

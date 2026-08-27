@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## go-tools — removed 2026-08-27
+
+Removed the plugin entirely, at the owner's request. All three hooks
+(`block-explore-in-go`, `block-go-symbol-grep`, `block-gosymdb-pipe`) existed
+only to enforce use of gosymdb, which was disabled over a month ago because
+it didn't work as intended and won't be used going forward. Dropped from
+`marketplace.json` and README.md along with it.
+
 ## agterm-hooks — removed 2026-08-27
 
 Removed the plugin entirely. Its `Stop`/`Notification` sidebar-status hooks
