@@ -20,6 +20,11 @@
       "description": "Structured implementation plan creation with context gathering, approach exploration, and revdiff review"
     },
     {
+      "name": "agterm-hooks",
+      "source": "./plugins/agterm-hooks",
+      "description": "Flags Claude Code's session status in agterm's sidebar (completed/blocked) via Stop and Notification hooks"
+    },
+    {
       "name": "brainstorm",
       "source": "./plugins/brainstorm",
       "description": "Collaborative design dialogue — turn ideas into designs through incremental questions and approach exploration"

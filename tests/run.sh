@@ -149,6 +149,118 @@ result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'grep -rn "find /" .')
 assert_eq "allows unrelated commands merely mentioning find /" "" "$result"
 
 # ---------------------------------------------------------------------------
+# planning/agterm-handoff.sh
+# ---------------------------------------------------------------------------
+
+HANDOFF_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/agterm-handoff.sh"
+
+echo "planning/agterm-handoff.sh"
+
+FAKE_BIN="$(mktemp -d)"
+cat > "${FAKE_BIN}/agtermctl" <<'EOF'
+#!/usr/bin/env bash
+echo "$@" >> "${AGTERMCTL_LOG}"
+if [ "$1" = "session" ] && [ "$2" = "new" ]; then
+  echo '{"result":{"id":"fake-session-id"}}'
+fi
+EOF
+chmod +x "${FAKE_BIN}/agtermctl"
+
+TEST_REPO="$(mktemp -d)"
+(cd "$TEST_REPO" && git init -q)
+PLAN_FILE="${TEST_REPO}/docs/plans/2026-01-01-example.md"
+mkdir -p "$(dirname "$PLAN_FILE")"
+echo "# Example plan" > "$PLAN_FILE"
+
+LOG="$(mktemp)"
+result=$(
+  cd "$TEST_REPO" && \
+  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${FAKE_BIN}:${PATH}" bash "$HANDOFF_SCRIPT" "$PLAN_FILE"
+)
+assert_eq "prints the new session's display name on success" "Implement: example" "$result"
+assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
+assert_contains "creates the session before flagging" "session new" "$(cat "$LOG")"
+rm -f "$LOG"
+
+result=$(AGTERM_ENABLED="" bash "$HANDOFF_SCRIPT" "$PLAN_FILE" 2>&1; echo "exit:$?")
+assert_contains "refuses to run when AGTERM_ENABLED is unset" "exit:1" "$result"
+
+rm -rf "$FAKE_BIN" "$TEST_REPO"
+
+# ---------------------------------------------------------------------------
+# agterm-hooks/stop-status.sh
+# ---------------------------------------------------------------------------
+
+STOP_STATUS_SCRIPT="${REPO_ROOT}/plugins/agterm-hooks/hooks/stop-status.sh"
+
+echo "agterm-hooks/stop-status.sh"
+
+FAKE_BIN="$(mktemp -d)"
+cat > "${FAKE_BIN}/agtermctl" <<'EOF'
+#!/usr/bin/env bash
+echo "$@" >> "${AGTERMCTL_LOG}"
+EOF
+chmod +x "${FAKE_BIN}/agtermctl"
+
+LOG="$(mktemp)"
+AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_SESSION_ID="abc-123" \
+  PATH="${FAKE_BIN}:${PATH}" bash "$STOP_STATUS_SCRIPT" < /dev/null
+assert_eq "flags completed with sound + auto-reset, targeted at the session" \
+  "session status completed --sound default --auto-reset --target abc-123" "$(cat "$LOG")"
+rm -f "$LOG"
+
+LOG="$(mktemp)"
+AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="" AGTERM_SESSION_ID="abc-123" \
+  PATH="${FAKE_BIN}:${PATH}" bash "$STOP_STATUS_SCRIPT" < /dev/null
+assert_eq "no-op when AGTERM_ENABLED is unset" "" "$(cat "$LOG")"
+rm -f "$LOG"
+
+LOG="$(mktemp)"
+AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_SESSION_ID="" \
+  PATH="${FAKE_BIN}:${PATH}" bash "$STOP_STATUS_SCRIPT" < /dev/null
+assert_eq "no-op when AGTERM_SESSION_ID is empty" "" "$(cat "$LOG")"
+rm -f "$LOG"
+
+result=$(AGTERM_ENABLED="1" AGTERM_SESSION_ID="abc-123" PATH="/usr/bin:/bin" bash "$STOP_STATUS_SCRIPT" < /dev/null; echo "exit:$?")
+assert_contains "exits 0 even when agtermctl isn't on PATH" "exit:0" "$result"
+
+rm -rf "$FAKE_BIN"
+
+# ---------------------------------------------------------------------------
+# agterm-hooks/notification-status.sh
+# ---------------------------------------------------------------------------
+
+NOTIFICATION_STATUS_SCRIPT="${REPO_ROOT}/plugins/agterm-hooks/hooks/notification-status.sh"
+
+echo "agterm-hooks/notification-status.sh"
+
+FAKE_BIN="$(mktemp -d)"
+cat > "${FAKE_BIN}/agtermctl" <<'EOF'
+#!/usr/bin/env bash
+echo "$@" >> "${AGTERMCTL_LOG}"
+EOF
+chmod +x "${FAKE_BIN}/agtermctl"
+
+LOG="$(mktemp)"
+AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_SESSION_ID="abc-123" \
+  PATH="${FAKE_BIN}:${PATH}" bash "$NOTIFICATION_STATUS_SCRIPT" < /dev/null
+assert_eq "flags blocked, targeted at the session, no forced sound" \
+  "session status blocked --target abc-123" "$(cat "$LOG")"
+rm -f "$LOG"
+
+LOG="$(mktemp)"
+AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="" AGTERM_SESSION_ID="abc-123" \
+  PATH="${FAKE_BIN}:${PATH}" bash "$NOTIFICATION_STATUS_SCRIPT" < /dev/null
+assert_eq "no-op when AGTERM_ENABLED is unset" "" "$(cat "$LOG")"
+rm -f "$LOG"
+
+result=$(AGTERM_ENABLED="1" AGTERM_SESSION_ID="abc-123" PATH="/usr/bin:/bin" bash "$NOTIFICATION_STATUS_SCRIPT" < /dev/null; echo "exit:$?")
+assert_contains "exits 0 even when agtermctl isn't on PATH" "exit:0" "$result"
+
+rm -rf "$FAKE_BIN"
+
+# ---------------------------------------------------------------------------
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

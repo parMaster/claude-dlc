@@ -83,6 +83,8 @@ Structured implementation plan creation.
 | `pr` | Open a draft PR from the plan file — interactive title (`[feat\|fix\|chore]: TICKET-ID - title`) and plan-based description. If a PR already exists on the branch, reads the current description and amends it with the new plan's changes rather than replacing it. |
 | `implement-in-session` | Explicit-only hand-off of a plan straight to a fresh agterm session, skipping `plan`/`review-plan`'s menus entirely — `/planning:implement-in-session [plan-file]` (defaults to the most recent plan under `docs/plans/` if omitted). Never triggers from natural language (`disable-model-invocation: true`). |
 
+Every agterm hand-off (`plan`, `review-plan`, `implement-in-session`) also flags the new session (`agtermctl session flag on`), so all in-flight implementations show up in agterm's flagged sidebar view / flagged-dashboard grid instead of having to be found and flagged by hand.
+
 **`plan` — flow**
 
 ```mermaid
@@ -148,6 +150,23 @@ flowchart TD
     E --> J["output PR URL"]
     I --> J
 ```
+
+---
+
+### agterm-hooks
+
+Flags Claude Code's session status in agterm's sidebar.
+
+```
+/plugin install agterm-hooks@parmaster-claude-dlc
+```
+
+Applies to any Claude Code session running inside agterm — not tied to `planning`'s hand-off flow. No-op outside agterm (`AGTERM_ENABLED` unset) or when `agtermctl` isn't on `PATH`.
+
+| Hook | Trigger | Effect |
+|------|---------|--------|
+| `stop-status` | `Stop` — Claude Code finishes responding | Flags the session `completed` in agterm's sidebar, with the system alert sound. `--auto-reset` clears it back to idle once you next look at the session. |
+| `notification-status` | `Notification` — Claude Code needs permission or has been idle-waiting for input | Flags the session `blocked` in agterm's sidebar. No sound is forced — agterm plays your own configured "Blocked sound" setting (Settings ▸ Appearance ▸ Agent Status) if you've set one. |
 
 ---
 

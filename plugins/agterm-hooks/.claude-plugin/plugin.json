@@ -1,0 +1,11 @@
+{
+  "name": "agterm-hooks",
+  "description": "Flags Claude Code's session status in agterm's sidebar (completed/blocked) via Stop and Notification hooks — no-op outside agterm",
+  "version": "1.0.0",
+  "author": {
+    "name": "parmaster"
+  },
+  "homepage": "https://github.com/parmaster/claude-dlc",
+  "repository": "https://github.com/parmaster/claude-dlc",
+  "license": "MIT"
+}

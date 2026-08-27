@@ -31,6 +31,11 @@ if [ -z "$SID" ] || [ "$SID" = "null" ]; then
   exit 1
 fi
 
+# Flag the hand-off so it shows up in agterm's flagged sidebar / flagged
+# dashboard alongside any other in-flight implementations. Best-effort: a
+# flag failure must not abort a hand-off that otherwise succeeded.
+agtermctl session flag on --target "$SID" >/dev/null 2>&1 || true
+
 agtermctl session type "claude 'You have a new implementation plan to execute: $PLAN_FILE
 
 Read it fully, then implement every task in order, following its stated

@@ -4,6 +4,18 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm-hooks v1.0.0 - 2026-08-27
+
+### Features
+
+- New plugin: `Stop` and `Notification` hooks that flag the current agterm session's sidebar status (`completed`/`blocked`, with sound on completion) when Claude Code running inside agterm finishes responding or needs attention. Not planning-specific — applies to any Claude Code session hosted in an agterm pane, not just plan hand-offs. No-op outside agterm.
+
+## planning v1.12.0 - 2026-08-27
+
+### Features
+
+- `agterm-handoff.sh` (shared by `plan`, `review-plan`, `implement-in-session`) now flags the newly created session (`agtermctl session flag on`), so every hand-off shows up in agterm's flagged sidebar view / flagged-dashboard grid instead of having to be found and flagged by hand.
+
 ## planning v1.11.1 - 2026-08-26
 
 ### Fixes
