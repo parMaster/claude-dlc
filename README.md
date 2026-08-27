@@ -161,7 +161,7 @@ Flags Claude Code's session status in agterm's sidebar.
 /plugin install agterm-hooks@parmaster-claude-dlc
 ```
 
-Applies to any Claude Code session running inside agterm — not tied to `planning`'s hand-off flow. No-op outside agterm (`AGTERM_ENABLED` unset) or when `agtermctl` isn't on `PATH`.
+Applies to any Claude Code session running inside agterm — not tied to `planning`'s hand-off flow. No-op outside agterm (`AGTERM_SESSION_ID` unset). Resolves `agtermctl` via known install paths (`$AGTERMCTL` override, `/usr/local/bin`, the bundled `agterm.app` binary, then `PATH` as a last resort) rather than trusting `PATH` alone — a Claude Code hook's PATH is more restricted than an interactive shell's.
 
 | Hook | Trigger | Effect |
 |------|---------|--------|

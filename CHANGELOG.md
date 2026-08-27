@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm-hooks v1.0.1 - 2026-08-27
+
+### Fixes
+
+- `stop-status.sh`/`notification-status.sh` resolved `agtermctl` via `command -v agtermctl` (PATH lookup), which silently fails: a Claude Code hook runs with a restricted PATH that doesn't include `/opt/homebrew/bin` or wherever an interactive shell's PATH resolves it, so the hooks never actually called `agtermctl` and no status/sound ever fired. Fixed by adding `resolve-agtermctl.sh`, a shared resolver mirroring the approach agterm's own installer already uses for its bundled agent-status hook (`~/.config/agterm/agent-status/agterm-agent-status.sh`): check `$AGTERMCTL` override, then `/usr/local/bin/agtermctl`, then the bundled `/Applications/agterm.app/Contents/MacOS/agtermctl`, then bare `agtermctl` on PATH as a last resort. Both scripts also now forward `--socket "$AGTERM_SOCKET"` when set, and gate on `AGTERM_SESSION_ID` alone instead of also requiring `AGTERM_ENABLED=1` (redundant — both are always set together), matching that same reference script.
+
 ## agterm-hooks v1.0.0 - 2026-08-27
 
 ### Features

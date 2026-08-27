@@ -203,27 +203,32 @@ echo "$@" >> "${AGTERMCTL_LOG}"
 EOF
 chmod +x "${FAKE_BIN}/agtermctl"
 
+# AGTERMCTL is set explicitly (not PATH) in every case: the script resolves
+# agtermctl via known install paths / $AGTERMCTL, not PATH, precisely
+# because a real Claude Code hook's PATH can't be relied on.
+
 LOG="$(mktemp)"
-AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_SESSION_ID="abc-123" \
-  PATH="${FAKE_BIN}:${PATH}" bash "$STOP_STATUS_SCRIPT" < /dev/null
+AGTERMCTL_LOG="$LOG" AGTERM_SESSION_ID="abc-123" AGTERM_SOCKET="" AGTERMCTL="${FAKE_BIN}/agtermctl" \
+  bash "$STOP_STATUS_SCRIPT" < /dev/null
 assert_eq "flags completed with sound + auto-reset, targeted at the session" \
   "session status completed --sound default --auto-reset --target abc-123" "$(cat "$LOG")"
 rm -f "$LOG"
 
 LOG="$(mktemp)"
-AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="" AGTERM_SESSION_ID="abc-123" \
-  PATH="${FAKE_BIN}:${PATH}" bash "$STOP_STATUS_SCRIPT" < /dev/null
-assert_eq "no-op when AGTERM_ENABLED is unset" "" "$(cat "$LOG")"
+AGTERMCTL_LOG="$LOG" AGTERM_SESSION_ID="abc-123" AGTERM_SOCKET="/tmp/fake.sock" \
+  AGTERMCTL="${FAKE_BIN}/agtermctl" bash "$STOP_STATUS_SCRIPT" < /dev/null
+assert_eq "forwards AGTERM_SOCKET when set" \
+  "session status completed --sound default --auto-reset --target abc-123 --socket /tmp/fake.sock" "$(cat "$LOG")"
 rm -f "$LOG"
 
 LOG="$(mktemp)"
-AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_SESSION_ID="" \
-  PATH="${FAKE_BIN}:${PATH}" bash "$STOP_STATUS_SCRIPT" < /dev/null
+AGTERMCTL_LOG="$LOG" AGTERM_SESSION_ID="" AGTERMCTL="${FAKE_BIN}/agtermctl" \
+  bash "$STOP_STATUS_SCRIPT" < /dev/null
 assert_eq "no-op when AGTERM_SESSION_ID is empty" "" "$(cat "$LOG")"
 rm -f "$LOG"
 
-result=$(AGTERM_ENABLED="1" AGTERM_SESSION_ID="abc-123" PATH="/usr/bin:/bin" bash "$STOP_STATUS_SCRIPT" < /dev/null; echo "exit:$?")
-assert_contains "exits 0 even when agtermctl isn't on PATH" "exit:0" "$result"
+result=$(AGTERM_SESSION_ID="abc-123" PATH="/usr/bin:/bin" bash "$STOP_STATUS_SCRIPT" < /dev/null; echo "exit:$?")
+assert_contains "exits 0 even when agtermctl can't be resolved anywhere" "exit:0" "$result"
 
 rm -rf "$FAKE_BIN"
 
@@ -243,20 +248,27 @@ EOF
 chmod +x "${FAKE_BIN}/agtermctl"
 
 LOG="$(mktemp)"
-AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_SESSION_ID="abc-123" \
-  PATH="${FAKE_BIN}:${PATH}" bash "$NOTIFICATION_STATUS_SCRIPT" < /dev/null
+AGTERMCTL_LOG="$LOG" AGTERM_SESSION_ID="abc-123" AGTERM_SOCKET="" AGTERMCTL="${FAKE_BIN}/agtermctl" \
+  bash "$NOTIFICATION_STATUS_SCRIPT" < /dev/null
 assert_eq "flags blocked, targeted at the session, no forced sound" \
   "session status blocked --target abc-123" "$(cat "$LOG")"
 rm -f "$LOG"
 
 LOG="$(mktemp)"
-AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="" AGTERM_SESSION_ID="abc-123" \
-  PATH="${FAKE_BIN}:${PATH}" bash "$NOTIFICATION_STATUS_SCRIPT" < /dev/null
-assert_eq "no-op when AGTERM_ENABLED is unset" "" "$(cat "$LOG")"
+AGTERMCTL_LOG="$LOG" AGTERM_SESSION_ID="abc-123" AGTERM_SOCKET="/tmp/fake.sock" \
+  AGTERMCTL="${FAKE_BIN}/agtermctl" bash "$NOTIFICATION_STATUS_SCRIPT" < /dev/null
+assert_eq "forwards AGTERM_SOCKET when set" \
+  "session status blocked --target abc-123 --socket /tmp/fake.sock" "$(cat "$LOG")"
 rm -f "$LOG"
 
-result=$(AGTERM_ENABLED="1" AGTERM_SESSION_ID="abc-123" PATH="/usr/bin:/bin" bash "$NOTIFICATION_STATUS_SCRIPT" < /dev/null; echo "exit:$?")
-assert_contains "exits 0 even when agtermctl isn't on PATH" "exit:0" "$result"
+LOG="$(mktemp)"
+AGTERMCTL_LOG="$LOG" AGTERM_SESSION_ID="" AGTERMCTL="${FAKE_BIN}/agtermctl" \
+  bash "$NOTIFICATION_STATUS_SCRIPT" < /dev/null
+assert_eq "no-op when AGTERM_SESSION_ID is empty" "" "$(cat "$LOG")"
+rm -f "$LOG"
+
+result=$(AGTERM_SESSION_ID="abc-123" PATH="/usr/bin:/bin" bash "$NOTIFICATION_STATUS_SCRIPT" < /dev/null; echo "exit:$?")
+assert_contains "exits 0 even when agtermctl can't be resolved anywhere" "exit:0" "$result"
 
 rm -rf "$FAKE_BIN"
 
