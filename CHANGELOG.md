@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.14.0 - 2026-08-31
+
+Added `spawn-session` — hand off an arbitrary task (not just a plan file)
+to a fresh, independent agterm session. Triggers from natural language
+("spawn a new session for this", "hand this off to a separate session",
+etc.) as well as `/planning:spawn-session [task]`. Can group related
+slices of one job under a shared named workspace. The new session's
+terminal shows the launch command (`claude "$(cat <tmpfile>)"`) rather
+than the prompt text itself — cosmetic, the spawned Claude session
+receives and echoes the real prompt once it starts. Split the agterm
+hand-off script into a generic primitive (`agterm-spawn.sh`) and a thin
+plan-specific wrapper (`agterm-handoff.sh`) — no behavior change for
+`plan`/`review-plan`/`handoff`.
+
 ## planning 1.13.3 - 2026-08-31
 
 Renamed the `implement-in-session` skill to `handoff` — shorter and clearer

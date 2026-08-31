@@ -149,22 +149,99 @@ result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'grep -rn "find /" .')
 assert_eq "allows unrelated commands merely mentioning find /" "" "$result"
 
 # ---------------------------------------------------------------------------
+# Shared fake agtermctl for planning/agterm-spawn.sh and
+# planning/agterm-handoff.sh (agterm-handoff.sh delegates to agterm-spawn.sh
+# internally, so both sections exercise the same agtermctl surface).
+# ---------------------------------------------------------------------------
+
+AGTERM_FAKE_BIN="$(mktemp -d)"
+cat > "${AGTERM_FAKE_BIN}/agtermctl" <<'EOF'
+#!/usr/bin/env bash
+echo "$@" >> "${AGTERMCTL_LOG}"
+if [ "$1" = "session" ] && [ "$2" = "new" ]; then
+  if [ -n "${AGTERMCTL_SESSION_NEW_JSON:-}" ]; then
+    echo "$AGTERMCTL_SESSION_NEW_JSON"
+  else
+    echo '{"result":{"id":"fake-session-id"}}'
+  fi
+fi
+for a in "$@"; do
+  if [ "$a" = "--stdin" ]; then
+    # Always drain stdin so `printf | agtermctl session type --stdin ...`
+    # never dies of SIGPIPE, whether or not the caller wants the content
+    # captured (AGTERMCTL_TYPED unset).
+    if [ -n "${AGTERMCTL_TYPED:-}" ]; then
+      cat >> "${AGTERMCTL_TYPED}"
+      printf '\n' >> "${AGTERMCTL_TYPED}"
+    else
+      cat >/dev/null
+    fi
+  fi
+done
+EOF
+chmod +x "${AGTERM_FAKE_BIN}/agtermctl"
+
+# ---------------------------------------------------------------------------
+# planning/agterm-spawn.sh
+# ---------------------------------------------------------------------------
+
+SPAWN_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/agterm-spawn.sh"
+
+echo "planning/agterm-spawn.sh"
+
+SPAWN_PROMPT_FILE="$(mktemp)"
+echo "do the thing" > "$SPAWN_PROMPT_FILE"
+
+LOG="$(mktemp)"
+TYPED="$(mktemp)"
+result=$(
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$SPAWN_PROMPT_FILE"
+)
+assert_eq "prints the session name on success" "My Session" "$result"
+assert_contains "creates the session in the current workspace when no workspace-name given" " --workspace ws-1" "$(cat "$LOG")"
+assert_not_contains "does not pass --workspace-name when not grouping" " --workspace-name" "$(cat "$LOG")"
+assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
+TYPED_CMD="$(cat "$TYPED")"
+assert_contains "types a claude launch command reading the prompt file" "claude \"\$(cat ${SPAWN_PROMPT_FILE}" "$TYPED_CMD"
+assert_not_contains "does not type the prompt text itself" "do the thing" "$TYPED_CMD"
+rm -f "$LOG" "$TYPED"
+
+LOG="$(mktemp)"
+TYPED="$(mktemp)"
+result=$(
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$SPAWN_PROMPT_FILE" "my-workspace"
+)
+assert_contains "groups under a named workspace when given" " --workspace-name my-workspace --create-workspace" "$(cat "$LOG")"
+rm -f "$LOG" "$TYPED"
+
+result=$(AGTERM_ENABLED="" bash "$SPAWN_SCRIPT" "/tmp" "name" "$SPAWN_PROMPT_FILE" 2>&1; echo "exit:$?")
+assert_contains "refuses to run when AGTERM_ENABLED is unset (exit code)" "exit:1" "$result"
+assert_contains "refuses to run when AGTERM_ENABLED is unset (message)" "not available" "$result"
+
+result=$(AGTERM_ENABLED="1" PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIPT" "/tmp" "name" "/nonexistent/prompt-file" 2>&1; echo "exit:$?")
+assert_contains "refuses to run when the prompt file doesn't exist (exit code)" "exit:1" "$result"
+assert_contains "refuses to run when the prompt file doesn't exist (message)" "prompt file not found" "$result"
+
+LOG="$(mktemp)"
+result=$(
+  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" AGTERMCTL_SESSION_NEW_JSON='{"result":{}}' \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$SPAWN_PROMPT_FILE" 2>&1; echo "exit:$?"
+)
+assert_contains "refuses to run when session new returns no id (exit code)" "exit:1" "$result"
+assert_contains "refuses to run when session new returns no id (message)" "session new failed to return a session id" "$result"
+rm -f "$LOG"
+
+rm -f "$SPAWN_PROMPT_FILE"
+
+# ---------------------------------------------------------------------------
 # planning/agterm-handoff.sh
 # ---------------------------------------------------------------------------
 
 HANDOFF_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/agterm-handoff.sh"
 
 echo "planning/agterm-handoff.sh"
-
-FAKE_BIN="$(mktemp -d)"
-cat > "${FAKE_BIN}/agtermctl" <<'EOF'
-#!/usr/bin/env bash
-echo "$@" >> "${AGTERMCTL_LOG}"
-if [ "$1" = "session" ] && [ "$2" = "new" ]; then
-  echo '{"result":{"id":"fake-session-id"}}'
-fi
-EOF
-chmod +x "${FAKE_BIN}/agtermctl"
 
 TEST_REPO="$(mktemp -d)"
 (cd "$TEST_REPO" && git init -q)
@@ -173,20 +250,29 @@ mkdir -p "$(dirname "$PLAN_FILE")"
 echo "# Example plan" > "$PLAN_FILE"
 
 LOG="$(mktemp)"
+TYPED="$(mktemp)"
 result=$(
   cd "$TEST_REPO" && \
-  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
-  PATH="${FAKE_BIN}:${PATH}" bash "$HANDOFF_SCRIPT" "$PLAN_FILE"
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$HANDOFF_SCRIPT" "$PLAN_FILE"
 )
 assert_eq "prints the new session's display name on success" "Implement: example" "$result"
 assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
 assert_contains "creates the session before flagging" "session new" "$(cat "$LOG")"
-rm -f "$LOG"
+TYPED_CMD="$(cat "$TYPED")"
+assert_contains "types a claude launch command reading a prompt file" 'claude "$(cat ' "$TYPED_CMD"
+PROMPT_PATH="${TYPED_CMD#*cat }"
+PROMPT_PATH="${PROMPT_PATH%)\"}"
+assert_eq "the prompt file the typed command reads actually exists" "yes" "$([ -f "$PROMPT_PATH" ] && echo yes || echo no)"
+PROMPT_CONTENT="$(cat "$PROMPT_PATH" 2>/dev/null || echo "")"
+assert_contains "prompt file references the plan path" "$PLAN_FILE" "$PROMPT_CONTENT"
+assert_contains "prompt file tells the session to read the plan fully" "Read it fully" "$PROMPT_CONTENT"
+rm -f "$LOG" "$TYPED"
 
 result=$(AGTERM_ENABLED="" bash "$HANDOFF_SCRIPT" "$PLAN_FILE" 2>&1; echo "exit:$?")
 assert_contains "refuses to run when AGTERM_ENABLED is unset" "exit:1" "$result"
 
-rm -rf "$FAKE_BIN" "$TEST_REPO"
+rm -rf "$AGTERM_FAKE_BIN" "$TEST_REPO"
 
 # ---------------------------------------------------------------------------
 

@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Hand off an implementation plan to a fresh agterm session, in the caller's
 # own workspace. Shared by plan/SKILL.md, review-plan/SKILL.md, and
-# handoff/SKILL.md so the agtermctl sequence lives in one place
-# instead of three copies.
+# handoff/SKILL.md so the agtermctl sequence lives in one place instead of
+# three copies. Thin wrapper around the generic agterm-spawn.sh: builds the
+# canned plan-hand-off prompt into a temp file and hands off in the current
+# workspace (no workspace grouping — matches this script's prior behavior).
 #
 # Usage: agterm-handoff.sh <plan-file>
-# Requires: AGTERM_ENABLED=1, AGTERM_WORKSPACE_ID set (both set automatically
-# by agterm itself), agtermctl and jq on PATH.
+# Requires: AGTERM_ENABLED=1, agtermctl and jq on PATH.
 # On success: prints the new session's display name (e.g. "Implement: foo")
 # to stdout, exits 0.
 # On failure: prints a one-line reason to stderr, exits 1.
@@ -24,24 +25,17 @@ PROJECT_ROOT=$(git rev-parse --show-toplevel)
 SLUG=$(basename "$PLAN_FILE" .md | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2}-//')
 SESSION_NAME="Implement: $SLUG"
 
-SID=$(agtermctl session new --cwd "$PROJECT_ROOT" --workspace "$AGTERM_WORKSPACE_ID" --name "$SESSION_NAME" --json | jq -r '.result.id')
-
-if [ -z "$SID" ] || [ "$SID" = "null" ]; then
-  echo "agterm-handoff: session new failed to return a session id" >&2
-  exit 1
-fi
-
-# Flag the hand-off so it shows up in agterm's flagged sidebar / flagged
-# dashboard alongside any other in-flight implementations. Best-effort: a
-# flag failure must not abort a hand-off that otherwise succeeded.
-agtermctl session flag on --target "$SID" >/dev/null 2>&1 || true
-
-agtermctl session type "claude 'You have a new implementation plan to execute: $PLAN_FILE
+# Portable mktemp (no -t <prefix>, which is BSD-only and fails GNU coreutils
+# on the Linux CI runner). Left in place after this script returns — see
+# agterm-spawn.sh's comment on why the prompt file is never cleaned up.
+PROMPT_FILE=$(mktemp "${TMPDIR:-/tmp}/agterm-handoff.XXXXXX")
+cat > "$PROMPT_FILE" <<EOF
+You have a new implementation plan to execute: $PLAN_FILE
 
 Read it fully, then implement every task in order, following its stated
-testing approach. Run the project'\''s tests and linter before treating any
-task as done.'" --target "$SID"
+testing approach. Run the project's tests and linter before treating any
+task as done.
+EOF
 
-agtermctl session type $'\n' --target "$SID"
-
-echo "$SESSION_NAME"
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+bash "$SCRIPT_DIR/agterm-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE"
