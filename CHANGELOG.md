@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.13.2 - 2026-08-31
+
+plan-review agent instructions were telling it to shell out via Bash for
+`grep`/`rg`/`cat`/`ls`/`find`, triggering needless permission prompts even
+though the agent already has the no-prompt Grep/Glob/Read tools. Now
+points it at those tools for search/read and reserves Bash for `go doc`
+and `go env`.
+
 ## global-rules 1.1.5 - 2026-08-31
 
 Auto-Memory Discipline reworked into two gates instead of one. Previously
