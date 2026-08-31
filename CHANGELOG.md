@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.13.3 - 2026-08-31
+
+Renamed the `implement-in-session` skill to `handoff` — shorter and clearer
+now that `/planning:implement-in-session` is `/planning:handoff`. No
+behavior change.
+
 ## planning 1.13.2 - 2026-08-31
 
 plan-review agent instructions were telling it to shell out via Bash for

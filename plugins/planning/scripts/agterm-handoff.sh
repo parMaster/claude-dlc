@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Hand off an implementation plan to a fresh agterm session, in the caller's
 # own workspace. Shared by plan/SKILL.md, review-plan/SKILL.md, and
-# implement-in-session/SKILL.md so the agtermctl sequence lives in one place
+# handoff/SKILL.md so the agtermctl sequence lives in one place
 # instead of three copies.
 #
 # Usage: agterm-handoff.sh <plan-file>

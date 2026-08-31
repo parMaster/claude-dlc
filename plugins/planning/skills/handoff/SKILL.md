@@ -1,5 +1,5 @@
 ---
-name: implement-in-session
+name: handoff
 description: Hand off an implementation plan directly to a fresh agterm session, skipping the plan/review-plan menus. Explicit invocation only.
 argument-hint: "[plan-file]"
 disable-model-invocation: true
@@ -7,7 +7,7 @@ user-invocable: true
 allowed-tools: Bash
 ---
 
-# Implement in a Separate Session
+# Handoff to a Separate Session
 
 Hand a plan straight to a fresh agterm session — the same mechanism `plan` and
 `review-plan` offer inline, without going through either skill's menus.
