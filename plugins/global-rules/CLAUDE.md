@@ -26,7 +26,9 @@
 **Dependency source lookup** — to read a dependency's actual source (verifying behavior, checking a function body, etc.), check `./vendor/<module-path>` in the current repo FIRST. Only fall back to `go env GOMODCACHE` if the repo has no `vendor/` dir or the package isn't vendored there — these repos are vendored essentially 100% of the time.
 
 ## Auto-Memory Discipline
-- Before writing to the auto-memory system (`~/.claude/projects/*/memory/`), propose the memory content and ask for confirmation first — do not write silently. Exception: the user explicitly asked to remember/save something ("remember this", "save that to memory") — write immediately in that case, no confirmation needed.
+- Don't treat "user gave feedback/correction" alone as a trigger to propose a memory save. Only consider saving something when it (1) isn't already recorded elsewhere — code, CLAUDE.md, git history — and (2) would matter in a future session on unrelated work. If it fails either check, say nothing about memory.
+- If it passes both checks, before writing to the auto-memory system (`~/.claude/projects/*/memory/`), propose the memory content and ask for confirmation first — do not write silently.
+- Exception: skip the checks and the confirmation ask only when the user unambiguously directs you to persist something to *your memory system* — "remember this for next time", "save that to memory", "add this to your notes." A colloquial "remember" about a task ("we should remember to update the ticket") is not this — that's a to-do, not an instruction to write to memory, and gets no special treatment.
 - This applies per memory write. Don't chain 2-3 unconfirmed saves in a row just because several things seemed memory-worthy in the same turn — ask about each, or batch them into one confirmation ask if closely related.
 
 ## Response Brevity

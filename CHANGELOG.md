@@ -4,6 +4,18 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.1.5 - 2026-08-31
+
+Auto-Memory Discipline reworked into two gates instead of one. Previously
+any write just needed the user's confirmation; now a save must first pass
+relevance checks — not already recorded elsewhere (code/CLAUDE.md/git
+history) and useful in a future unrelated session — before confirmation
+is even asked, so feedback/corrections stop auto-triggering a save
+proposal on their own. Also narrowed the "explicit ask" exception so it
+only fires on an unambiguous instruction to write to memory itself
+("remember this", "save that to memory"), not a colloquial "remember" used
+about a task ("we should remember to update the ticket").
+
 ## planning 1.13.1 - 2026-08-31
 
 `review-plan`'s Step 2 now explicitly requires printing the review agent's
