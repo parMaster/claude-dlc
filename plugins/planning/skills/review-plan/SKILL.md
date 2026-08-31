@@ -45,7 +45,7 @@ For ROUND > 1, append the "Fixes applied since last round" list (built in Step 3
 
 ## Step 2: Present findings
 
-Show the agent's full report to the user.
+Print the agent's full report verbatim as your own chat message in this turn. This is mandatory, not optional, when Step 1 ran as a background agent: once a background agent finishes, its output is gone from the transcript — there is no panel or log the user can expand to see it afterward. Printing the report here is the only way the user ever sees it. Step 3's AskUserQuestion must never be the first thing the user sees after a review round.
 
 ## Step 3: Decide next action
 

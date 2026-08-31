@@ -4,6 +4,15 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.13.1 - 2026-08-31
+
+`review-plan`'s Step 2 now explicitly requires printing the review agent's
+full report as a chat message before moving to Step 3's AskUserQuestion.
+Previously the step just said "show the report", which a background-agent
+round could satisfy without ever printing it — once a background agent
+finishes there is no panel left to expand, so the user would see the "Fix
+and re-review?" prompt with the findings nowhere in the conversation.
+
 ## planning 1.13.0 - 2026-08-31
 
 `plan` skill no longer hardcodes `go test ./...` as the full-suite test
