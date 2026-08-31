@@ -43,6 +43,13 @@ Before asking questions, understand what the user is working on:
 
    **CRITICAL: do NOT launch an Agent or read more than 5 files in this step.**
 
+   **for Go repos — resolve the real test command, don't assume `go test ./...`:**
+   - check `Makefile` for a `test` target → use `make test`
+   - else check `.github/workflows/*.yml` / `.gitlab-ci.yml` for the test step → mirror that exact invocation
+   - else fall back to `go test ./...`
+
+   Use whichever command this resolves to everywhere the plan references "run full test suite."
+
 3. Synthesize findings into a brief context summary (3-5 bullet points)
 
 ## Step 1: Present context and ask focused questions
@@ -223,7 +230,8 @@ func TestFunctionName_EmptyResult(t *testing.T) { ... }
 
 ### Task N-1: Verify acceptance criteria
 - [ ] verify all requirements from Goal are implemented
-- [ ] run full test suite: `go test ./...`
+- [ ] run full test suite: `<command resolved in Step 0, e.g. `make test` or `go test ./...`>`
+  - if failures look like shared-state flakiness — an assertion fails against a resource another test seems to have touched, failures aren't reproducible when the same test is run alone (`-run`), or which tests fail changes between runs — retry once with `-p=1` before treating it as a regression
 - [ ] run `golangci-lint run ./...` — fix all issues before proceeding
 - [ ] verify test coverage meets project standard
 

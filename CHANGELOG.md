@@ -4,6 +4,18 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.13.0 - 2026-08-31
+
+`plan` skill no longer hardcodes `go test ./...` as the full-suite test
+command. Step 0 context gathering now resolves the repo's actual test
+command (`make test` if a Makefile has a `test` target, else the invocation
+from `.github/workflows/*.yml`/`.gitlab-ci.yml`, else falls back to
+`go test ./...`), and generated plans use that resolved command. Also adds
+guidance to retry once with `-p=1` when full-suite failures look like
+shared-state flakiness between parallel tests rather than a real bug —
+distinguished by whether the failure reproduces when the same test is run
+alone.
+
 ## go-tools — removed 2026-08-27
 
 Removed the plugin entirely, at the owner's request. All three hooks
