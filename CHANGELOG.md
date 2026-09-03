@@ -4,6 +4,19 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.2.0 - 2026-09-03
+
+Added "Atlassian MCP Hygiene" rule: scope Jira MCP calls (`getJiraIssue`,
+`searchJiraIssuesUsingJql`) with an explicit minimal `fields` array and
+`responseContentFormat: "markdown"` instead of relying on the default
+field set, which pulls in nested `assignee`/`reporter`/`project` objects
+full of avatar URLs and self-links even for a one-line status check.
+Also documents delegating multi-step Jira work (status transition +
+comment + subtask listing, bulk JQL) to a subagent so raw multi-call
+output stays out of the main session. Considered and rejected a
+`PreToolUse` hook enforcing this on the same two tool names — too narrow
+against the ~40-tool Atlassian MCP surface, would give false confidence.
+
 ## planning 1.14.0 - 2026-08-31
 
 Added `spawn-session` — hand off an arbitrary task (not just a plan file)

@@ -19,6 +19,10 @@
 - Do NOT invent helper functions, verify they exist via grep/Read first
 - When asked about a library's capabilities (e.g., slog support in controller-runtime), check the actual source rather than asserting from memory
 
+## Atlassian MCP Hygiene
+- **Scope Jira field requests** — Atlassian Jira MCP calls (`getJiraIssue`, `searchJiraIssuesUsingJql`, and similar) default to returning `summary, description, status, issuetype, priority, labels, components, assignee, reporter, created, updated, resolution, project` — several of those (`assignee`, `reporter`, `project`) are nested objects carrying avatar URLs and self-links that bloat the session even for a two-line lookup. Always pass an explicit `fields` array scoped to only what's needed (e.g. `["status"]` for a status check, `["description"]` for a description) — never rely on the default set, and never pass `fields: ["*all"]` unless the user explicitly asked for full fidelity. Also pass `responseContentFormat: "markdown"` — it returns simplified plain text instead of full ADF JSON.
+- **Delegate compound Jira work to a subagent** — for anything needing several Jira MCP calls to produce one small answer (e.g. transition status + add comment + list subtasks, or bulk JQL search across many issues), dispatch a subagent via the Agent tool with a description of the end result needed, and use only its distilled report. This keeps the raw multi-call JSON out of the main session context; a single well-scoped call (per the rule above) doesn't need this.
+
 ## Go codebases
 
 **Vendored dependencies** — when a vendored Go repo (has a `vendor/` dir) shows stale/inconsistent vendoring (e.g. `inconsistent vendoring`, missing/extra packages in `vendor/`, or build/import errors right after switching branches or merging), do NOT investigate — just run `go mod tidy && go mod vendor` to resync. Only dig deeper if that doesn't resolve it.
