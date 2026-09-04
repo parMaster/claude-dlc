@@ -573,7 +573,11 @@ rm -rf "$AGTERM_FAKE_BIN" "$TEST_REPO"
 - [x] Move this plan to `docs/plans/completed/`.
 - [x] Single summary commit: all implementation changes + plan move in one
       commit.
-- [ ] Open draft PR — invoke `planning:pr` (deferred — see note below).
+- [x] Open draft PR — N/A: user explicitly directed implementation to happen
+      on `main` directly (no feature branch), and the change was committed
+      and pushed straight to `origin/main` (`0ff5996`) to let the
+      marketplace clone pick it up for a live demo. No branch exists to
+      open a PR from.
 
 ## Post-Completion
 
