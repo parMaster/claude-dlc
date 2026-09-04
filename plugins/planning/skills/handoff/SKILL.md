@@ -4,7 +4,7 @@ description: Hand off an implementation plan directly to a fresh agterm session,
 argument-hint: "[plan-file]"
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Bash
+allowed-tools: Bash, ListAgents
 ---
 
 # Handoff to a Separate Session
@@ -27,9 +27,18 @@ Hand a plan straight to a fresh agterm session — the same mechanism `plan` and
 4. Verify the resolved path exists: `test -f "<path>"`. If it doesn't, tell
    the user the file wasn't found and stop.
 
-## Step 2: Hand off
+## Step 2: Learn this session's own name
 
-Run: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE"`, substituting the plan path resolved in Step 1.
+Call `ListAgents`. Its result opens with a self-identifying line, e.g.
+"This session is `claude-dlc-3f` [8e434c] — the name other sessions use to
+message it." Take the bare name before the ` [` — that's `CALLER_NAME` in
+Step 3. If the output doesn't contain a line in that shape, skip this: call
+the script in Step 3 with just `PLAN_FILE`, omitting `CALLER_NAME` entirely
+— a missing name must never block the hand-off.
+
+## Step 3: Hand off
+
+Run: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE" "CALLER_NAME"`, substituting the plan path resolved in Step 1 and the name resolved in Step 2 (omit the trailing argument entirely if Step 2 found no name).
 
 This one call also performs the `AGTERM_ENABLED`/`agtermctl` availability check
 internally — unlike `plan`/`review-plan`, which check availability separately
@@ -38,7 +47,7 @@ there's no reason to check twice. If it exits non-zero, tell the user why
 (its stderr says either "not available" or the specific hand-off failure) and
 stop.
 
-## Step 3: Confirm
+## Step 4: Confirm
 
 On success, the script's last stdout line is the new session's display name
 (e.g. `Implement: foo`) — tell the user: implementation has been handed off

@@ -2,7 +2,7 @@
 name: spawn-session
 description: Hand off an arbitrary task to a freshly spawned, independent agterm session running its own `claude` process — not a background subagent. Activates on "spawn a new session for this", "hand this off to a new session", "start a separate session for this job", "delegate this to a new terminal session", "run this in a separate/parallel session", "spin up a session for this slice", or when the user is slicing a larger job into pieces to hand off one at a time.
 argument-hint: "[task description]"
-allowed-tools: Bash
+allowed-tools: Bash, ListAgents
 ---
 
 # Spawn a Task in a Separate Session
@@ -38,7 +38,15 @@ should run independently of (and outlive) this conversation.
   port — anything that would collide under concurrent access), spawn them
   one at a time instead of firing them all off back to back.
 
-## Step 3: Check availability, write the prompt, and spawn — in one command
+## Step 3: Learn this session's own name
+
+Call `ListAgents`. Its result opens with a self-identifying line, e.g.
+"This session is `claude-dlc-3f` [8e434c] — the name other sessions use to
+message it." Take the bare name before the ` [` — that's `CALLER_NAME`
+below. If the output doesn't contain a line in that shape, skip the
+callback paragraph in Step 4 entirely rather than blocking the spawn.
+
+## Step 4: Check availability, write the prompt, and spawn — in one command
 
 A `SKILL.md` step is a fresh shell each time it runs, so a shell variable
 set in one Bash call is gone by the next — the availability check, the
@@ -55,6 +63,9 @@ if [ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1; then
   PROMPT_FILE=$(mktemp "${TMPDIR:-/tmp}/agterm-spawn.XXXXXX")
   cat > "$PROMPT_FILE" <<'PROMPT_EOF'
 <the resolved task prompt from Step 1>
+
+This task was spawned from session `CALLER_NAME`. If asked at any point to
+return a result there, use the SendMessage tool addressed to `CALLER_NAME`.
 PROMPT_EOF
   bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-spawn.sh" "$PWD" "SESSION_NAME" "$PROMPT_FILE" [WORKSPACE_NAME]
 else
@@ -63,10 +74,12 @@ else
 fi
 ```
 
-substituting `SESSION_NAME` from Step 2, and appending `WORKSPACE_NAME`
-only when grouping (omit the argument entirely otherwise).
+substituting `SESSION_NAME` from Step 2, `CALLER_NAME` from Step 3 (both
+occurrences — omit the whole callback paragraph, including its leading
+blank line, if Step 3 found no name), and appending `WORKSPACE_NAME` only
+when grouping (omit the argument entirely otherwise).
 
-## Step 4: Confirm
+## Step 5: Confirm
 
 On success (exit 0), the last stdout line is the new session's display
 name — tell the user the task has been handed off to a new agterm session

@@ -267,6 +267,23 @@ assert_eq "the prompt file the typed command reads actually exists" "yes" "$([ -
 PROMPT_CONTENT="$(cat "$PROMPT_PATH" 2>/dev/null || echo "")"
 assert_contains "prompt file references the plan path" "$PLAN_FILE" "$PROMPT_CONTENT"
 assert_contains "prompt file tells the session to read the plan fully" "Read it fully" "$PROMPT_CONTENT"
+assert_not_contains "no callback line when caller name is omitted" "SendMessage" "$PROMPT_CONTENT"
+rm -f "$LOG" "$TYPED"
+
+LOG="$(mktemp)"
+TYPED="$(mktemp)"
+result=$(
+  cd "$TEST_REPO" && \
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$HANDOFF_SCRIPT" "$PLAN_FILE" "caller-session-9f"
+)
+assert_eq "prints the new session's display name when a caller name is given" "Implement: example" "$result"
+TYPED_CMD="$(cat "$TYPED")"
+PROMPT_PATH="${TYPED_CMD#*cat }"
+PROMPT_PATH="${PROMPT_PATH%)\"}"
+PROMPT_CONTENT="$(cat "$PROMPT_PATH" 2>/dev/null || echo "")"
+assert_contains "prompt tells the new session which session spawned it" 'spawned from session `caller-session-9f`' "$PROMPT_CONTENT"
+assert_contains "prompt tells the new session how to send a result back" "SendMessage tool addressed to" "$PROMPT_CONTENT"
 rm -f "$LOG" "$TYPED"
 
 result=$(AGTERM_ENABLED="" bash "$HANDOFF_SCRIPT" "$PLAN_FILE" 2>&1; echo "exit:$?")

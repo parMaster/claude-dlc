@@ -4,6 +4,17 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.15.0 - 2026-09-04
+
+`spawn-session` and `handoff` now unconditionally tell every
+spawned/handed-off session this session's own cross-session address (via
+`ListAgents`) and how to send a result back with `SendMessage` — so a
+result can still be routed back even if you only decide you want one
+after the session is already running, not just when you say so up front.
+`agterm-handoff.sh` gained an optional second `caller-session-name`
+argument; omitted (as `plan`/`review-plan` still call it), the prompt is
+unchanged. Both skills' `allowed-tools` gained `ListAgents`.
+
 ## global-rules 1.2.0 - 2026-09-03
 
 Added "Atlassian MCP Hygiene" rule: scope Jira MCP calls (`getJiraIssue`,

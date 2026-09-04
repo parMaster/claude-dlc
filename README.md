@@ -86,6 +86,8 @@ Structured implementation plan creation.
 
 Every agterm hand-off (`plan`, `review-plan`, `handoff`, `spawn-session`) also flags the new session (`agtermctl session flag on`), so all in-flight implementations show up in agterm's flagged sidebar view / flagged-dashboard grid instead of having to be found and flagged by hand.
 
+`handoff` and `spawn-session` also tell the new session this session's own cross-session name (via `ListAgents`), so the new session can `SendMessage` a short result back if asked to at any point during the task — not only when that's requested up front.
+
 **`plan` — flow**
 
 ```mermaid
