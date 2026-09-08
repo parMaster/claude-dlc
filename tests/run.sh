@@ -216,6 +216,15 @@ result=$(
 assert_contains "groups under a named workspace when given" " --workspace-name my-workspace --create-workspace" "$(cat "$LOG")"
 rm -f "$LOG" "$TYPED"
 
+LOG="$(mktemp)"
+TYPED="$(mktemp)"
+result=$(
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$SPAWN_PROMPT_FILE" "" "--permission-mode acceptEdits"
+)
+assert_contains "inserts claude-flags into the launch command when given" 'claude --permission-mode acceptEdits "$(cat ' "$(cat "$TYPED")"
+rm -f "$LOG" "$TYPED"
+
 result=$(AGTERM_ENABLED="" bash "$SPAWN_SCRIPT" "/tmp" "name" "$SPAWN_PROMPT_FILE" 2>&1; echo "exit:$?")
 assert_contains "refuses to run when AGTERM_ENABLED is unset (exit code)" "exit:1" "$result"
 assert_contains "refuses to run when AGTERM_ENABLED is unset (message)" "not available" "$result"
@@ -260,7 +269,7 @@ assert_eq "prints the new session's display name on success" "Implement: example
 assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
 assert_contains "creates the session before flagging" "session new" "$(cat "$LOG")"
 TYPED_CMD="$(cat "$TYPED")"
-assert_contains "types a claude launch command reading a prompt file" 'claude "$(cat ' "$TYPED_CMD"
+assert_contains "types a claude launch command reading a prompt file" 'claude --permission-mode acceptEdits "$(cat ' "$TYPED_CMD"
 PROMPT_PATH="${TYPED_CMD#*cat }"
 PROMPT_PATH="${PROMPT_PATH%)\"}"
 assert_eq "the prompt file the typed command reads actually exists" "yes" "$([ -f "$PROMPT_PATH" ] && echo yes || echo no)"

@@ -54,4 +54,6 @@ task as done.$CALLBACK_NOTE
 EOF
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-bash "$SCRIPT_DIR/agterm-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE"
+# Implementation hand-offs start in accept-edits mode: the whole point is to
+# implement the plan, not to re-ask permission for every edit along the way.
+bash "$SCRIPT_DIR/agterm-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE" "" "--permission-mode acceptEdits"

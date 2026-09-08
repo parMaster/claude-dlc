@@ -4,6 +4,16 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.17.0 - 2026-09-08
+
+Implementation hand-offs to a fresh agterm session (`handoff`, and `plan`'s/
+`review-plan`'s "Implement in a Separate Session") now launch with
+`--permission-mode acceptEdits`, so the new session starts implementing right
+away instead of asking permission for every edit. `agterm-spawn.sh` gained an
+optional `[claude-flags]` parameter to carry this; `spawn-session` (arbitrary,
+possibly non-implementation tasks) is unaffected and still starts in the
+default permission mode.
+
 ## planning 1.16.3 - 2026-09-08
 
 `plan-review` findings could describe a problem category ("needs more test
