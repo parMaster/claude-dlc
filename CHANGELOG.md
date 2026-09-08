@@ -4,6 +4,15 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.16.2 - 2026-09-08
+
+Fixed `review-plan` skipping straight from "review agent finished" to applying
+fixes without ever printing the round's report — the "print the report first"
+rule existed but read as a should-statement buried in prose, so it got skipped
+once findings were in hand. Reworded Step 2 as an explicit ordering constraint:
+no Grep/Read/Edit/fix action of any kind, including the all-MECHANICAL fast
+path, may happen before the report is posted.
+
 ## planning 1.16.1 - 2026-09-08
 
 Fixed 1.16.0's comment-hygiene check turning into a narrated, separately-announced
