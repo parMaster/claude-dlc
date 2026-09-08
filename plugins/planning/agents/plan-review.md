@@ -71,13 +71,15 @@ If unsure whether something is over-engineering, phrase it as a question in the 
 
 Every MECHANICAL finding must include a `verify:` command with its expected output (e.g. expect 0 matches, or expect a specific count). This lets the fix be checked mechanically instead of by re-reading prose.
 
+**Findings must be prescriptive, not descriptive.** Every finding's "how to fix it" is the literal fix — the specific test case name and what it must assert, the corrected sentence for a stale doc, the exact code or task change — never a category label ("needs more test coverage," "reconcile the docs," "add error handling") that leaves whoever applies it to invent the specifics themselves. An invented fix is exactly the kind of gap this review exists to catch, so don't hand off that same risk in your own findings. If you can't state the concrete fix, keep digging until you can before writing the finding.
+
 Output format (use exactly this structure):
 
 ```
 ## Plan Review: [filename] (round ROUND)
 
 ### Summary
-[2–3 sentence honest assessment]
+[2–3 sentence honest assessment — what's the overall state, not a restatement of the findings below. Every specific problem belongs in an Issues section as its own prescriptive finding, not buried in this paragraph.]
 
 ### Critical Issues
 [omit section if none]

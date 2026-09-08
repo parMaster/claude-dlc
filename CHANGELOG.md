@@ -4,6 +4,16 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.16.3 - 2026-09-08
+
+`plan-review` findings could describe a problem category ("needs more test
+coverage", "reconcile the docs") without stating the actual fix, forcing
+whoever applies the fix to invent specifics — and an invented fix is exactly
+what produced the next round's finding on the same issue. Added an explicit
+requirement that every finding's "how to fix it" be the literal concrete
+change, plus a note keeping specific problems out of the Summary paragraph
+and into their own prescriptive findings.
+
 ## planning 1.16.2 - 2026-09-08
 
 Fixed `review-plan` skipping straight from "review agent finished" to applying
