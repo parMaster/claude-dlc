@@ -41,6 +41,9 @@ Review checklist:
 - Tests name specific cases — happy path, error cases, edge cases — not just "write tests"?
 - Single happy-path test where multiple named cases are needed?
 
+**Comment Hygiene (Important)**
+- Do code comments shown in tasks avoid ticket IDs, Confluence/Jira links, PR numbers, commit SHAs, `(Slice N)` markers, and "see ... in Technical Details"/`docs/specs` pointers? These are MECHANICAL findings — grep for the pattern and cite the match as `verify:`. Skip a match that's actually a standard name, not a reference — `UTF-8`, `SHA-256`, `RFC-7231`, `AES-256`, `ISO-8601` and the like aren't ticket IDs.
+
 **Task Granularity (Important)**
 - Each task is ONE logical unit?
 - Specific descriptive names, not generic "[Core Logic]" or "[Implementation]"?

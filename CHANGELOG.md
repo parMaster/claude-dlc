@@ -4,6 +4,27 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.16.0 - 2026-09-08
+
+`plan`'s Step 2.5 self-review now runs the same deep verification the separate
+`plan-review` agent applies — error/status tracing, test-precondition ordering,
+multi-phase state, and a new comment-hygiene grep — so the author catches these
+before the reviewer ever sees the plan. Step 0 discovery and the dependency-contract
+check gain a self-declared "deep-discovery mode" for multi-plan/large-feature work,
+dropping the flat 5-file / 3-6-function caps when the plan says so.
+
+`review-plan`'s fix step now scans the whole plan for every instance of a
+reviewer-flagged pattern instead of fixing one occurrence per round, and no longer
+resolves "needs more explanation" findings by pointing back to a spec or ticket.
+
+Both `plan` and `plan-review` gained an explicit code-comment-content rule: no
+ticket IDs, links, PR numbers, commit SHAs, `(Slice N)` markers, or
+docs/specs/Technical-Details pointers in example code — comments must be
+self-contained. Plan-level cross-references are unaffected.
+
+The plan template drops the `Solution Overview` section — it duplicated the
+top-level `Architecture` field and `Context` section.
+
 ## planning 1.15.0 - 2026-09-04
 
 `spawn-session` and `handoff` now unconditionally tell every

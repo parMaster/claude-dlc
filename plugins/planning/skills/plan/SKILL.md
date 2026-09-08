@@ -19,7 +19,7 @@ Before asking questions, understand what the user is working on:
    - "migrate to Z" / "upgrade W" → migration plan
    - generic request → explore current work
 
-2. **Gather relevant context quickly** — use direct tool calls (Read, Glob, Grep), NOT an Agent. Keep discovery under 30 seconds:
+2. **Gather relevant context quickly** — use direct tool calls (Read, Glob, Grep), NOT an Agent. Keep discovery under 30 seconds in the default mode; deep-discovery mode below lifts both this budget and the file cap.
 
    **for feature development:**
    - glob for files matching the feature area
@@ -42,6 +42,15 @@ Before asking questions, understand what the user is working on:
    - `ls` the top-level directory structure
 
    **CRITICAL: do NOT launch an Agent or read more than 5 files in this step.**
+
+   **Deep-discovery mode** — the 5-file cap and 30-second budget above are the default, not a hard ceiling. Switch to deep mode when any of these become true:
+   - `docs/plans/` (including `completed/`) already contains a sibling plan for the same feature (checkable right here at Step 0)
+   - the user states, at any point, that this plan is part of a larger, multi-plan effort (a feature broken into slices, a WBS/parent doc)
+   - Step 1's scope/constraints answers reveal multi-plan or large-feature scope that wasn't apparent yet at Step 0
+
+   The first condition can be checked now. The other two usually can't be known until after Step 1 — when either fires there, go back and run the deep pass below before Step 2, rather than proceeding with shallow discovery just because the trigger came late.
+
+   In deep mode: read as many files as it takes to understand the actual call chains the plan's tasks depend on — no fixed file count, no 30-second budget. This is still a discovery pass, not a full audit, so keep it targeted to what the plan's tasks will actually call or touch.
 
    **for Go repos — resolve the real test command, don't assume `go test ./...`:**
    - check `Makefile` for a `test` target → use `make test`
@@ -118,6 +127,8 @@ Otherwise, before writing tasks: identify every external function, method, or AP
 
 This is a focused pass — typically 3–6 functions, not broad exploration. Record findings in the "Verified Dependency Behaviors" section of the plan.
 
+In deep-discovery mode (Step 0), widen this to every dependency any task actually calls — not a fixed 3–6 count. A function reused across several tasks needs verifying once; a wrong assumption about it otherwise silently reproduces itself into every task that calls it.
+
 ### Plan structure
 
 ```markdown
@@ -154,12 +165,8 @@ This is a focused pass — typically 3–6 functions, not broad exploration. Rec
 - run tests after each change
 - maintain backward compatibility
 
-## Solution Overview
-- high-level approach and architecture chosen
-- key design decisions and rationale
-- how it fits into the existing system
-
 ## Technical Details
+- key design decisions and rationale
 - data structures and changes
 - parameters and formats
 - processing flow
@@ -257,6 +264,18 @@ Every step must contain the actual content an engineer needs. These are plan fai
 - Steps that describe what to do without showing how — if a step changes code, show the code
 - References to types, functions, or methods not defined in any task
 
+### Code comment rules
+
+Comments inside example code shown in tasks must be self-contained — never a pointer to something else:
+
+- No ticket IDs, no links to Confluence/Jira/PRs, no commit SHAs
+- No `(Slice N)` markers or "see ... in Technical Details" pointers back into this plan
+- No `docs/specs/...` references — inline the one clause of context a reader needs, don't point at the spec
+- At most 1-2 lines; if it needs more than that to justify itself, the content belongs in this plan's prose, not in a code comment
+- State only the "why" a future reader needs at the call site to not re-break the thing — never restate what the code obviously does
+
+This applies to comments in the code itself. Plan-level cross-references (a WBS/slice note, "this plan supersedes the approach in `<prior-plan>`") stay in the plan's own prose sections — this rule doesn't touch those.
+
 ## Step 2.5: Self-review
 
 After writing the complete plan, check it yourself before offering next steps:
@@ -265,8 +284,14 @@ After writing the complete plan, check it yourself before offering next steps:
 2. **Placeholder scan** — search for any patterns from the "No placeholders" section above. Fix them.
 3. **Type consistency** — do method signatures and names used in later tasks match what's defined in earlier tasks? A function called `ParseConfig()` in Task 3 but `LoadConfig()` in Task 7 is a bug.
 4. **Dependency behavior check** — for each entry in "Verified Dependency Behaviors": does the plan's logic actually hold given what that function does? A function that grants USAGE+DML but not CREATE is not "full access" even if named that way.
+5. **Error/status tracing** — skip if the plan asserts no error outcomes or status codes. Otherwise, for every one asserted, trace it end-to-end: where the sentinel/error originates, every `%w` re-wrap on the way, and what the handler that receives it actually returns. Fix any task whose expected outcome doesn't match what the trace shows.
+6. **Test setup preconditions** — skip if the plan has no test setup steps. Otherwise walk each task's test setup in execution order against the API's actual state-transition/creation-order rules. Fix any step that would be rejected because it violates an ordering requirement.
+7. **Multi-phase state** — skip if the plan touches no migration, workflow, or staged operation. Otherwise check what earlier phases actually leave in place before a later task asserts on that state. Fix any assumption of absent state that an earlier phase already establishes.
+8. **Comment hygiene** — grep the plan's code blocks for ticket IDs (`[A-Z]{2,}-[0-9]+`), links (`https?://`), commit SHAs (`\b[0-9a-f]{7,40}\b`), `Slice [0-9A-Z]`, `see .* Technical Details`, and `docs/specs`. Skip a match that's actually a standard name, not a reference — `UTF-8`, `SHA-256`, `RFC-7231`, `AES-256`, `ISO-8601` and the like aren't ticket IDs. Rewrite any real hit per "Code comment rules" above.
 
 Fix issues inline. No need to re-review after fixing.
+
+These checks mirror what the separate `plan-review` agent verifies. Catching them here means fewer review rounds, not weaker review — the reviewer still runs the same checklist independently.
 
 ## Step 3: Next steps
 

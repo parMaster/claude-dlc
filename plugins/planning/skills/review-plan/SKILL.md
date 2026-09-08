@@ -67,7 +67,7 @@ Print the agent's full report verbatim as your own chat message in this turn. Th
 ```
 
 - **Fix and re-review**:
-  1. Apply fixes to the plan file based on the findings (Edit tool). Keep a running list of what you changed, phrased as one line per finding: `[finding] → [what you did]`.
+  1. Apply fixes to the plan file based on the findings (Edit tool). For any finding that reveals a pattern repeated across multiple tasks (the same wrong assumption about a function's behavior, the same stale reference, reused in several places) — grep/scan the whole plan for every other instance of that pattern and fix all of them now, not just the line(s) the reviewer flagged. When a finding says code needs more explanation, inline it per `planning:plan`'s "Code comment rules" — never resolve it by adding a comment that points back to Technical Details, a spec doc, or a ticket. Keep a running list of what you changed, phrased as one line per finding: `[finding] → [what you did]`.
   2. For every MECHANICAL finding, re-run its `verify:` command and compare against the expected result. Any that still fail must be fixed before continuing — do not spawn a new round with an unverified mechanical fix.
   3. If **every** finding in this round was MECHANICAL (no REASONED findings at all): do not spawn a new agent round. All fixes are now verified by command, which is strictly stronger evidence than another read of the plan. Report the verify results to the user and go to Step 5.
   4. Otherwise (at least one REASONED finding was present): increment the round counter, and go to Step 1. Pass the fix list from step 1 into the round prompt as "Fixes applied since last round" — this is what step 8 of the reviewer's instructions and the "Fix verdicts" output section require.
