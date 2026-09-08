@@ -351,11 +351,11 @@ Then use AskUserQuestion:
   ```
 
   Tell the user implementation has been handed off to a background subagent (noting the chosen model) and they'll be notified when it completes. Stop completely — do NOT continue.
-- **Implement in a Separate Session**: hand off to a fresh agterm session in this same workspace — no model-tier question.
+- **Implement in a Separate Session**: hand off to a fresh agterm session in this same workspace. First ask which model it should run on, using the same AskUserQuestion as the Subagent option above (`Inherit`/`Opus`/`Sonnet`/`Haiku`); lower-case the chosen label for `MODEL` (empty string for Inherit).
 
-  Run: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE"` (substitute the real plan path for `PLAN_FILE`).
+  Run: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE" "" "MODEL"` (substitute the real plan path for `PLAN_FILE` and the chosen model for `MODEL`).
 
-  On success (exit 0), the script's last stdout line is the new session's display name (e.g. `Implement: foo`) — tell the user implementation has been handed off to a new agterm session with that name, in this same workspace, and they can switch to it to watch or drive it directly. On failure (non-zero exit), tell the user the handoff failed, quoting the script's stderr output. Do not fall back to a subagent silently. Either way, stop completely.
+  On success (exit 0), the script's last stdout line is the new session's display name (e.g. `Implement: foo`) — tell the user implementation has been handed off to a new agterm session with that name, in this same workspace (noting the chosen model, unless Inherit), and they can switch to it to watch or drive it directly. On failure (non-zero exit), tell the user the handoff failed, quoting the script's stderr output. Do not fall back to a subagent silently. Either way, stop completely.
 - **Done**: stop.
 
 ## Key principles

@@ -6,13 +6,17 @@
 # canned plan-hand-off prompt into a temp file and hands off in the current
 # workspace (no workspace grouping — matches this script's prior behavior).
 #
-# Usage: agterm-handoff.sh <plan-file> [caller-session-name]
+# Usage: agterm-handoff.sh <plan-file> [caller-session-name] [model]
 #   [caller-session-name] this session's own cross-session address (from the
 #                          ListAgents tool's self-identifying line). When
 #                          given, the new session's prompt is told that name
 #                          and that it can SendMessage a result back there
 #                          if asked. Omit to leave the prompt exactly as it
 #                          was before this argument existed.
+#   [model]                model alias (e.g. "opus", "sonnet", "haiku") to run
+#                          the new session on, passed through as `--model`.
+#                          Omit (or pass "") to inherit whatever `claude`
+#                          launches with by default.
 # Requires: AGTERM_ENABLED=1, agtermctl and jq on PATH.
 # On success: prints the new session's display name (e.g. "Implement: foo")
 # to stdout, exits 0.
@@ -20,8 +24,9 @@
 
 set -euo pipefail
 
-PLAN_FILE="${1:?usage: agterm-handoff.sh <plan-file> [caller-session-name]}"
+PLAN_FILE="${1:?usage: agterm-handoff.sh <plan-file> [caller-session-name] [model]}"
 CALLER_NAME="${2:-}"
+MODEL="${3:-}"
 
 if [ "${AGTERM_ENABLED:-}" != "1" ] || ! command -v agtermctl >/dev/null 2>&1; then
   echo "agterm-handoff: not available — AGTERM_ENABLED is unset or agtermctl wasn't found on PATH" >&2
@@ -53,7 +58,12 @@ testing approach. Run the project's tests and linter before treating any
 task as done.$CALLBACK_NOTE
 EOF
 
+CLAUDE_FLAGS="--permission-mode acceptEdits"
+if [ -n "$MODEL" ]; then
+  CLAUDE_FLAGS="$CLAUDE_FLAGS --model $MODEL"
+fi
+
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # Implementation hand-offs start in accept-edits mode: the whole point is to
 # implement the plan, not to re-ask permission for every edit along the way.
-bash "$SCRIPT_DIR/agterm-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE" "" "--permission-mode acceptEdits"
+bash "$SCRIPT_DIR/agterm-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE" "" "$CLAUDE_FLAGS"

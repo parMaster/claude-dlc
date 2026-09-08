@@ -32,13 +32,35 @@ Hand a plan straight to a fresh agterm session — the same mechanism `plan` and
 Call `ListAgents`. Its result opens with a self-identifying line, e.g.
 "This session is `claude-dlc-3f` [8e434c] — the name other sessions use to
 message it." Take the bare name before the ` [` — that's `CALLER_NAME` in
-Step 3. If the output doesn't contain a line in that shape, skip this: call
-the script in Step 3 with just `PLAN_FILE`, omitting `CALLER_NAME` entirely
-— a missing name must never block the hand-off.
+Step 4. If the output doesn't contain a line in that shape, skip this: omit
+`CALLER_NAME` entirely in Step 4 — a missing name must never block the
+hand-off.
 
-## Step 3: Hand off
+## Step 3: Choose a model
 
-Run: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE" "CALLER_NAME"`, substituting the plan path resolved in Step 1 and the name resolved in Step 2 (omit the trailing argument entirely if Step 2 found no name).
+Ask which model the new session should run on, using AskUserQuestion:
+
+```json
+{
+  "questions": [{
+    "question": "Which model should the new session use?",
+    "header": "Model",
+    "options": [
+      {"label": "Inherit", "description": "Use whatever `claude` launches with by default"},
+      {"label": "Opus", "description": "Most capable — best for complex or subtle implementations"},
+      {"label": "Sonnet", "description": "Faster and cheaper — good for straightforward plans"},
+      {"label": "Haiku", "description": "Fastest and cheapest — for simple mechanical changes"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+Lower-case the chosen label (`opus`, `sonnet`, `haiku`) for `MODEL` below; for **Inherit**, use an empty string.
+
+## Step 4: Hand off
+
+Run: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE" "CALLER_NAME" "MODEL"`, substituting the plan path resolved in Step 1, the name resolved in Step 2, and the model chosen above (omit the `CALLER_NAME` argument entirely if Step 2 found no name — but keep `MODEL` as the last argument in that case, e.g. `... "PLAN_FILE" "" "MODEL"`).
 
 This one call also performs the `AGTERM_ENABLED`/`agtermctl` availability check
 internally — unlike `plan`/`review-plan`, which check availability separately
@@ -47,9 +69,10 @@ there's no reason to check twice. If it exits non-zero, tell the user why
 (its stderr says either "not available" or the specific hand-off failure) and
 stop.
 
-## Step 4: Confirm
+## Step 5: Confirm
 
 On success, the script's last stdout line is the new session's display name
 (e.g. `Implement: foo`) — tell the user: implementation has been handed off
-to a new agterm session with that name, in this same workspace, and they can
-switch to it to watch or drive it directly. Stop completely.
+to a new agterm session with that name, in this same workspace (noting the
+chosen model, unless Inherit), and they can switch to it to watch or drive it
+directly. Stop completely.

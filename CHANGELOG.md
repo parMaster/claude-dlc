@@ -4,6 +4,17 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.18.0 - 2026-09-08
+
+Every agterm hand-off (`spawn-session`, `handoff`, and `plan`'s/`review-plan`'s
+"Implement in a Separate Session") now asks which model the new session
+should run on (Inherit/Opus/Sonnet/Haiku), matching the question the
+background-subagent path already asked. Passed through as `claude --model
+<alias>`: `agterm-handoff.sh` gained an optional `[model]` parameter that
+appends `--model` alongside its existing `--permission-mode acceptEdits`;
+`spawn-session` passes it straight to `agterm-spawn.sh`'s existing
+`[claude-flags]` parameter.
+
 ## planning 1.17.0 - 2026-09-08
 
 Implementation hand-offs to a fresh agterm session (`handoff`, and `plan`'s/

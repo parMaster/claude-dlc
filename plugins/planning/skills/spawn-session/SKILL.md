@@ -38,15 +38,38 @@ should run independently of (and outlive) this conversation.
   port — anything that would collide under concurrent access), spawn them
   one at a time instead of firing them all off back to back.
 
-## Step 3: Learn this session's own name
+## Step 3: Choose a model
+
+Ask which model the new session should run on, using AskUserQuestion:
+
+```json
+{
+  "questions": [{
+    "question": "Which model should the new session use?",
+    "header": "Model",
+    "options": [
+      {"label": "Inherit", "description": "Use whatever `claude` launches with by default"},
+      {"label": "Opus", "description": "Most capable — best for complex or subtle work"},
+      {"label": "Sonnet", "description": "Faster and cheaper — good for straightforward tasks"},
+      {"label": "Haiku", "description": "Fastest and cheapest — for simple mechanical changes"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+Lower-case the chosen label (`opus`, `sonnet`, `haiku`) for `MODEL_FLAGS` below
+(`--model opus`, etc.); for **Inherit**, leave `MODEL_FLAGS` empty.
+
+## Step 4: Learn this session's own name
 
 Call `ListAgents`. Its result opens with a self-identifying line, e.g.
 "This session is `claude-dlc-3f` [8e434c] — the name other sessions use to
 message it." Take the bare name before the ` [` — that's `CALLER_NAME`
 below. If the output doesn't contain a line in that shape, skip the
-callback paragraph in Step 4 entirely rather than blocking the spawn.
+callback paragraph in Step 5 entirely rather than blocking the spawn.
 
-## Step 4: Check availability, write the prompt, and spawn — in one command
+## Step 5: Check availability, write the prompt, and spawn — in one command
 
 A `SKILL.md` step is a fresh shell each time it runs, so a shell variable
 set in one Bash call is gone by the next — the availability check, the
@@ -67,24 +90,27 @@ if [ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1; then
 This task was spawned from session `CALLER_NAME`. If asked at any point to
 return a result there, use the SendMessage tool addressed to `CALLER_NAME`.
 PROMPT_EOF
-  bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-spawn.sh" "$PWD" "SESSION_NAME" "$PROMPT_FILE" [WORKSPACE_NAME]
+  bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-spawn.sh" "$PWD" "SESSION_NAME" "$PROMPT_FILE" [WORKSPACE_NAME] [MODEL_FLAGS]
 else
   echo "spawn-session: not available — AGTERM_ENABLED is unset or agtermctl wasn't found on PATH" >&2
   exit 1
 fi
 ```
 
-substituting `SESSION_NAME` from Step 2, `CALLER_NAME` from Step 3 (both
+substituting `SESSION_NAME` from Step 2, `CALLER_NAME` from Step 4 (both
 occurrences — omit the whole callback paragraph, including its leading
-blank line, if Step 3 found no name), and appending `WORKSPACE_NAME` only
-when grouping (omit the argument entirely otherwise).
+blank line, if Step 4 found no name), appending `WORKSPACE_NAME` only when
+grouping (empty string `""` if `MODEL_FLAGS` is also being passed but no
+grouping applies), and appending `MODEL_FLAGS` from Step 3 only when it's
+non-empty.
 
-## Step 5: Confirm
+## Step 6: Confirm
 
 On success (exit 0), the last stdout line is the new session's display
 name — tell the user the task has been handed off to a new agterm session
-with that name (and which workspace, if grouped), and they can switch to
-it to watch or drive it directly. On failure (non-zero exit), tell the
+with that name (and which workspace, if grouped, and which model, unless
+Inherit), and they can switch to it to watch or drive it directly. On
+failure (non-zero exit), tell the
 user the hand-off failed, quoting the stderr output — if it's the
 "not available" message, ask whether they want a background subagent
 instead rather than falling back to one silently. Stop either way — do
