@@ -278,7 +278,7 @@ This applies to comments in the code itself. Plan-level cross-references (a WBS/
 
 ## Step 2.5: Self-review
 
-After writing the complete plan, check it yourself before offering next steps:
+After writing the complete plan, check it yourself before offering next steps. All 8 checks below are internal reasoning, not an announced procedure — where a check is faster with a tool call (a grep, a read) than by eyeballing, make the call and act on the result, but don't narrate it as its own step or report a "clean" pass; only surface something if you actually find and fix an issue.
 
 1. **Spec coverage** — skim each requirement. Can you point to a task that implements it? Add tasks for any gaps.
 2. **Placeholder scan** — search for any patterns from the "No placeholders" section above. Fix them.
@@ -287,7 +287,7 @@ After writing the complete plan, check it yourself before offering next steps:
 5. **Error/status tracing** — skip if the plan asserts no error outcomes or status codes. Otherwise, for every one asserted, trace it end-to-end: where the sentinel/error originates, every `%w` re-wrap on the way, and what the handler that receives it actually returns. Fix any task whose expected outcome doesn't match what the trace shows.
 6. **Test setup preconditions** — skip if the plan has no test setup steps. Otherwise walk each task's test setup in execution order against the API's actual state-transition/creation-order rules. Fix any step that would be rejected because it violates an ordering requirement.
 7. **Multi-phase state** — skip if the plan touches no migration, workflow, or staged operation. Otherwise check what earlier phases actually leave in place before a later task asserts on that state. Fix any assumption of absent state that an earlier phase already establishes.
-8. **Comment hygiene** — grep the plan's code blocks for ticket IDs (`[A-Z]{2,}-[0-9]+`), links (`https?://`), commit SHAs (`\b[0-9a-f]{7,40}\b`), `Slice [0-9A-Z]`, `see .* Technical Details`, and `docs/specs`. Skip a match that's actually a standard name, not a reference — `UTF-8`, `SHA-256`, `RFC-7231`, `AES-256`, `ISO-8601` and the like aren't ticket IDs. Rewrite any real hit per "Code comment rules" above.
+8. **Comment hygiene** — same as the other seven: check the plan's code blocks for ticket IDs (`[A-Z]{2,}-[0-9]+`), links (`https?://`), commit SHAs (`\b[0-9a-f]{7,40}\b`), `Slice [0-9A-Z]`, `see .* Technical Details`, and `docs/specs`. Skip a match that's actually a standard name, not a reference — `UTF-8`, `SHA-256`, `RFC-7231`, `AES-256`, `ISO-8601` and the like aren't ticket IDs. Rewrite any real hit per "Code comment rules" above.
 
 Fix issues inline. No need to re-review after fixing.
 

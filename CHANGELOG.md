@@ -4,6 +4,17 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.16.1 - 2026-09-08
+
+Fixed 1.16.0's comment-hygiene check turning into a narrated, separately-announced
+Bash step every time it ran — once per plan, then again every single `review-plan`
+round — because it was the only Step 2.5 item phrased as a command ("grep the
+plan's code blocks") instead of a reasoning check like the other seven. Reworded
+`plan`'s Step 2.5 so all 8 checks are explicit internal reasoning, not an announced
+procedure, and `review-plan`'s fix step to re-run only the specific finding's own
+`verify:` command silently instead of a broader "sanity check" rescan of the whole
+plan.
+
 ## planning 1.16.0 - 2026-09-08
 
 `plan`'s Step 2.5 self-review now runs the same deep verification the separate
