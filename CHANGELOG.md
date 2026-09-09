@@ -4,6 +4,18 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.4.0 - 2026-09-09
+
+New "Background Work: Wakeup Discipline" section. Sessions were calling
+`ScheduleWakeup` on 120–150s intervals to "check back" on spawned subagents
+— work the harness already re-invokes them for the instant it finishes — so
+the wakeups fired after the work was done, each one a fresh turn repeating
+the same prompt. Two turns in one observed session went to re-deriving that
+the task was already handled instead of stopping the loop. The rule keeps
+the distinction that matters: in a dynamic /loop a wakeup is what keeps the
+loop alive, so it isn't optional — it just has to be a long fallback rather
+than a poll, and `stop: true` the moment a fire shows the task is complete.
+
 ## planning 1.18.2 - 2026-09-09
 
 `spawn-session` and `handoff` rewritten as instructions rather than prose:

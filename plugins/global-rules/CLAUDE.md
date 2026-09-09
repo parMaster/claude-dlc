@@ -51,3 +51,9 @@
 ## CLI Best Practices
 - Don't put `sleep` in front of curl or other CLIs, i.e. `sleep 3 && curl -f ....`
 - Don't prepend `cd <path>` to a Bash command when the session is already rooted in that directory — the shell resets to the working dir each call, so it's redundant noise. Only `cd` (or use `make -C <dir>`) when the command must operate outside the session root.
+
+## Background Work: Wakeup Discipline
+- Never schedule a short wakeup to poll work the harness tracks (spawned agents, background Bash, workflows) — completion re-invokes you the moment it lands. Outside a /loop, end the turn; there is nothing to schedule.
+- Inside a dynamic /loop the wakeup is what keeps the loop alive, so it isn't optional — but make it a long fallback (1200s+) that only matters if the work hangs, never a 120s poll. Mark quiet fires `noop: true`.
+- The moment a fire shows the loop's task is complete, call `stop: true`. Don't spend a turn re-deriving "already handled" on each later fire.
+- Match the delay to the work only when polling state the harness can't see: a CI run, a remote deploy, an external queue.
