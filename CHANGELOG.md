@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.3.0 - 2026-09-09
+
+Three additions: Jira MCP delegation now has no carve-out for single calls,
+skills should be re-invoked via the Skill tool rather than replayed from
+memory on repeat use, and the "no co-authored-by tag lines" rule is
+reinstated under Git Hygiene (the `attribution.commit`/`attribution.pr`
+settings.json fields it was dropped for stopped suppressing the tag line).
+
 ## planning 1.18.1 - 2026-09-09
 
 `spawn-session`'s report-back callback note is worded as conditional ("if
