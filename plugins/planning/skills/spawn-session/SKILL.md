@@ -25,6 +25,14 @@ should run independently of (and outlive) this conversation.
   discussion, as if the new session has zero context: state what to do,
   which files/areas are involved, and how to verify it's done. The new
   session cannot see this conversation.
+- If the request explicitly wants the result back here (e.g. "make it
+  return the result", "report back", "let me know what it finds"), say so
+  unconditionally in the task prompt itself: state plainly that calling
+  `SendMessage` with the answer/result is the last step of the task, once
+  done. Don't rely on the callback note in Step 5 alone for this — it's
+  worded as conditional ("if asked at any point") precisely because most
+  spawned tasks don't need to report back, so on its own it won't make an
+  otherwise-silent session call back.
 
 ## Step 2: Decide on naming and workspace grouping
 

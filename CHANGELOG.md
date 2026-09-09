@@ -4,6 +4,18 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.18.1 - 2026-09-09
+
+`spawn-session`'s report-back callback note is worded as conditional ("if
+asked at any point to return a result there") — fine for most tasks, but a
+task the user explicitly wants reported back (e.g. "make it return the
+result") never got a follow-up ask, so the spawned session answered in its
+own terminal and stopped without ever calling `SendMessage` (confirmed live:
+two Haiku *and* two Sonnet spawns both answered locally and went idle).
+Step 1 now says to state the report-back requirement unconditionally in the
+task prompt itself when the request calls for it, instead of relying on the
+generic callback note alone.
+
 ## planning 1.18.0 - 2026-09-08
 
 Every agterm hand-off (`spawn-session`, `handoff`, and `plan`'s/`review-plan`'s
