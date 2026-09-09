@@ -4,6 +4,19 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.18.2 - 2026-09-09
+
+`spawn-session` and `handoff` rewritten as instructions rather than prose:
+the narrative intros, the re-explanations of rationale, and the redundant
+`AGTERM_ENABLED` pre-check (both scripts already check it themselves) are
+gone, the 15-line AskUserQuestion JSON blocks are compact option lists, and
+the positional-argument rules are shown as example command lines instead of
+described. `spawn-session` also gains `AskUserQuestion` in `allowed-tools`,
+which Step 3 needed but the frontmatter never listed. Both files had a
+`ListAgents` example that wrapped the session name in backticks the real
+output doesn't have — following it literally yielded a name with backticks
+in it.
+
 ## global-rules 1.3.0 - 2026-09-09
 
 Three additions: Jira MCP delegation now has no carve-out for single calls,

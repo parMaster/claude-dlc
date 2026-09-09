@@ -29,47 +29,49 @@ Hand a plan straight to a fresh agterm session — the same mechanism `plan` and
 
 ## Step 2: Learn this session's own name
 
-Call `ListAgents`. Its result opens with a self-identifying line, e.g.
-"This session is `claude-dlc-3f` [8e434c] — the name other sessions use to
-message it." Take the bare name before the ` [` — that's `CALLER_NAME` in
-Step 4. If the output doesn't contain a line in that shape, skip this: omit
-`CALLER_NAME` entirely in Step 4 — a missing name must never block the
-hand-off.
+Call `ListAgents`. Its result opens with a self-identifying line:
+
+```
+This session is claude-dlc-c7 [39feef] — the name other sessions use to message it
+```
+
+`CALLER_NAME` is the bare name before the ` [` — no brackets, no backticks
+(`claude-dlc-c7` above). If no line matches that shape, pass an empty
+`CALLER_NAME` in Step 4 — a missing name must never block the hand-off.
 
 ## Step 3: Choose a model
 
-Ask which model the new session should run on, using AskUserQuestion:
+Ask with `AskUserQuestion` — question "Which model should the new session
+use?", header "Model", single-select, options:
 
-```json
-{
-  "questions": [{
-    "question": "Which model should the new session use?",
-    "header": "Model",
-    "options": [
-      {"label": "Inherit", "description": "Use whatever `claude` launches with by default"},
-      {"label": "Opus", "description": "Most capable — best for complex or subtle implementations"},
-      {"label": "Sonnet", "description": "Faster and cheaper — good for straightforward plans"},
-      {"label": "Haiku", "description": "Fastest and cheapest — for simple mechanical changes"}
-    ],
-    "multiSelect": false
-  }]
-}
-```
+- **Inherit** — whatever `claude` launches with by default
+- **Opus** — most capable; complex or subtle implementations
+- **Sonnet** — faster and cheaper; straightforward plans
+- **Haiku** — fastest and cheapest; simple mechanical changes
 
-Lower-case the chosen label (`opus`, `sonnet`, `haiku`) for `MODEL` below; for **Inherit**, use an empty string.
+`MODEL` is the lower-cased label, or an empty string for **Inherit**.
 
 ## Step 4: Hand off
 
-Run: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE" "CALLER_NAME" "MODEL"`, substituting the plan path resolved in Step 1, the name resolved in Step 2, and the model chosen above (omit the `CALLER_NAME` argument entirely if Step 2 found no name — but keep `MODEL` as the last argument in that case, e.g. `... "PLAN_FILE" "" "MODEL"`).
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE" "CALLER_NAME" "MODEL"
+```
 
-This one call also performs the `AGTERM_ENABLED`/`agtermctl` availability check
-internally — unlike `plan`/`review-plan`, which check availability separately
-to decide whether to even show their menu option, this skill has no menu, so
-there's no reason to check twice. If it exits non-zero, tell the user why
-(its stderr says either "not available" or the specific hand-off failure) and
-stop.
+Arguments are positional, so a missing value still needs its slot:
 
-## Step 5: Confirm
+```bash
+# plan, caller name, model
+... "docs/plans/2026-09-09-foo.md" "claude-dlc-c7" "opus"
+# no caller name (Step 2 found none), model chosen
+... "docs/plans/2026-09-09-foo.md" "" "opus"
+# caller name, Inherit
+... "docs/plans/2026-09-09-foo.md" "claude-dlc-c7" ""
+```
+
+The script checks agterm availability itself; don't pre-check. On non-zero
+exit, report its stderr and stop.
+
+## Step 5: Report the outcome
 
 On success, the script's last stdout line is the new session's display name
 (e.g. `Implement: foo`) — tell the user: implementation has been handed off
