@@ -14,9 +14,26 @@ Iterative structured critique of an implementation plan. A read-only review agen
 2. Otherwise check `docs/plans/` — most recently modified `.md` (excluding `completed/`)
 3. If multiple plans exist and it's unclear which, list them and ask
 
+## Step 0.5: Mechanical pre-pass
+
+Run once per plan, before the first review round, without asking which model — this one is always Haiku. Roughly 40% of round-1 findings in the measured history were grep-provable; clearing them here means the reasoned round spends its context on judgment instead of stale identifiers.
+
+Use the Agent tool with `subagent_type: planning:plan-review` and `model: "haiku"`, passing:
+
+```
+Plan file: PLAN_FILE
+Mode: mechanical
+```
+
+Print its report verbatim as your own chat message, same as Step 2 requires for a full round. Then apply every finding with the Edit tool and re-run each finding's own `verify:` command, fixing anything that still fails before continuing.
+
+Then go to Step 1 with the round counter at **1**. The pre-pass is not a round: it does not consume the 1–3 budget, and its fixes are **not** passed into round 1 as "Fixes applied since last round" — round 1 is still the first reasoned look at the whole plan, and telling the reviewer otherwise would make it narrow itself per step 8 of its own instructions.
+
+Skip this step only when re-entering the loop from Step 5's "Run auto-review" — it has already run for this plan.
+
 ## Step 1: Spawn review agent
 
-Track the current round (start at 1, max 3). Every time this step runs — first review, a "Fix and re-review" continuation, or "Run auto-review" from the post-review menu — first ask which model should run this round, using AskUserQuestion:
+Track the current round (start at 1, max 3 — the Step 0.5 pre-pass is not counted). Every time this step runs — first review, a "Fix and re-review" continuation, or "Run auto-review" from the post-review menu — first ask which model should run this round, using AskUserQuestion:
 
 ```json
 {
@@ -69,8 +86,9 @@ The instant the review agent returns — foreground or background — your next 
 - **Fix and re-review**:
   1. Apply fixes to the plan file based on the findings (Edit tool). For any finding that reveals a pattern repeated across multiple tasks (the same wrong assumption about a function's behavior, the same stale reference, reused in several places) — grep/scan the whole plan for every other instance of that pattern and fix all of them now, not just the line(s) the reviewer flagged. When a finding says code needs more explanation, inline it per `planning:plan`'s "Code comment rules" — never resolve it by adding a comment that points back to Technical Details, a spec doc, or a ticket. Keep a running list of what you changed, phrased as one line per finding: `[finding] → [what you did]`.
   2. For every MECHANICAL finding, re-run exactly its own `verify:` command and compare against the expected result — not a broader rescan of the whole plan "while you're at it." Do this silently alongside applying the fixes, not as an announced separate step; only surface it if a result doesn't match what the finding expected. Any that still fail must be fixed before continuing — do not spawn a new round with an unverified mechanical fix.
-  3. If **every** finding in this round was MECHANICAL (no REASONED findings at all): do not spawn a new agent round. All fixes are now verified by command, which is strictly stronger evidence than another read of the plan. Report the verify results to the user and go to Step 5.
-  4. Otherwise (at least one REASONED finding was present): increment the round counter, and go to Step 1. Pass the fix list from step 1 into the round prompt as "Fixes applied since last round" — this is what step 8 of the reviewer's instructions and the "Fix verdicts" output section require.
+  3. For every REASONED finding, check your own fix before moving on: read the source the fix now claims something about, and confirm the claim holds. A fix that rewrites a call must match the real signature in the file; a fix that changes an expected value must match what the code actually returns. Of the fixes measured across this loop's history, 45 were later judged incomplete and 26 had introduced a new problem — the next round is not the place to discover that. If a fix touches a task other than the flagged one, re-read that task in full too. Do this silently; surface only what you had to correct.
+  4. If **every** finding in this round was MECHANICAL (no REASONED findings at all): do not spawn a new agent round. All fixes are now verified by command, which is strictly stronger evidence than another read of the plan. Report the verify results to the user and go to Step 5.
+  5. Otherwise (at least one REASONED finding was present): increment the round counter, and go to Step 1. Pass the fix list from step 1 into the round prompt as "Fixes applied since last round" — this is what step 8 of the reviewer's instructions and the "Fix verdicts" output section require.
 - **Switch to revdiff**: invoke the `revdiff:revdiff` skill on the plan file. When it returns, go to Step 5
 - **Done**: stop completely — do NOT suggest or begin implementation
 

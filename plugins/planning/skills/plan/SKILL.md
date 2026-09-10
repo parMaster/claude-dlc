@@ -41,7 +41,7 @@ Before asking questions, understand what the user is working on:
    - read README.md or CLAUDE.md for project overview
    - `ls` the top-level directory structure
 
-   **CRITICAL: do NOT launch an Agent or read more than 5 files in this step.**
+   **CRITICAL: do NOT launch an Agent or read more than 5 files in this step.** This cap is on *discovery* only — Step 2's "Read what you will modify" pass is separate and uncapped.
 
    **Deep-discovery mode** — the 5-file cap and 30-second budget above are the default, not a hard ceiling. Switch to deep mode when any of these become true:
    - `docs/plans/` (including `completed/`) already contains a sibling plan for the same feature (checkable right here at Step 0)
@@ -115,6 +115,17 @@ Before defining tasks, map out which files will be created or modified and what 
 
 This structure informs task decomposition — each task should produce self-contained changes that make sense independently.
 
+### Read what you will modify
+
+Before writing a task, read **in full** every file that task lists under `Modify`, and every file it lists under `Create` that already exists. Not a grep for the symbol, not the first 50 lines — the whole file. This is not part of Step 0's discovery budget and is not capped by it: discovery decides *what* the plan touches, this pass establishes *what is actually there* in the files it has already decided to touch.
+
+Two things go wrong when this is skipped, and both produce a plan that cannot compile:
+
+- **Helpers and fixtures.** A task writes `newFakeClientBuilder()` when the real signature is `newFakeClientBuilder(t, scheme)`, or declares a helper that already exists in the same package. Before writing any test code, read the existing test files in that same package — the ones the new tests will sit beside — and reuse their real fixture and helper names, with their real parameter lists.
+- **Existing assertions.** A task changes behavior that an existing test already pins (a returned `Result{}`, a status reason, an error string) and never lists the assertion as needing an update. Any test currently asserting on behavior a task changes is itself a `Modify` target — find those assertions while reading, and give each one an explicit checklist item.
+
+If a file is genuinely too large to hold, that is a signal to narrow the task's scope, not to skim the file.
+
 ### Dependency contract check
 
 **Skip this step** if the plan introduces net-new code with no existing dependencies to verify.
@@ -128,6 +139,8 @@ Otherwise, before writing tasks: identify every external function, method, or AP
 This is a focused pass — typically 3–6 functions, not broad exploration. Record findings in the "Verified Dependency Behaviors" section of the plan.
 
 In deep-discovery mode (Step 0), widen this to every dependency any task actually calls — not a fixed 3–6 count. A function reused across several tasks needs verifying once; a wrong assumption about it otherwise silently reproduces itself into every task that calls it.
+
+Test-only helpers count as dependencies. A fixture, builder, or assertion helper the plan's test code calls is a function the plan's correctness depends on, even though it never ships — and it is the single most common place plans go wrong. It does not need a "Verified Dependency Behaviors" entry (that section is for shipped behavior), but its real signature does need to be right in every task that calls it.
 
 ### Plan structure
 
@@ -282,7 +295,7 @@ After writing the complete plan, check it yourself before offering next steps. A
 
 1. **Spec coverage** — skim each requirement. Can you point to a task that implements it? Add tasks for any gaps.
 2. **Placeholder scan** — search for any patterns from the "No placeholders" section above. Fix them.
-3. **Type consistency** — do method signatures and names used in later tasks match what's defined in earlier tasks? A function called `ParseConfig()` in Task 3 but `LoadConfig()` in Task 7 is a bug.
+3. **Type consistency** — do method signatures and names used in later tasks match what's defined in earlier tasks? A function called `ParseConfig()` in Task 3 but `LoadConfig()` in Task 7 is a bug. Then check the same names against the real files: every helper, fixture, and function a task *calls* rather than creates must match the signature in the file you read, and no task may declare something that already exists in that package.
 4. **Dependency behavior check** — for each entry in "Verified Dependency Behaviors": does the plan's logic actually hold given what that function does? A function that grants USAGE+DML but not CREATE is not "full access" even if named that way.
 5. **Error/status tracing** — skip if the plan asserts no error outcomes or status codes. Otherwise, for every one asserted, trace it end-to-end: where the sentinel/error originates, every `%w` re-wrap on the way, and what the handler that receives it actually returns. Fix any task whose expected outcome doesn't match what the trace shows.
 6. **Test setup preconditions** — skip if the plan has no test setup steps. Otherwise walk each task's test setup in execution order against the API's actual state-transition/creation-order rules. Fix any step that would be rejected because it violates an ordering requirement.

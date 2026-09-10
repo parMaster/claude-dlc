@@ -46,6 +46,42 @@ the distinction that matters: in a dynamic /loop a wakeup is what keeps the
 loop alive, so it isn't optional — it just has to be a long fallback rather
 than a poll, and `stop: true` the moment a fire shows the task is complete.
 
+## planning 1.19.0 - 2026-09-10
+
+`plan` now reads, in full, every existing file a task lists under Create or
+Modify before writing that task — plus the sibling test files any new test code
+will reuse. Step 0's 5-file discovery cap is explicitly scoped to discovery and
+no longer caps this pass. Test helpers and fixtures are called out as
+dependencies whose real signatures have to be right, and Step 2.5's
+type-consistency check now compares names against those real files rather than
+only against other tasks.
+
+`review-plan` gains a Haiku mechanical pre-pass (Step 0.5) that clears
+grep-provable findings before the first reasoned round. It is deliberately not
+numbered as a round: it does not consume the 1–3 budget and its fixes are not
+passed into round 1 as a fix list, because `plan-review.md`'s step 8 would then
+narrow round 1 against a plan nothing had reasoned over. The agent gained a
+matching `Mode: mechanical` that skips its four expensive verification steps and
+emits no verdict.
+
+`review-plan`'s fix step now verifies its own REASONED fixes against the source
+they make claims about, instead of leaving that to the next round.
+
+Measured from 111 review transcripts across 44 plans (see
+`docs/analysis/2026-09-10-plan-review-loop-measurement.md`, and
+`docs/analysis/measure-review-rounds.py` to re-run it): 69% of round-1 critical
+findings cite a concrete `file:line` in the repo, and 24% are wrong helper
+signatures, fixtures, or stale assertions in files the plan itself listed as
+Modify. Peak review context is 108K median, of which only 28K is the prompt plus
+the plan — the other 79K is codebase reading the planner could have done first.
+116 of 296 round-1 findings were grep-provable. Of 569 fixes the reviewer later
+judged, 45 were incomplete and 26 had introduced a new problem.
+
+The round limit stays at 3 and the reviewer's severity language is untouched: at
+a median of 2 criticals per round-1 review, with a fifth finding none, it was
+measured as well-calibrated. Capping the findings list would have lost real
+findings without touching the cause.
+
 ## planning 1.18.2 - 2026-09-09
 
 `spawn-session` and `handoff` rewritten as instructions rather than prose:
