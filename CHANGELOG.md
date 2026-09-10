@@ -4,6 +4,22 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.5.0 - 2026-09-10
+
+Replaces 1.4.0's wakeup-discipline prose with a `permissions.deny` entry for
+`ScheduleWakeup`, added to `~/.claude/settings.json` by the setup hook. Four
+bullets carried through every context of every session, still relying on the
+model to follow them, to prevent something the permission layer refuses
+outright for free. Side effect worth knowing: a bare `/loop` with no interval
+now runs once rather than pacing itself — `/loop <interval>` is unaffected.
+
+Also adds an "Enforcement: Harness Before Prose" section to the repo's own
+CLAUDE.md. The 1.4.0 rule got written because the proposed wording was
+reviewed and improved without anyone asking whether it should be a rule at
+all; the section says to check for a mechanism — a deny rule, a `disable*`
+setting, a hook, an agent `tools:` list — before adding prose, including when
+the user is the one proposing it.
+
 ## global-rules 1.4.0 - 2026-09-09
 
 New "Background Work: Wakeup Discipline" section. Sessions were calling

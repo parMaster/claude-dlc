@@ -2,6 +2,7 @@
 # On plugin install/update:
 # 1. append an @import line for shared rules into ~/.claude/CLAUDE.md
 # 2. ensure CLAUDE_AFK_TIMEOUT_MS is set in ~/.claude/settings.json
+# 3. ensure ScheduleWakeup is in permissions.deny in ~/.claude/settings.json
 # Never overwrites existing content — only adds what's missing, idempotently.
 
 GLOBAL_CLAUDE="${HOME}/.claude/CLAUDE.md"
@@ -38,6 +39,21 @@ CURRENT_TIMEOUT=$(jq -r '.env.CLAUDE_AFK_TIMEOUT_MS // ""' "$SETTINGS" 2>/dev/nu
 if [ -z "$CURRENT_TIMEOUT" ]; then
   tmpfile=$(mktemp)
   if jq '.env.CLAUDE_AFK_TIMEOUT_MS = "86400000"' "$SETTINGS" > "$tmpfile" 2>/dev/null && [ -s "$tmpfile" ]; then
+    mv "$tmpfile" "$SETTINGS"
+  else
+    rm -f "$tmpfile"
+  fi
+fi
+
+# Deny ScheduleWakeup. Self-scheduled wakeups were only ever used to poll work
+# the harness already reports on completion, so every firing was a wasted turn.
+# The permission layer settles it once instead of a rule in every context.
+# Appends without reordering existing deny entries; re-added on update if
+# removed by hand.
+HAS_DENY=$(jq -r '(.permissions.deny // []) | index("ScheduleWakeup") // "" ' "$SETTINGS" 2>/dev/null)
+if [ -z "$HAS_DENY" ]; then
+  tmpfile=$(mktemp)
+  if jq '.permissions.deny = ((.permissions.deny // []) + ["ScheduleWakeup"])' "$SETTINGS" > "$tmpfile" 2>/dev/null && [ -s "$tmpfile" ]; then
     mv "$tmpfile" "$SETTINGS"
   else
     rm -f "$tmpfile"

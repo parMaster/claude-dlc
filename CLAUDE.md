@@ -33,6 +33,26 @@ Add the marketplace and install individual plugins:
   - `agents/<name>.md` defines a custom subagent (frontmatter: `name`, `description`, `tools`). Use this — not a prompt-only "don't touch files" instruction inside a skill — whenever a spawned agent must actually be prevented from writing/editing/deleting: the `tools:` list is enforced at the tool-permission layer, so Write/Edit/NotebookEdit simply aren't callable if omitted from it.
 - `CHANGELOG.md` — version history, one section per plugin version bump
 
+## Enforcement: Harness Before Prose
+
+Before writing a behavioral rule into `plugins/global-rules/CLAUDE.md`, check
+whether the harness can enforce it instead: `permissions.deny`/`ask` for a tool
+or command, a `disable*` key in settings.json, a PreToolUse hook, or an
+`agents/<name>.md` `tools:` list. Prose in that file is loaded into every
+context of every session on every machine and still depends on the model
+choosing to follow it; a settings-level block costs nothing per turn and can't
+be reasoned around. Prose is the fallback for what no mechanism covers —
+judgment, style, workflow order — not the default.
+
+This applies to rules the user proposes, too. Reviewing the wording of a
+proposed rule is not the same as checking whether it should be a rule at all;
+do the second one first, and say so if a mechanism exists.
+
+When a mechanism turns up for something already written as prose, replace the
+prose — don't keep both. A settings default that should reach new machines goes
+in `plugins/global-rules/scripts/setup.sh`, which edits `~/.claude/settings.json`
+idempotently and never clobbers a value the user already set.
+
 ## Conventions
 
 - Hook scripts use `${CLAUDE_PLUGIN_ROOT}` for path resolution — plugin files are copied to a cache on install, so absolute/relative paths fail.
