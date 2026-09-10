@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.6.1 - 2026-09-10
+
+Fixes the Atlassian MCP Hygiene rule's `subagent_type` reference — plugin
+agents register under their plugin's name (`global-rules:atlassian-caller`),
+not the bare agent name. Confirmed live: `subagent_type: atlassian-caller`
+failed with "Agent type not found" until corrected.
+
 ## global-rules 1.6.0 - 2026-09-10
 
 Adds a dedicated `atlassian-caller` subagent (Haiku, 40 Atlassian MCP tools,

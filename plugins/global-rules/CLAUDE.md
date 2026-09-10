@@ -22,7 +22,7 @@
 - When asked about a library's capabilities (e.g., slog support in controller-runtime), check the actual source rather than asserting from memory
 
 ## Atlassian MCP Hygiene
-- **Delegate the goal, once, to `atlassian-caller`** — every Atlassian MCP call (Jira or Confluence) goes through the `atlassian-caller` subagent (Agent tool, `subagent_type: atlassian-caller`), even a lone `getJiraIssue`. Ask for an end result ("confirm the issue is Done, transitioning it if it isn't": read status, walk the transitions, verify) and use only its report. One `atlassian-caller` spawn per goal, never one per call — it has no Agent tool in its own toolset, so it cannot re-delegate even if it tries.
+- **Delegate the goal, once, to `atlassian-caller`** — every Atlassian MCP call (Jira or Confluence) goes through the `atlassian-caller` subagent (Agent tool, `subagent_type: global-rules:atlassian-caller` — plugin agents register under their plugin's name), even a lone `getJiraIssue`. Ask for an end result ("confirm the issue is Done, transitioning it if it isn't": read status, walk the transitions, verify) and use only its report. One `atlassian-caller` spawn per goal, never one per call — it has no Agent tool in its own toolset, so it cannot re-delegate even if it tries.
 - **Scope the fields** — pass an explicit `fields` array (`["status"]`, `["description"]`) and `responseContentFormat: "markdown"`. The default set drags in `assignee`, `reporter` and `project` as nested objects full of avatar URLs; use `["*all"]` only when asked for full fidelity.
 
 ## Go codebases
