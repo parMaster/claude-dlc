@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.6.0 - 2026-09-10
+
+Adds a dedicated `atlassian-caller` subagent (Haiku, 40 Atlassian MCP tools,
+no Agent tool) and points the Atlassian MCP Hygiene rule at it by name
+instead of a generic Agent-tool subagent. Observed live: a Jira subagent
+broke its own delegated goal into sub-steps and spawned a second nested
+subagent for one of them — the generic subagent type has every tool,
+including Agent, so the rule's "don't re-delegate" instruction depended on
+each nested agent correctly recognizing it already was that subagent, and
+that reasoning isn't reliable. `atlassian-caller`'s `tools:` allowlist
+omits Agent entirely (plus `disallowedTools: Agent` as an explicit
+backstop), so it's structurally unable to spawn a child regardless of how
+it reasons about the task.
+
 ## global-rules 1.5.1 - 2026-09-10
 
 Rewrites the two Atlassian MCP bullets from ~180 words to ~80 and adds the
