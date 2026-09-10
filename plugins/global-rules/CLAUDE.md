@@ -22,8 +22,8 @@
 - When asked about a library's capabilities (e.g., slog support in controller-runtime), check the actual source rather than asserting from memory
 
 ## Atlassian MCP Hygiene
-- **Scope Jira field requests** — Atlassian Jira MCP calls (`getJiraIssue`, `searchJiraIssuesUsingJql`, and similar) default to returning `summary, description, status, issuetype, priority, labels, components, assignee, reporter, created, updated, resolution, project` — several of those (`assignee`, `reporter`, `project`) are nested objects carrying avatar URLs and self-links that bloat the session even for a two-line lookup. Always pass an explicit `fields` array scoped to only what's needed (e.g. `["status"]` for a status check, `["description"]` for a description) — never rely on the default set, and never pass `fields: ["*all"]` unless the user explicitly asked for full fidelity. Also pass `responseContentFormat: "markdown"` — it returns simplified plain text instead of full ADF JSON.
-- **Delegate every Jira MCP call to a subagent** — including a single `getJiraIssue`. Dispatch via the Agent tool with a description of the end result needed, and use only its distilled report.
+- **Delegate the goal, once** — every Jira MCP call goes through an Agent-tool subagent, even a lone `getJiraIssue`. Ask for an end result ("complete TASK-123": read status, walk the transitions, verify) and use only its report. One subagent per goal, never one per call — and if you are that subagent, make the calls yourself instead of re-delegating.
+- **Scope the fields** — pass an explicit `fields` array (`["status"]`, `["description"]`) and `responseContentFormat: "markdown"`. The default set drags in `assignee`, `reporter` and `project` as nested objects full of avatar URLs; use `["*all"]` only when asked for full fidelity.
 
 ## Go codebases
 

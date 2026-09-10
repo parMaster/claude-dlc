@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.5.1 - 2026-09-10
+
+Rewrites the two Atlassian MCP bullets from ~180 words to ~80 and adds the
+missing scope rule: a delegation covers a whole goal, and a Jira subagent
+makes its own calls rather than re-delegating.
+
+Measured from 20 Jira subagent transcripts: a spawn costs ~32K tokens of
+context (median; 2 tokens of it uncached — the rest is cache write and read),
+for a median of 6 Jira calls. That price is worth paying once per goal and not
+once per call. Reusing a live subagent via `SendMessage` was considered and
+dropped: by the time the next Jira request arrives the prompt cache has
+usually expired, and the agent's grown context then costs more to resume than
+a fresh spawn.
+
 ## global-rules 1.5.0 - 2026-09-10
 
 Replaces 1.4.0's wakeup-discipline prose with a `permissions.deny` entry for
