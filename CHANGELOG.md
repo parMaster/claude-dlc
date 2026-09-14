@@ -4,6 +4,15 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.20.1 - 2026-09-14
+
+Hardens the runtime-branch instructions in `spawn-session` and `handoff`'s
+model-choice step. Observed live: a session picked Codex as the runtime but
+was then asked the Claude Inherit/Opus/Sonnet/Haiku question anyway — the
+executing model defaulted to the familiar tier list from other planning
+skills instead of checking the runtime answer first. Both skills now open
+that step with an explicit instruction not to do that.
+
 ## planning 1.20.0 - 2026-09-14
 
 Adds Codex CLI as an alternative runtime for `spawn-session` and `handoff`,

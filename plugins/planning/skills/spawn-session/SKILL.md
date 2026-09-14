@@ -38,6 +38,10 @@ header "Runtime", single-select, options:
 
 ## Step 4: Choose a model
 
+Check the Step 3 answer before asking — do not default to the Claude tier
+list out of habit just because it's the familiar one from other planning
+skills. Codex gets its own, different question.
+
 **If Claude was chosen**, ask with `AskUserQuestion` — question "Which model
 should the new session use?", header "Model", single-select, options:
 
