@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Generic primitive: spawn a fresh agterm session and type a `claude` launch
-# command into it, reading the task prompt from a file. This avoids passing
-# arbitrary prompt text through the terminal-typing mechanism at all — only
-# the file path is typed (as a short, known-safe command line); the new
-# session's own shell does the `$(cat ...)` expansion when it runs the
-# command.
+# Spawn a fresh agterm session and type a `claude` launch command into it,
+# reading the task prompt from a file. This avoids passing arbitrary prompt
+# text through the terminal-typing mechanism at all — only the file path is
+# typed (as a short, known-safe command line); the new session's own shell
+# does the `$(cat ...)` expansion when it runs the command.
 #
 # Shared by agterm-handoff.sh (plan-file hand-off) and spawn-session/SKILL.md
-# (arbitrary task hand-off).
+# (arbitrary task hand-off). Session creation itself (workspace resolution,
+# `agtermctl session new`, flagging) is agent-agnostic and lives in
+# agterm-session-new.sh, reused by codex-spawn.sh for the Codex runtime.
 #
 # Usage: agterm-spawn.sh <cwd> <session-name> <prompt-file> [workspace-name] [claude-flags]
 #   <cwd>            working directory for the new session's shell
@@ -47,21 +48,8 @@ if [ ! -f "$PROMPT_FILE" ]; then
   exit 1
 fi
 
-if [ -n "$WORKSPACE_NAME" ]; then
-  SID=$(agtermctl session new --cwd "$CWD" --workspace-name "$WORKSPACE_NAME" --create-workspace --name "$SESSION_NAME" --json | jq -r '.result.id')
-else
-  SID=$(agtermctl session new --cwd "$CWD" --workspace "${AGTERM_WORKSPACE_ID:-active}" --name "$SESSION_NAME" --json | jq -r '.result.id')
-fi
-
-if [ -z "$SID" ] || [ "$SID" = "null" ]; then
-  echo "agterm-spawn: session new failed to return a session id" >&2
-  exit 1
-fi
-
-# Flag the hand-off so it shows up in agterm's flagged sidebar / flagged
-# dashboard alongside any other in-flight sessions. Best-effort: a flag
-# failure must not abort a hand-off that otherwise succeeded.
-agtermctl session flag on --target "$SID" >/dev/null 2>&1 || true
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+SID=$(bash "$SCRIPT_DIR/agterm-session-new.sh" "$CWD" "$SESSION_NAME" "$WORKSPACE_NAME")
 
 # %q shell-escapes the path if it needs it (spaces, etc). The prompt text
 # itself never appears on this command line — it's read by the new

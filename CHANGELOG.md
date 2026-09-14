@@ -4,6 +4,23 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.20.0 - 2026-09-14
+
+Adds Codex CLI as an alternative runtime for `spawn-session` and `handoff`,
+so a task or plan can be handed to a fresh `codex` session instead of always
+assuming `claude`. Both skills ask which CLI to run before the model
+question. `agterm-spawn.sh`'s session-creation logic (workspace resolution,
+`agtermctl session new`, flagging) is factored into a new agent-agnostic
+`agterm-session-new.sh`, reused by a new `codex-spawn.sh`; the canned
+plan-hand-off prompt is factored into a sourced `handoff-prompt.sh`, reused
+by a new `codex-handoff.sh` alongside the existing `agterm-handoff.sh`.
+Codex has no Opus/Sonnet/Haiku-style model tiers, so its model question is
+Inherit-or-free-text instead of a fixed list; its nearest equivalent to
+`--permission-mode acceptEdits` is `--sandbox workspace-write
+--ask-for-approval never`, confirmed against `codex --help` output rather
+than guessed. `plan` and `review-plan` are unchanged — both still hand off
+to `claude` only, via the untouched `agterm-handoff.sh` signature.
+
 ## planning 1.19.1 - 2026-09-14
 
 Removes the automatic `SendMessage`-back-to-caller machinery from `handoff`

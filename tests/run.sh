@@ -182,6 +182,46 @@ EOF
 chmod +x "${AGTERM_FAKE_BIN}/agtermctl"
 
 # ---------------------------------------------------------------------------
+# planning/agterm-session-new.sh
+# ---------------------------------------------------------------------------
+
+SESSION_NEW_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/agterm-session-new.sh"
+
+echo "planning/agterm-session-new.sh"
+
+LOG="$(mktemp)"
+result=$(
+  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SESSION_NEW_SCRIPT" "/tmp/some/dir" "My Session"
+)
+assert_eq "prints the session id on success" "fake-session-id" "$result"
+assert_contains "creates the session in the current workspace when no workspace-name given" " --workspace ws-1" "$(cat "$LOG")"
+assert_not_contains "does not pass --workspace-name when not grouping" " --workspace-name" "$(cat "$LOG")"
+assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
+rm -f "$LOG"
+
+LOG="$(mktemp)"
+result=$(
+  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SESSION_NEW_SCRIPT" "/tmp/some/dir" "My Session" "my-workspace"
+)
+assert_contains "groups under a named workspace when given" " --workspace-name my-workspace --create-workspace" "$(cat "$LOG")"
+rm -f "$LOG"
+
+result=$(AGTERM_ENABLED="" bash "$SESSION_NEW_SCRIPT" "/tmp" "name" 2>&1; echo "exit:$?")
+assert_contains "refuses to run when AGTERM_ENABLED is unset (exit code)" "exit:1" "$result"
+assert_contains "refuses to run when AGTERM_ENABLED is unset (message)" "not available" "$result"
+
+LOG="$(mktemp)"
+result=$(
+  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" AGTERMCTL_SESSION_NEW_JSON='{"result":{}}' \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SESSION_NEW_SCRIPT" "/tmp/some/dir" "My Session" 2>&1; echo "exit:$?"
+)
+assert_contains "refuses to run when session new returns no id (exit code)" "exit:1" "$result"
+assert_contains "refuses to run when session new returns no id (message)" "session new failed to return a session id" "$result"
+rm -f "$LOG"
+
+# ---------------------------------------------------------------------------
 # planning/agterm-spawn.sh
 # ---------------------------------------------------------------------------
 
@@ -245,6 +285,59 @@ rm -f "$LOG"
 rm -f "$SPAWN_PROMPT_FILE"
 
 # ---------------------------------------------------------------------------
+# planning/codex-spawn.sh
+# ---------------------------------------------------------------------------
+
+CODEX_SPAWN_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/codex-spawn.sh"
+
+echo "planning/codex-spawn.sh"
+
+CODEX_SPAWN_PROMPT_FILE="$(mktemp)"
+echo "do the thing" > "$CODEX_SPAWN_PROMPT_FILE"
+
+LOG="$(mktemp)"
+TYPED="$(mktemp)"
+result=$(
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$CODEX_SPAWN_PROMPT_FILE"
+)
+assert_eq "prints the session name on success" "My Session" "$result"
+assert_contains "creates the session in the current workspace when no workspace-name given" " --workspace ws-1" "$(cat "$LOG")"
+assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
+TYPED_CMD="$(cat "$TYPED")"
+assert_contains "types a codex launch command reading the prompt file" "codex \"\$(cat ${CODEX_SPAWN_PROMPT_FILE}" "$TYPED_CMD"
+assert_not_contains "does not type the prompt text itself" "do the thing" "$TYPED_CMD"
+rm -f "$LOG" "$TYPED"
+
+LOG="$(mktemp)"
+TYPED="$(mktemp)"
+result=$(
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$CODEX_SPAWN_PROMPT_FILE" "my-workspace"
+)
+assert_contains "groups under a named workspace when given" " --workspace-name my-workspace --create-workspace" "$(cat "$LOG")"
+rm -f "$LOG" "$TYPED"
+
+LOG="$(mktemp)"
+TYPED="$(mktemp)"
+result=$(
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$CODEX_SPAWN_PROMPT_FILE" "" "--sandbox workspace-write --ask-for-approval never"
+)
+assert_contains "inserts codex-flags into the launch command when given" 'codex --sandbox workspace-write --ask-for-approval never "$(cat ' "$(cat "$TYPED")"
+rm -f "$LOG" "$TYPED"
+
+result=$(AGTERM_ENABLED="" bash "$CODEX_SPAWN_SCRIPT" "/tmp" "name" "$CODEX_SPAWN_PROMPT_FILE" 2>&1; echo "exit:$?")
+assert_contains "refuses to run when AGTERM_ENABLED is unset (exit code)" "exit:1" "$result"
+assert_contains "refuses to run when AGTERM_ENABLED is unset (message)" "not available" "$result"
+
+result=$(AGTERM_ENABLED="1" PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_SPAWN_SCRIPT" "/tmp" "name" "/nonexistent/prompt-file" 2>&1; echo "exit:$?")
+assert_contains "refuses to run when the prompt file doesn't exist (exit code)" "exit:1" "$result"
+assert_contains "refuses to run when the prompt file doesn't exist (message)" "prompt file not found" "$result"
+
+rm -f "$CODEX_SPAWN_PROMPT_FILE"
+
+# ---------------------------------------------------------------------------
 # planning/agterm-handoff.sh
 # ---------------------------------------------------------------------------
 
@@ -281,6 +374,56 @@ rm -f "$LOG" "$TYPED"
 
 result=$(AGTERM_ENABLED="" bash "$HANDOFF_SCRIPT" "$PLAN_FILE" 2>&1; echo "exit:$?")
 assert_contains "refuses to run when AGTERM_ENABLED is unset" "exit:1" "$result"
+
+
+# ---------------------------------------------------------------------------
+# planning/codex-handoff.sh
+# ---------------------------------------------------------------------------
+
+CODEX_HANDOFF_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/codex-handoff.sh"
+
+echo "planning/codex-handoff.sh"
+
+CODEX_TEST_REPO="$(mktemp -d)"
+(cd "$CODEX_TEST_REPO" && git init -q)
+CODEX_PLAN_FILE="${CODEX_TEST_REPO}/docs/plans/2026-01-01-example.md"
+mkdir -p "$(dirname "$CODEX_PLAN_FILE")"
+echo "# Example plan" > "$CODEX_PLAN_FILE"
+
+LOG="$(mktemp)"
+TYPED="$(mktemp)"
+result=$(
+  cd "$CODEX_TEST_REPO" && \
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_HANDOFF_SCRIPT" "$CODEX_PLAN_FILE"
+)
+assert_eq "prints the new session's display name on success" "Implement: example" "$result"
+assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
+assert_contains "creates the session before flagging" "session new" "$(cat "$LOG")"
+TYPED_CMD="$(cat "$TYPED")"
+assert_contains "types a codex launch command with the accept-edits-equivalent flags" 'codex --sandbox workspace-write --ask-for-approval never "$(cat ' "$TYPED_CMD"
+PROMPT_PATH="${TYPED_CMD#*cat }"
+PROMPT_PATH="${PROMPT_PATH%)\"}"
+assert_eq "the prompt file the typed command reads actually exists" "yes" "$([ -f "$PROMPT_PATH" ] && echo yes || echo no)"
+PROMPT_CONTENT="$(cat "$PROMPT_PATH" 2>/dev/null || echo "")"
+assert_contains "prompt file references the plan path" "$CODEX_PLAN_FILE" "$PROMPT_CONTENT"
+assert_contains "prompt file tells the session to read the plan fully" "Read it fully" "$PROMPT_CONTENT"
+rm -f "$LOG" "$TYPED"
+
+LOG="$(mktemp)"
+TYPED="$(mktemp)"
+result=$(
+  cd "$CODEX_TEST_REPO" && \
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_HANDOFF_SCRIPT" "$CODEX_PLAN_FILE" "gpt-5.1-codex"
+)
+assert_contains "appends --model when a model is given" 'codex --sandbox workspace-write --ask-for-approval never --model gpt-5.1-codex "$(cat ' "$(cat "$TYPED")"
+rm -f "$LOG" "$TYPED"
+
+result=$(AGTERM_ENABLED="" bash "$CODEX_HANDOFF_SCRIPT" "$CODEX_PLAN_FILE" 2>&1; echo "exit:$?")
+assert_contains "refuses to run when AGTERM_ENABLED is unset" "exit:1" "$result"
+
+rm -rf "$CODEX_TEST_REPO"
 
 rm -rf "$AGTERM_FAKE_BIN" "$TEST_REPO"
 
