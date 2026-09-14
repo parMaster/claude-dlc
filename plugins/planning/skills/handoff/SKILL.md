@@ -4,7 +4,7 @@ description: Hand off an implementation plan directly to a fresh agterm session,
 argument-hint: "[plan-file]"
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Bash, ListAgents
+allowed-tools: Bash
 ---
 
 # Handoff to a Separate Session
@@ -27,19 +27,7 @@ Hand a plan straight to a fresh agterm session — the same mechanism `plan` and
 4. Verify the resolved path exists: `test -f "<path>"`. If it doesn't, tell
    the user the file wasn't found and stop.
 
-## Step 2: Learn this session's own name
-
-Call `ListAgents`. Its result opens with a self-identifying line:
-
-```
-This session is claude-dlc-c7 [39feef] — the name other sessions use to message it
-```
-
-`CALLER_NAME` is the bare name before the ` [` — no brackets, no backticks
-(`claude-dlc-c7` above). If no line matches that shape, pass an empty
-`CALLER_NAME` in Step 4 — a missing name must never block the hand-off.
-
-## Step 3: Choose a model
+## Step 2: Choose a model
 
 Ask with `AskUserQuestion` — question "Which model should the new session
 use?", header "Model", single-select, options:
@@ -51,27 +39,23 @@ use?", header "Model", single-select, options:
 
 `MODEL` is the lower-cased label, or an empty string for **Inherit**.
 
-## Step 4: Hand off
+## Step 3: Hand off
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE" "CALLER_NAME" "MODEL"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE" "MODEL"
 ```
 
-Arguments are positional, so a missing value still needs its slot:
-
 ```bash
-# plan, caller name, model
-... "docs/plans/2026-09-09-foo.md" "claude-dlc-c7" "opus"
-# no caller name (Step 2 found none), model chosen
-... "docs/plans/2026-09-09-foo.md" "" "opus"
-# caller name, Inherit
-... "docs/plans/2026-09-09-foo.md" "claude-dlc-c7" ""
+# model chosen
+... "docs/plans/2026-09-09-foo.md" "opus"
+# Inherit
+... "docs/plans/2026-09-09-foo.md" ""
 ```
 
 The script checks agterm availability itself; don't pre-check. On non-zero
 exit, report its stderr and stop.
 
-## Step 5: Report the outcome
+## Step 4: Report the outcome
 
 On success, the script's last stdout line is the new session's display name
 (e.g. `Implement: foo`) — tell the user: implementation has been handed off

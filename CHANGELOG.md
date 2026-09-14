@@ -4,6 +4,21 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.19.1 - 2026-09-14
+
+Removes the automatic `SendMessage`-back-to-caller machinery from `handoff`
+and `spawn-session`: they no longer call `ListAgents` to learn this session's
+own name, thread a `CALLER_NAME` through `agterm-handoff.sh`, or splice a
+"message this session back when done" paragraph into every spawned prompt.
+Owner reported it doesn't work reliably in practice (a multi-session
+oversight/plan/impl chain never got the ping back) and that the addressing
+step doesn't need to be pre-baked into the skill at all — a spawned session
+already has `SendMessage` and `ListAgents` as ordinary tools, so a one-off
+callback request can just be written into the prompt by hand at spawn time
+if actually needed, no dedicated plumbing required. `agterm-handoff.sh` drops
+its `[caller-session-name]` parameter (now just `<plan-file> [model]`); both
+skills drop `ListAgents` from `allowed-tools`.
+
 ## global-rules 1.6.1 - 2026-09-10
 
 Fixes the Atlassian MCP Hygiene rule's `subagent_type` reference — plugin

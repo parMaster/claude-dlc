@@ -86,8 +86,6 @@ Structured implementation plan creation.
 
 Every agterm hand-off (`plan`, `review-plan`, `handoff`, `spawn-session`) asks which model the new session should run on (Inherit/Opus/Sonnet/Haiku, passed through as `claude --model`) and also flags the new session (`agtermctl session flag on`), so all in-flight implementations show up in agterm's flagged sidebar view / flagged-dashboard grid instead of having to be found and flagged by hand. The three that specifically hand off plan implementation (`plan` and `review-plan`'s "Implement in a Separate Session", and `handoff`) launch the new session with `--permission-mode acceptEdits`, so it starts implementing right away instead of asking permission for every edit; `spawn-session` hands off arbitrary tasks and starts with the default permission mode.
 
-`handoff` and `spawn-session` also tell the new session this session's own cross-session name (via `ListAgents`), so the new session can `SendMessage` a short result back if asked to at any point during the task — not only when that's requested up front.
-
 **`plan` — flow**
 
 ```mermaid
