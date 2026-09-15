@@ -4,6 +4,17 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.6.3 - 2026-09-15
+
+Adds a `block-coauthor` PreToolUse hook that denies any `git commit`/`git
+commit --amend` or `gh pr create`/`gh pr edit` whose command string contains
+a `Co-Authored-By` line — observed live: Claude Code's own attribution
+system-reminder tells the model to add one to every commit and PR, which
+conflicts with this repo's "never include a co-authored tag line" rule, and
+the model doesn't reliably notice the conflict. Moves the enforcement from
+CLAUDE.md prose to this hook, per the repo's own "harness before prose"
+principle, and removes the now-redundant prose line.
+
 ## planning 1.21.0 - 2026-09-15
 
 `review-plan` can now hand the whole review off to a freshly spawned Codex

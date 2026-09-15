@@ -194,6 +194,7 @@ Includes: plan-first workflow (re-invoke a skill via the Skill tool on repeat us
 | Hook | Trigger | Effect |
 |------|---------|--------|
 | `block-root-find` | `Bash` command running `find` rooted at `/` (e.g. `find / -type d ...`), including inside `$(...)` command substitution or a variable assignment | Denies — full-filesystem scans aren't a normal part of any task; scope the search to a specific directory instead |
+| `block-coauthor` | `Bash` command running `git commit`/`git commit --amend` or `gh pr create`/`gh pr edit` whose command string contains a `Co-Authored-By` line | Denies — this repo's commit-hygiene rule says never to include one; remove it and retry |
 
 ---
 

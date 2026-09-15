@@ -116,7 +116,7 @@ BLOCK_ROOT_FIND_SCRIPT="${REPO_ROOT}/plugins/global-rules/scripts/block-root-fin
 
 run_hook() {
   local script="$1" command="$2"
-  printf '%s' "$command" | jq -Rn '{tool_input:{command: input}}' | bash "$script"
+  printf '%s' "$command" | jq -Rs '{tool_input:{command: .}}' | bash "$script"
 }
 
 echo "global-rules/block-root-find.sh"
@@ -147,6 +147,40 @@ assert_eq "allows commands where find is a substring of a longer word" "" "$resu
 
 result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'grep -rn "find /" .')
 assert_eq "allows unrelated commands merely mentioning find /" "" "$result"
+
+# ---------------------------------------------------------------------------
+# global-rules/block-coauthor.sh
+# ---------------------------------------------------------------------------
+
+BLOCK_COAUTHOR_SCRIPT="${REPO_ROOT}/plugins/global-rules/scripts/block-coauthor.sh"
+
+echo "global-rules/block-coauthor.sh"
+
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'git commit -m "fix bug
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"')
+assert_contains "blocks git commit with a Co-Authored-By line" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'git commit --amend -m "msg Co-Authored-By: x"')
+assert_contains "blocks git commit --amend with a Co-Authored-By line" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'gh pr create --title x --body "desc Co-Authored-By: Claude"')
+assert_contains "blocks gh pr create with a Co-Authored-By line" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'gh pr edit 5 --body "desc Co-Authored-By: Claude"')
+assert_contains "blocks gh pr edit with a Co-Authored-By line" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'echo hi && git commit -m "hi Co-Authored-By: x"')
+assert_contains "blocks a Co-Authored-By commit chained after &&" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'git commit -m "plain message"')
+assert_eq "allows a git commit with no Co-Authored-By line" "" "$result"
+
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'git status')
+assert_eq "allows unrelated git commands" "" "$result"
+
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'grep -rn "Co-Authored-By" .')
+assert_eq "allows unrelated commands merely mentioning the phrase" "" "$result"
 
 # ---------------------------------------------------------------------------
 # Shared fake agtermctl for planning/agterm-spawn.sh and

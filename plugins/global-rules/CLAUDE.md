@@ -7,7 +7,6 @@
 
 ## Git Hygiene
 - **Stale branch** — before starting to plan or implement, and again right before the final commit, check whether the current branch is behind its remote tracking branch (`git fetch` then `git status`). If it's behind, resync immediately — `git pull --rebase` (or plain `git pull` if there are no local commits yet) — instead of discovering it later when `git push` is rejected as non-fast-forward. Resolve any conflicts the resync surfaces as part of finishing the work, not as a follow-up.
-- Never include a "co-authored..." tag line in commit messages or PR descriptions.
 
 ## Verification Before Commit
 - NEVER commit until all tests pass locally (run `go test ./...` first)
