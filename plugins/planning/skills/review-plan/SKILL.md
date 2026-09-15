@@ -1,7 +1,7 @@
 ---
 name: review-plan
 description: Review an implementation plan for completeness, correctness, over-engineering, and test coverage. Iterates review rounds until no critical issues remain or round limit hit. Activates on "review plan", "check the plan", "critique this plan", or as an optional step after planning:plan.
-allowed-tools: Read, Glob, Grep, Bash, Agent, AskUserQuestion, Edit, Skill
+allowed-tools: Read, Glob, Grep, Bash, Agent, AskUserQuestion, Edit
 ---
 
 # Plan Review
@@ -65,17 +65,15 @@ Track the current round (start at 1, max 3 — the Step 0.5 pre-pass is not coun
     "question": "Which model should review this round?",
     "header": "Model",
     "options": [
-      {"label": "Inherit", "description": "Use the same model as this session (default)"},
       {"label": "Opus", "description": "Most capable — best for catching subtle logic gaps or over-engineering"},
-      {"label": "Sonnet", "description": "Faster and cheaper — good for most plans"},
-      {"label": "Haiku", "description": "Fastest and cheapest — for a quick mechanical pass"}
+      {"label": "Sonnet", "description": "Faster and cheaper — good for most plans"}
     ],
     "multiSelect": false
   }]
 }
 ```
 
-Use the Agent tool with `subagent_type: planning:plan-review` — a dedicated read-only agent (`plugins/planning/agents/plan-review.md`) that only has Read/Glob/Grep/Bash; it cannot call Write, Edit, or NotebookEdit, so it cannot create, modify, or delete files no matter what its prompt says. Pass `model` set to the chosen tier (`opus`, `sonnet`, or `haiku`); for **Inherit**, omit the `model` parameter entirely. The review methodology, checklist, and output format live in the agent definition — this step only supplies what changes per call:
+Use the Agent tool with `subagent_type: planning:plan-review` — a dedicated read-only agent (`plugins/planning/agents/plan-review.md`) that only has Read/Glob/Grep/Bash; it cannot call Write, Edit, or NotebookEdit, so it cannot create, modify, or delete files no matter what its prompt says. Pass `model` set to the chosen tier (`opus` or `sonnet`). The review methodology, checklist, and output format live in the agent definition — this step only supplies what changes per call:
 
 ```
 Plan file: PLAN_FILE
@@ -99,7 +97,6 @@ The instant the review agent returns — foreground or background — your next 
     "header": "Next step",
     "options": [
       {"label": "Fix and re-review", "description": "Apply fixes from the findings, then run another review round"},
-      {"label": "Switch to revdiff", "description": "Open the plan in revdiff for manual inline annotation instead"},
       {"label": "Done", "description": "Stop here — I'll handle the fixes manually"}
     ],
     "multiSelect": false
@@ -113,7 +110,6 @@ The instant the review agent returns — foreground or background — your next 
   3. For every REASONED finding, check your own fix before moving on: read the source the fix now claims something about, and confirm the claim holds. A fix that rewrites a call must match the real signature in the file; a fix that changes an expected value must match what the code actually returns. Of the fixes measured across this loop's history, 45 were later judged incomplete and 26 had introduced a new problem — the next round is not the place to discover that. If a fix touches a task other than the flagged one, re-read that task in full too. Do this silently; surface only what you had to correct.
   4. If **every** finding in this round was MECHANICAL (no REASONED findings at all): do not spawn a new agent round. All fixes are now verified by command, which is strictly stronger evidence than another read of the plan. Report the verify results to the user and go to Step 5.
   5. Otherwise (at least one REASONED finding was present): increment the round counter, and go to Step 1. Pass the fix list from step 1 into the round prompt as "Fixes applied since last round" — this is what step 8 of the reviewer's instructions and the "Fix verdicts" output section require.
-- **Switch to revdiff**: invoke the `revdiff:revdiff` skill on the plan file. When it returns, go to Step 5
 - **Done**: stop completely — do NOT suggest or begin implementation
 
 **If verdict is APPROVE**: go to Step 5.
@@ -124,8 +120,7 @@ After 3 rounds without APPROVE, stop the auto-review loop. Show any remaining is
 
 ## Step 5: Report and stop
 
-This is where every review path ends — auto-review approval, round limit, or a revdiff pass finishing. Report the outcome and stop. Do not ask what to do next — the user calls `/planning:handoff`, `revdiff:revdiff`, or begins implementation directly when ready.
+This is where every review path ends — auto-review approval or round limit. Report the outcome and stop. Do not ask what to do next — the user calls `/planning:handoff`, `revdiff:revdiff`, or begins implementation directly when ready.
 
 - **Arriving with an APPROVE verdict** (Step 3): tell the user the plan is approved and ready for implementation.
 - **Arriving after the round limit** (Step 4, which already reported "Review limit reached (3 rounds). Remaining issues listed above."): nothing further to report — just stop.
-- **Arriving after a revdiff pass returns** (Step 3's "Switch to revdiff" branch): tell the user the revdiff pass is done and review is complete.

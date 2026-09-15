@@ -4,6 +4,16 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.21.1 - 2026-09-15
+
+Trims two unused options from `review-plan`'s prompts, both observed live:
+the per-round model question now offers only Opus and Sonnet (Inherit and
+Haiku dropped — the owner always makes an explicit choice, never falls
+back to a default or picks the mechanical tier for a full round), and the
+NEEDS REVISION menu drops "Switch to revdiff" (the owner never switches to
+revdiff mid-review — it's still reachable afterward, manually, same as
+`/planning:handoff`).
+
 ## global-rules 1.6.3 - 2026-09-15
 
 Adds a `block-coauthor` PreToolUse hook that denies any `git commit`/`git
