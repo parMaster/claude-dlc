@@ -12,7 +12,7 @@ Open a draft PR with a structured title and plan-based description.
 
 1. If `$ARGUMENTS` contains a path, use it
 2. Otherwise check `docs/plans/completed/` — most recently modified `.md` file
-3. Otherwise check `docs/plans/` — most recently modified `.md` file (excluding `completed/`)
+3. Otherwise check `docs/plans/` — most recently modified `.md` file (excluding `completed/` and `wbs-*.md`)
 
 Read the plan file. Extract the **Goal** line and task list for use in the description.
 

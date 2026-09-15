@@ -4,6 +4,32 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.22.0 - 2026-09-15
+
+Adds `oversight`, a new skill for the epic-scoping phase before any
+individual iteration gets planned — the owner's "Over" session, which
+previously had no skill and got re-derived from scratch at the start of
+every epic. Gathers scope, proposes grouping tickets into iterations only
+when planning them one-by-one would produce throwaway stubs discarded
+minutes later by a grouped ticket's real implementation, then checks each
+proposed iteration against INVEST (not the raw tickets — a ticket can
+legitimately fail INVEST alone precisely because it's meant to be
+grouped), and pins down an epic-level Definition of Done. Persists to a
+new doc type, `docs/plans/wbs-<epic-slug>.md`, distinct from per-iteration
+plans — `review-plan`, `handoff`, and `pr`'s "most recent plan" discovery
+now all exclude `wbs-*.md` so an epic-scope doc never gets picked up as an
+implementation plan to review or hand off. Unlike `plan`/`review-plan`
+(which report and stop), `oversight` is meant to be revisited across an
+epic's lifetime: its iteration hub can kick off an iteration — which
+spawns a new session via the existing `planning:spawn-session` skill,
+passing a self-contained prompt (tickets + grouping rationale) so the new
+session never has to read the WBS doc itself — mark an iteration done, or
+add/re-scope tickets, and resumes from the WBS doc if the session
+restarts mid-epic instead of re-deriving everything. Status tracking is
+deliberately just two states (`not started`/`done`), not a finer-grained
+machine, since nobody would reliably remember to update intermediate
+states by hand.
+
 ## planning 1.21.1 - 2026-09-15
 
 Trims two unused options from `review-plan`'s prompts, both observed live:

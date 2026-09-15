@@ -18,10 +18,12 @@ a finished plan to a running implementation.
 1. If an argument was given (`$0`), use it as the plan file path.
 2. Otherwise, find the most recently modified plan:
 
-   Run: `ls -t docs/plans/*.md 2>/dev/null | head -1`
+   Run: `ls -t docs/plans/*.md 2>/dev/null | grep -v '/wbs-' | head -1`
 
    (this already excludes `docs/plans/completed/`, since `*.md` only globs
-   files directly under `docs/plans/`, not its subdirectories)
+   files directly under `docs/plans/`, not its subdirectories; `grep -v`
+   also excludes `docs/plans/wbs-*.md` epic-scope docs, which aren't
+   per-iteration implementation plans)
 
 3. If step 2 produced no output (no `.md` files directly under `docs/plans/`),
    tell the user there's no active plan to hand off and stop.

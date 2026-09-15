@@ -36,6 +36,7 @@ The planning skills form a pipeline — each step is optional, drop in at any po
 
 ```mermaid
 flowchart TD
+    OV(["planning:oversight"])
     BS(["brainstorm"])
     PL(["planning:plan"])
     RP(["planning:review-plan"])
@@ -43,6 +44,7 @@ flowchart TD
     IM["implement"]
     DPR(["planning:pr"])
 
+    OV -.->|optional, multi-plan epics| PL
     BS -.->|optional warmup| PL
     PL -.->|optional| RP
     PL -.->|optional| RD
@@ -78,6 +80,7 @@ Structured implementation plan creation.
 
 | Skill | Description |
 |-------|-------------|
+| `oversight` | Establish and track scope for a multi-plan epic before any of its iterations get individually planned — gathers tickets/tasks, proposes grouping them into iterations (only when planning tickets one-by-one would produce throwaway stubs later discarded by a grouped ticket's real implementation), then checks each proposed iteration against INVEST (Independent/Negotiable/Valuable/Estimable/Small/Testable) and pins down an epic-level Definition of Done. Persists to `docs/plans/wbs-<epic-slug>.md` — a distinct doc type from per-iteration plans, excluded from `review-plan`/`handoff`/`pr`'s "most recent plan" discovery so it's never picked up as one. Unlike `plan`/`review-plan`, this is meant to be revisited across the epic's lifetime: its iteration hub lets you kick off an iteration (spawns a new session via `planning:spawn-session`, passing a self-contained prompt built from that iteration's tickets and grouping rationale), mark an iteration done, or add/re-scope tickets, and resumes from the WBS doc if the session restarts mid-epic. |
 | `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering and approach exploration. Reports the created plan file path and stops — call `/planning:review-plan`, `revdiff:revdiff`, or `/planning:handoff` next. Self-review also traces error/status handling, walks test preconditions, and checks multi-phase state — the same depth the separate `review-plan` reviewer applies — and enforces a code-comment rule (no ticket IDs, links, PR numbers, commit SHAs, `(Slice N)` markers, or spec/doc pointers in example code). Discovery and dependency verification widen in a self-declared deep-discovery mode for multi-plan/large-feature work. Before writing a task, it reads in full every existing file that task lists under Create/Modify — plus the sibling test files any new test code reuses — so tasks are written against real helper signatures and existing assertions rather than guessed ones. |
 | `review-plan` | Structured plan critique, run by a dedicated `plan-review` subagent (`agents/plan-review.md`) restricted to Read/Glob/Grep/Bash — no Write/Edit/NotebookEdit, so it can't create, modify, or delete files no matter what its prompt says. Before the first round, asks whether to review in this session (delegating each round to the subagent, as before) or hand the whole review off to a freshly spawned Codex CLI session running this same skill there — that choice only appears when the session is actually running inside agterm (`AGTERM_ENABLED=1`) and `agtermctl` is on PATH; it defaults straight to this session otherwise, without asking. Checks correctness, over-engineering, test coverage, conventions. Asks which model should run each review round (Opus/Sonnet) before every spawn — first review or a "Fix and re-review" continuation. Every finding is tagged MECHANICAL (backed by a `verify:` command) or REASONED (needs judgment); a finding that's a pattern repeated across multiple tasks gets every instance fixed in one pass, not just the flagged line, and a "needs more explanation" finding gets inlined rather than resolved with a pointer back to a spec or ticket; a fix pass that leaves only MECHANICAL findings gets its fixes verified by command instead of spawning another round. Rounds after the first scope the expensive dependency/error-tracing checks to just the sections the last round's fixes touched, instead of redoing the whole plan. Presents findings by severity (Critical/Important/Minor) with APPROVE/NEEDS REVISION verdict. Iterates up to 3 rounds, then reports the outcome and stops — call `/planning:handoff`, `revdiff:revdiff`, or begin implementation directly when ready. A Haiku mechanical pre-pass runs once before the first round and clears the grep-provable findings, without consuming the 3-round budget. The fix step verifies its own reasoned fixes against the source they make claims about, rather than leaving that for the next round. Invoke on any plan: `/review-plan docs/plans/foo.md` |
 | `pr` | Open a draft PR from the plan file — interactive title (`[feat\|fix\|chore]: TICKET-ID - title`) and plan-based description. If a PR already exists on the branch, reads the current description and amends it with the new plan's changes rather than replacing it. |
@@ -85,6 +88,27 @@ Structured implementation plan creation.
 | `spawn-session` | Hand off an arbitrary task (not tied to a plan file) to a fresh, independent agterm session — triggers from natural language ("spawn a new session for this", "hand this off to a separate session", etc.) as well as `/planning:spawn-session [task]`. Asks which CLI to run it on — Claude or Codex — before the model question. Distinct from a background subagent: a real, visible terminal session the user can watch or drive directly. Can group related slices of one job under a shared named workspace. |
 
 Three skills hand off to a fresh agterm session now that `plan` and `review-plan` no longer do it inline: `handoff` and `spawn-session` ask which CLI to run — Claude or Codex — then which model, and hand off implementation (`handoff`) or an arbitrary task (`spawn-session`). `review-plan` can additionally hand off the review itself (not implementation) to a Codex session, with no CLI or model choice — it always spawns `codex` with whatever model it's configured to use by default. `plan` no longer hands off anywhere; it reports the created file and stops. Every hand-off flags the new session (`agtermctl session flag on`), so all in-flight sessions show up in agterm's flagged sidebar view / flagged-dashboard grid instead of having to be found and flagged by hand. On the Claude path (`handoff`/`spawn-session` only), the model question is Inherit/Opus/Sonnet/Haiku, passed through as `claude --model`; on the Codex path it's Inherit or a free-typed model name (via the `AskUserQuestion` "Other" input), passed through as `codex --model` — Codex has no built-in model tiers to choose from. `handoff`'s implementation hand-off and `review-plan`'s review hand-off both launch in accept-edits-equivalent mode so they can start working right away — `claude --permission-mode acceptEdits` on the Claude path, `codex --sandbox workspace-write --ask-for-approval never` on the Codex path (Codex has no direct equivalent of `acceptEdits`, so this is the closest mapping: auto-approve within the workspace sandbox without escalating further); `spawn-session` starts with each CLI's own default permission/approval mode instead, since it hands off an arbitrary task rather than a plan already meant to be acted on.
+
+**`oversight` — flow**
+
+```mermaid
+flowchart TD
+    A["find existing WBS docs"] --> B{"resume or new?"}
+    B -->|"existing doc"| H
+    B -->|"new epic"| C["gather scope: tickets/tasks"]
+    C --> D["propose iteration chunking"]
+    D --> E["INVEST pass per proposed iteration"]
+    E -->|"fails INVEST"| D
+    E -->|"holds up"| F["confirm grouping + epic DoD"]
+    F --> G["write docs/plans/wbs-<epic>.md"]
+    G --> H{"iteration hub"}
+    H -->|"kick off iteration"| K(["build prompt from tickets + rationale, spawn via planning:spawn-session"])
+    K --> H
+    H -->|"mark done"| U["update WBS doc + progress log"]
+    U --> H
+    H -->|"add/re-scope tickets"| C
+    H -->|"done for now"| STOP(["stop — resumable later"])
+```
 
 **`plan` — flow**
 

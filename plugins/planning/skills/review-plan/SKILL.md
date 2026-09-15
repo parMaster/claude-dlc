@@ -11,7 +11,7 @@ Iterative structured critique of an implementation plan. A read-only review agen
 ## Step 0: Find the plan file
 
 1. If `$ARGUMENTS` contains a file path, use it
-2. Otherwise check `docs/plans/` — most recently modified `.md` (excluding `completed/`)
+2. Otherwise check `docs/plans/` — most recently modified `.md` (excluding `completed/` and `wbs-*.md`)
 3. If multiple plans exist and it's unclear which, list them and ask
 
 ## Step 0.3: Choose review runtime
