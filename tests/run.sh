@@ -425,6 +425,46 @@ assert_contains "refuses to run when AGTERM_ENABLED is unset" "exit:1" "$result"
 
 rm -rf "$CODEX_TEST_REPO"
 
+# ---------------------------------------------------------------------------
+# planning/codex-review-handoff.sh
+# ---------------------------------------------------------------------------
+
+CODEX_REVIEW_HANDOFF_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/codex-review-handoff.sh"
+
+echo "planning/codex-review-handoff.sh"
+
+CODEX_REVIEW_TEST_REPO="$(mktemp -d)"
+(cd "$CODEX_REVIEW_TEST_REPO" && git init -q)
+CODEX_REVIEW_PLAN_FILE="${CODEX_REVIEW_TEST_REPO}/docs/plans/2026-01-01-example.md"
+mkdir -p "$(dirname "$CODEX_REVIEW_PLAN_FILE")"
+echo "# Example plan" > "$CODEX_REVIEW_PLAN_FILE"
+
+LOG="$(mktemp)"
+TYPED="$(mktemp)"
+result=$(
+  cd "$CODEX_REVIEW_TEST_REPO" && \
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_REVIEW_HANDOFF_SCRIPT" "$CODEX_REVIEW_PLAN_FILE"
+)
+assert_eq "prints the new session's display name on success" "Review: example" "$result"
+assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
+assert_contains "creates the session before flagging" "session new" "$(cat "$LOG")"
+TYPED_CMD="$(cat "$TYPED")"
+assert_contains "types a codex launch command with workspace-write flags" 'codex --sandbox workspace-write --ask-for-approval never "$(cat ' "$TYPED_CMD"
+assert_not_contains "never passes a --model flag" " --model" "$TYPED_CMD"
+PROMPT_PATH="${TYPED_CMD#*cat }"
+PROMPT_PATH="${PROMPT_PATH%)\"}"
+assert_eq "the prompt file the typed command reads actually exists" "yes" "$([ -f "$PROMPT_PATH" ] && echo yes || echo no)"
+PROMPT_CONTENT="$(cat "$PROMPT_PATH" 2>/dev/null || echo "")"
+assert_contains "prompt file references the plan path" "$CODEX_REVIEW_PLAN_FILE" "$PROMPT_CONTENT"
+assert_contains "prompt file tells the session to review it thoroughly" "Review it thoroughly" "$PROMPT_CONTENT"
+rm -f "$LOG" "$TYPED"
+
+result=$(AGTERM_ENABLED="" bash "$CODEX_REVIEW_HANDOFF_SCRIPT" "$CODEX_REVIEW_PLAN_FILE" 2>&1; echo "exit:$?")
+assert_contains "refuses to run when AGTERM_ENABLED is unset" "exit:1" "$result"
+
+rm -rf "$CODEX_REVIEW_TEST_REPO"
+
 rm -rf "$AGTERM_FAKE_BIN" "$TEST_REPO"
 
 # ---------------------------------------------------------------------------

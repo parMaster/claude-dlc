@@ -28,9 +28,10 @@ if ! grep -qF "$IMPORT_LINE" "$GLOBAL_CLAUDE"; then
   echo "$IMPORT_LINE" >> "$GLOBAL_CLAUDE"
 fi
 
-# Ensure AskUserQuestion dialogs (e.g. review-plan's post-review menu) don't
-# auto-timeout after the 60s default. Only set it if the user hasn't already
-# configured their own value — never clobber an existing setting.
+# Ensure AskUserQuestion dialogs (e.g. review-plan's runtime/model-choice
+# prompts) don't auto-timeout after the 60s default. Only set it if the user
+# hasn't already configured their own value — never clobber an existing
+# setting.
 if [ ! -f "$SETTINGS" ]; then
   echo '{}' > "$SETTINGS"
 fi

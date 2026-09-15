@@ -1,7 +1,7 @@
 ---
 name: plan
 description: Create a structured implementation plan in docs/plans/. Activates on "make a plan", "create a plan", "plan this feature", "write a plan", or when the user wants to document implementation steps before coding.
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, Skill, AskUserQuestion, EnterPlanMode
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, AskUserQuestion, EnterPlanMode
 ---
 
 # Implementation Plan Creation
@@ -306,70 +306,9 @@ Fix issues inline. No need to re-review after fixing.
 
 These checks mirror what the separate `plan-review` agent verifies. Catching them here means fewer review rounds, not weaker review — the reviewer still runs the same checklist independently.
 
-## Step 3: Next steps
+## Step 3: Report completion
 
-After self-review, tell the user: "created plan: `docs/plans/yyyymmdd-<task-name>.md`"
-
-Before building this menu, check availability: `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1`. Only include the "Implement in a Separate Session" option below when that check succeeds; omit it otherwise (the other four options are always shown).
-
-Then use AskUserQuestion:
-
-```json
-{
-  "questions": [{
-    "question": "Plan created. What's next?",
-    "header": "Next step",
-    "options": [
-      {"label": "Auto-review", "description": "Run structured agent review — checks correctness, over-engineering, test coverage"},
-      {"label": "Review with revdiff", "description": "Open plan in revdiff for inline annotations"},
-      {"label": "Implement in a Subagent", "description": "Hand off implementation to a background subagent — reports back when done, keeps this session clean"},
-      {"label": "Implement in a Separate Session", "description": "Hand off implementation to a fresh agterm session, in the same workspace as this one — runs interactively, you can watch and drive it directly"},
-      {"label": "Done", "description": "Stop here"}
-    ],
-    "multiSelect": false
-  }]
-}
-```
-
-- **Auto-review**: invoke the `planning:review-plan` skill on the plan file — it handles the review/fix loop internally. When it returns, stop completely. Do NOT proceed to implementation.
-- **Review with revdiff**: invoke the `revdiff:revdiff` skill on the plan file — it handles the full annotation and revision loop internally. When it returns, stop completely. Do NOT proceed to implementation.
-- **Implement in a Subagent**: first ask which model the implementer should run on, using AskUserQuestion:
-
-  ```json
-  {
-    "questions": [{
-      "question": "Which model should the implementer subagent use?",
-      "header": "Model",
-      "options": [
-        {"label": "Inherit", "description": "Use the same model as this session (default)"},
-        {"label": "Opus", "description": "Most capable — best for complex or subtle implementations"},
-        {"label": "Sonnet", "description": "Faster and cheaper — good for straightforward plans"},
-        {"label": "Haiku", "description": "Fastest and cheapest — for simple mechanical changes"}
-      ],
-      "multiSelect": false
-    }]
-  }
-  ```
-
-  Then use the Agent tool with `subagent_type: general-purpose` and `run_in_background: true` to dispatch the plan below. Pass `model` set to the chosen tier (`opus`, `sonnet`, or `haiku`); for **Inherit**, omit the `model` parameter entirely. Do NOT add task-by-task review scaffolding or extra process — this is a plain hand-off, matching what a fresh session would get:
-
-  ```
-  You have a new implementation plan to execute: PLAN_FILE
-
-  Read it fully, then implement every task in order, following its stated
-  testing approach. Run the project's tests and linter before treating any
-  task as done. When the whole plan is implemented, report a concise
-  summary of what changed, and flag any deviations from the plan or open
-  concerns.
-  ```
-
-  Tell the user implementation has been handed off to a background subagent (noting the chosen model) and they'll be notified when it completes. Stop completely — do NOT continue.
-- **Implement in a Separate Session**: hand off to a fresh agterm session in this same workspace. First ask which model it should run on, using the same AskUserQuestion as the Subagent option above (`Inherit`/`Opus`/`Sonnet`/`Haiku`); lower-case the chosen label for `MODEL` (empty string for Inherit).
-
-  Run: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE" "MODEL"` (substitute the real plan path for `PLAN_FILE` and the chosen model for `MODEL`).
-
-  On success (exit 0), the script's last stdout line is the new session's display name (e.g. `Implement: foo`) — tell the user implementation has been handed off to a new agterm session with that name, in this same workspace (noting the chosen model, unless Inherit), and they can switch to it to watch or drive it directly. On failure (non-zero exit), tell the user the handoff failed, quoting the script's stderr output. Do not fall back to a subagent silently. Either way, stop completely.
-- **Done**: stop.
+After self-review, tell the user: "created plan: `docs/plans/yyyymmdd-<task-name>.md`" and stop. Do not ask what to do next — the user calls `/planning:review-plan`, `revdiff:revdiff`, `/planning:handoff`, or begins implementation directly when ready.
 
 ## Key principles
 

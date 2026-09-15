@@ -44,9 +44,9 @@ flowchart TD
     DPR(["planning:pr"])
 
     BS -.->|optional warmup| PL
-    PL -->|auto-review| RP
-    PL -->|revdiff| RD
-    PL -->|skip| IM
+    PL -.->|optional| RP
+    PL -.->|optional| RD
+    PL --> IM
     RP --> IM
     RD --> IM
     IM --> DPR
@@ -78,13 +78,13 @@ Structured implementation plan creation.
 
 | Skill | Description |
 |-------|-------------|
-| `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering and approach exploration. Offers auto-review, revdiff annotation, hand off to a background subagent, or hand off to a fresh agterm session at the end. Self-review also traces error/status handling, walks test preconditions, and checks multi-phase state — the same depth the separate `review-plan` reviewer applies — and enforces a code-comment rule (no ticket IDs, links, PR numbers, commit SHAs, `(Slice N)` markers, or spec/doc pointers in example code). Discovery and dependency verification widen in a self-declared deep-discovery mode for multi-plan/large-feature work. Before writing a task, it reads in full every existing file that task lists under Create/Modify — plus the sibling test files any new test code reuses — so tasks are written against real helper signatures and existing assertions rather than guessed ones. |
-| `review-plan` | Structured plan critique, run by a dedicated `plan-review` subagent (`agents/plan-review.md`) restricted to Read/Glob/Grep/Bash — no Write/Edit/NotebookEdit, so it can't create, modify, or delete files no matter what its prompt says. Checks correctness, over-engineering, test coverage, conventions. Asks which model should run each review round (Inherit/Opus/Sonnet/Haiku) before every spawn — first review, "Fix and re-review", or "Run auto-review". Every finding is tagged MECHANICAL (backed by a `verify:` command) or REASONED (needs judgment); a finding that's a pattern repeated across multiple tasks gets every instance fixed in one pass, not just the flagged line, and a "needs more explanation" finding gets inlined rather than resolved with a pointer back to a spec or ticket; a fix pass that leaves only MECHANICAL findings gets its fixes verified by command and skips straight to the post-review menu instead of spawning another round. Rounds after the first scope the expensive dependency/error-tracing checks to just the sections the last round's fixes touched, instead of redoing the whole plan. Presents findings by severity (Critical/Important/Minor) with APPROVE/NEEDS REVISION verdict. Iterates up to 3 rounds, then lands on a "what's next" menu (re-run auto-review, switch to revdiff, hand off to a background implementation subagent or a fresh agterm session — choosing which model it runs on either way, or Done) that keeps re-asking until Done is explicitly chosen. The agterm hand-off only appears when the session is actually running inside agterm (`AGTERM_ENABLED=1`) and `agtermctl` is on PATH — it's silently omitted otherwise. A Haiku mechanical pre-pass runs once before the first round and clears the grep-provable findings, without consuming the 3-round budget. The fix step verifies its own reasoned fixes against the source they make claims about, rather than leaving that for the next round. Invoke on any plan: `/review-plan docs/plans/foo.md` |
+| `plan` | Create `docs/plans/YYYYMMDD-<name>.md` with context gathering and approach exploration. Reports the created plan file path and stops — call `/planning:review-plan`, `revdiff:revdiff`, or `/planning:handoff` next. Self-review also traces error/status handling, walks test preconditions, and checks multi-phase state — the same depth the separate `review-plan` reviewer applies — and enforces a code-comment rule (no ticket IDs, links, PR numbers, commit SHAs, `(Slice N)` markers, or spec/doc pointers in example code). Discovery and dependency verification widen in a self-declared deep-discovery mode for multi-plan/large-feature work. Before writing a task, it reads in full every existing file that task lists under Create/Modify — plus the sibling test files any new test code reuses — so tasks are written against real helper signatures and existing assertions rather than guessed ones. |
+| `review-plan` | Structured plan critique, run by a dedicated `plan-review` subagent (`agents/plan-review.md`) restricted to Read/Glob/Grep/Bash — no Write/Edit/NotebookEdit, so it can't create, modify, or delete files no matter what its prompt says. Before the first round, asks whether to review in this session (delegating each round to the subagent, as before) or hand the whole review off to a freshly spawned Codex CLI session running this same skill there — that choice only appears when the session is actually running inside agterm (`AGTERM_ENABLED=1`) and `agtermctl` is on PATH; it defaults straight to this session otherwise, without asking. Checks correctness, over-engineering, test coverage, conventions. Asks which model should run each review round (Inherit/Opus/Sonnet/Haiku) before every spawn — first review or a "Fix and re-review" continuation. Every finding is tagged MECHANICAL (backed by a `verify:` command) or REASONED (needs judgment); a finding that's a pattern repeated across multiple tasks gets every instance fixed in one pass, not just the flagged line, and a "needs more explanation" finding gets inlined rather than resolved with a pointer back to a spec or ticket; a fix pass that leaves only MECHANICAL findings gets its fixes verified by command instead of spawning another round. Rounds after the first scope the expensive dependency/error-tracing checks to just the sections the last round's fixes touched, instead of redoing the whole plan. Presents findings by severity (Critical/Important/Minor) with APPROVE/NEEDS REVISION verdict. Iterates up to 3 rounds, then reports the outcome and stops — call `/planning:handoff`, `revdiff:revdiff`, or begin implementation directly when ready. A Haiku mechanical pre-pass runs once before the first round and clears the grep-provable findings, without consuming the 3-round budget. The fix step verifies its own reasoned fixes against the source they make claims about, rather than leaving that for the next round. Invoke on any plan: `/review-plan docs/plans/foo.md` |
 | `pr` | Open a draft PR from the plan file — interactive title (`[feat\|fix\|chore]: TICKET-ID - title`) and plan-based description. If a PR already exists on the branch, reads the current description and amends it with the new plan's changes rather than replacing it. |
 | `handoff` | Explicit-only hand-off of a plan straight to a fresh agterm session, skipping `plan`/`review-plan`'s menus entirely — `/planning:handoff [plan-file]` (defaults to the most recent plan under `docs/plans/` if omitted). Asks which CLI to run the hand-off on — Claude or Codex — before the model question. Never triggers from natural language (`disable-model-invocation: true`). |
 | `spawn-session` | Hand off an arbitrary task (not tied to a plan file) to a fresh, independent agterm session — triggers from natural language ("spawn a new session for this", "hand this off to a separate session", etc.) as well as `/planning:spawn-session [task]`. Asks which CLI to run it on — Claude or Codex — before the model question. Distinct from a background subagent: a real, visible terminal session the user can watch or drive directly. Can group related slices of one job under a shared named workspace. |
 
-Every agterm hand-off (`plan`, `review-plan`, `handoff`, `spawn-session`) flags the new session (`agtermctl session flag on`), so all in-flight implementations show up in agterm's flagged sidebar view / flagged-dashboard grid instead of having to be found and flagged by hand. `plan` and `review-plan` always launch a `claude` process; `handoff` and `spawn-session` first ask which CLI to run — Claude or Codex. On the Claude path, the model question is the existing Inherit/Opus/Sonnet/Haiku choice, passed through as `claude --model`; on the Codex path it's Inherit or a free-typed model name (via the `AskUserQuestion` "Other" input), passed through as `codex --model` — Codex has no built-in model tiers to choose from. The two that hand off plan implementation (`handoff`, and `plan`/`review-plan`'s "Implement in a Separate Session") launch the new session in accept-edits mode so it starts implementing right away instead of asking permission for every edit — `claude --permission-mode acceptEdits` on the Claude path, `codex --sandbox workspace-write --ask-for-approval never` on the Codex path (Codex has no direct equivalent of `acceptEdits`, so this is the closest mapping: auto-approve within the workspace sandbox without escalating further); `spawn-session` hands off arbitrary tasks and starts with each CLI's own default permission/approval mode.
+Three skills hand off to a fresh agterm session now that `plan` and `review-plan` no longer do it inline: `handoff` and `spawn-session` ask which CLI to run — Claude or Codex — then which model, and hand off implementation (`handoff`) or an arbitrary task (`spawn-session`). `review-plan` can additionally hand off the review itself (not implementation) to a Codex session, with no CLI or model choice — it always spawns `codex` with whatever model it's configured to use by default. `plan` no longer hands off anywhere; it reports the created file and stops. Every hand-off flags the new session (`agtermctl session flag on`), so all in-flight sessions show up in agterm's flagged sidebar view / flagged-dashboard grid instead of having to be found and flagged by hand. On the Claude path (`handoff`/`spawn-session` only), the model question is Inherit/Opus/Sonnet/Haiku, passed through as `claude --model`; on the Codex path it's Inherit or a free-typed model name (via the `AskUserQuestion` "Other" input), passed through as `codex --model` — Codex has no built-in model tiers to choose from. `handoff`'s implementation hand-off and `review-plan`'s review hand-off both launch in accept-edits-equivalent mode so they can start working right away — `claude --permission-mode acceptEdits` on the Claude path, `codex --sandbox workspace-write --ask-for-approval never` on the Codex path (Codex has no direct equivalent of `acceptEdits`, so this is the closest mapping: auto-approve within the workspace sandbox without escalating further); `spawn-session` starts with each CLI's own default permission/approval mode instead, since it hands off an arbitrary task rather than a plan already meant to be acted on.
 
 **`plan` — flow**
 
@@ -101,20 +101,21 @@ flowchart TD
     G -->|Regular| I["code-first task template"]
     H --> J["create plan + read modify targets + dependency check + self-review"]
     I --> J
-    J --> K{"next step?"}
-    K -->|auto-review| L(["planning:review-plan"])
-    K -->|revdiff| M(["revdiff:revdiff"])
-    K -->|"implement in subagent"| SUB(["background subagent — hand off & stop"])
-    K -->|"implement in separate session"| SESS(["new agterm session — hand off & stop"])
-    K -->|done| N(["stop"])
-    EXT(["/planning:handoff"]) -.->|direct, bypasses menu| SESS
+    J --> K(["report plan path — stop"])
+    K -.->|manual| L(["planning:review-plan"])
+    K -.->|manual| RD(["revdiff:revdiff"])
+    K -.->|manual| SESS(["planning:handoff"])
 ```
 
 **`review-plan` — flow**
 
 ```mermaid
 flowchart TD
-    A["find plan file"] --> A2["Haiku mechanical pre-pass — fix + verify"]
+    A["find plan file"] --> A1{"agterm available?"}
+    A1 -->|no| A2["Haiku mechanical pre-pass — fix + verify"]
+    A1 -->|yes| A15{"runtime choice"}
+    A15 -->|"this session"| A2
+    A15 -->|"spawn Codex session"| CX(["new Codex session — hand off review & stop"])
     A2 --> B["ask review model → spawn review agent — Round N"]
     B --> C["read plan + relevant source files"]
     C --> D["verify dependency behaviors end-to-end"]
@@ -126,15 +127,10 @@ flowchart TD
     H2 -->|"no, all MECHANICAL"| M
     G -->|"Switch to revdiff"| RD(["revdiff:revdiff"])
     G -->|Done| STOP(["stop"])
-    E -->|APPROVE| M{"post-review menu"}
+    E -->|APPROVE| M(["report outcome — stop"])
     E -->|"round limit hit"| M
-    M -->|"Run auto-review"| B
-    M -->|"Review with revdiff"| RD
     RD --> M
-    M -->|"Implement in a Subagent"| SUB(["background subagent — hand off & stop"])
-    M -->|"Implement in a Separate Session"| SESS(["new agterm session — hand off & stop"])
-    M -->|Done| STOP2(["stop ✓ ready for implementation"])
-    EXT(["/planning:handoff"]) -.->|direct, bypasses menu| SESS
+    M -.->|manual| SESS(["/planning:handoff"])
 ```
 
 **`pr` — flow**
@@ -191,7 +187,7 @@ Shared global CLAUDE.md rules distributed across machines.
 /plugin install global-rules@parmaster-claude-dlc
 ```
 
-After install, run `claude --init-only` once to trigger the setup hook — it appends a single `@import` line to `~/.claude/CLAUDE.md` pointing at the plugin file, and makes two additions to `~/.claude/settings.json`: `CLAUDE_AFK_TIMEOUT_MS=86400000` (24h) so `AskUserQuestion` dialogs (e.g. `review-plan`'s post-review menu) don't auto-submit after the 60s default, and `ScheduleWakeup` in `permissions.deny` — self-scheduled wakeups were only ever used to poll work the harness already reports on completion, so each firing was a wasted turn. Denying it also means a bare `/loop` with no interval runs once instead of pacing itself; `/loop <interval>` is unaffected. All steps are additive and idempotent — existing content and any value you've already set yourself are left untouched. Machine-specific rules stay in `~/.claude/CLAUDE.md` directly; shared rules live in the plugin and are updated on reinstall.
+After install, run `claude --init-only` once to trigger the setup hook — it appends a single `@import` line to `~/.claude/CLAUDE.md` pointing at the plugin file, and makes two additions to `~/.claude/settings.json`: `CLAUDE_AFK_TIMEOUT_MS=86400000` (24h) so `AskUserQuestion` dialogs (e.g. `review-plan`'s runtime/model-choice prompts) don't auto-submit after the 60s default, and `ScheduleWakeup` in `permissions.deny` — self-scheduled wakeups were only ever used to poll work the harness already reports on completion, so each firing was a wasted turn. Denying it also means a bare `/loop` with no interval runs once instead of pacing itself; `/loop <interval>` is unaffected. All steps are additive and idempotent — existing content and any value you've already set yourself are left untouched. Machine-specific rules stay in `~/.claude/CLAUDE.md` directly; shared rules live in the plugin and are updated on reinstall.
 
 Includes: plan-first workflow (re-invoke a skill via the Skill tool on repeat use rather than replaying it from memory), commit hygiene (tests + linter before commit, no co-authored-by tag lines), git hygiene (stale-branch resync before planning and before the final commit), CLI best practices, a longer `AskUserQuestion` timeout, auto-memory discipline (confirm before writing memories, except on explicit request), response brevity (short answers, plain words, text diagrams over prose), Atlassian MCP hygiene (delegate all Jira/Confluence MCP work to a dedicated `atlassian-caller` subagent that has no Agent tool of its own — one spawn per goal, not per call — and scope the requested fields).
 

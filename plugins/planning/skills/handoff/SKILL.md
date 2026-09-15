@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Hand off an implementation plan directly to a fresh agterm session, skipping the plan/review-plan menus. Explicit invocation only.
+description: Hand off an implementation plan directly to a fresh agterm session running Claude or Codex. Explicit invocation only.
 argument-hint: "[plan-file]"
 disable-model-invocation: true
 user-invocable: true
@@ -9,8 +9,9 @@ allowed-tools: Bash, AskUserQuestion
 
 # Handoff to a Separate Session
 
-Hand a plan straight to a fresh agterm session — the same mechanism `plan` and
-`review-plan` offer inline, without going through either skill's menus.
+Hand a plan straight to a fresh agterm session. `plan` and `review-plan` no
+longer offer implementation hand-off inline — this is the direct route from
+a finished plan to a running implementation.
 
 ## Step 1: Resolve the plan file
 

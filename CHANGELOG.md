@@ -4,6 +4,33 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.21.0 - 2026-09-15
+
+`review-plan` can now hand the whole review off to a freshly spawned Codex
+CLI session running this same skill there, instead of always reviewing in
+the current session — a new Step 0.3 asks "this session or spawn Codex
+session," gated on agterm availability same as the existing hand-off
+options. The Codex path uses a new `codex-review-handoff.sh` (mirroring
+`codex-handoff.sh`, sharing its canned-prompt infrastructure via a new
+`build_review_prompt` in `handoff-prompt.sh`) and, per owner's explicit
+call, never asks which model to run on — the spawned session always uses
+whatever model Codex is configured to use by default.
+
+Separately, removes the two end-of-skill "what's next" menus — `plan` Step
+3 and `review-plan` Step 5 — now that `review-plan`, `revdiff:revdiff`, and
+`handoff` are all directly invocable, making the menus' options a stale
+duplicate of that same surface (the "Implement in a Separate Session"
+option, in particular, only ever offered a Claude session, unlike
+`handoff`'s Claude/Codex choice). Both skills now just report what they did
+and stop. This also means `plan`/`review-plan` no longer offer one-click
+"implement in a background subagent" — that capability now lives only in
+`handoff`/`spawn-session`, or by asking directly in plain language.
+
+## global-rules 1.6.2 - 2026-09-15
+
+Fixes a stale code comment in `setup.sh` referencing `review-plan`'s
+post-review menu, which planning 1.21.0 removes. No behavior change.
+
 ## planning 1.20.1 - 2026-09-14
 
 Hardens the runtime-branch instructions in `spawn-session` and `handoff`'s

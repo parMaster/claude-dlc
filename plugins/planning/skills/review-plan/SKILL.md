@@ -14,6 +14,32 @@ Iterative structured critique of an implementation plan. A read-only review agen
 2. Otherwise check `docs/plans/` — most recently modified `.md` (excluding `completed/`)
 3. If multiple plans exist and it's unclear which, list them and ask
 
+## Step 0.3: Choose review runtime
+
+Before running any review round, check availability: `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1`. If unavailable, skip this step entirely and continue to Step 0.5 — there's only one real choice (this session), so there's nothing to ask.
+
+If available, ask with AskUserQuestion:
+
+```json
+{
+  "questions": [{
+    "question": "Where should this review run?",
+    "header": "Runtime",
+    "options": [
+      {"label": "This session", "description": "Continue here — delegates each review round to the plan-review subagent, as it already does"},
+      {"label": "Spawn Codex session", "description": "Hand the whole review off to a freshly spawned Codex CLI session running this same skill there — this session's job ends once it's spawned"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+**This session**: continue to Step 0.5.
+
+**Spawn Codex session**: run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/codex-review-handoff.sh" "PLAN_FILE"` (substitute the real plan path for `PLAN_FILE`). No model question — the spawned session always uses whatever model Codex is configured to use by default.
+
+On success (exit 0), the script's last stdout line is the new session's display name (e.g. `Review: foo`) — tell the user the review has been handed off to a new Codex session with that name, in this same workspace, and they can switch to it to watch or drive it directly. On failure (non-zero exit), tell the user the hand-off failed, quoting the script's stderr output. Do not fall back to reviewing in this session silently. Either way, stop completely — do NOT run Step 0.5 or any review round in this session.
+
 ## Step 0.5: Mechanical pre-pass
 
 Run once per plan, before the first review round, without asking which model — this one is always Haiku. Roughly 40% of round-1 findings in the measured history were grep-provable; clearing them here means the reasoned round spends its context on judgment instead of stale identifiers.
@@ -29,11 +55,9 @@ Print its report verbatim as your own chat message, same as Step 2 requires for 
 
 Then go to Step 1 with the round counter at **1**. The pre-pass is not a round: it does not consume the 1–3 budget, and its fixes are **not** passed into round 1 as "Fixes applied since last round" — round 1 is still the first reasoned look at the whole plan, and telling the reviewer otherwise would make it narrow itself per step 8 of its own instructions.
 
-Skip this step only when re-entering the loop from Step 5's "Run auto-review" — it has already run for this plan.
-
 ## Step 1: Spawn review agent
 
-Track the current round (start at 1, max 3 — the Step 0.5 pre-pass is not counted). Every time this step runs — first review, a "Fix and re-review" continuation, or "Run auto-review" from the post-review menu — first ask which model should run this round, using AskUserQuestion:
+Track the current round (start at 1, max 3 — the Step 0.5 pre-pass is not counted). Every time this step runs — first review, or a "Fix and re-review" continuation — first ask which model should run this round, using AskUserQuestion:
 
 ```json
 {
@@ -98,67 +122,10 @@ The instant the review agent returns — foreground or background — your next 
 
 After 3 rounds without APPROVE, stop the auto-review loop. Show any remaining issues and tell the user: "Review limit reached (3 rounds). Remaining issues listed above." Then go to Step 5.
 
-## Step 5: Post-review menu
+## Step 5: Report and stop
 
-This is the hub every review path returns to — auto-review approval, round limit, or a revdiff pass finishing. Never stop silently here; always ask. Only "Done" ends the loop.
+This is where every review path ends — auto-review approval, round limit, or a revdiff pass finishing. Report the outcome and stop. Do not ask what to do next — the user calls `/planning:handoff`, `revdiff:revdiff`, or begins implementation directly when ready.
 
-Before building this menu, check availability: `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1`. Only include the "Implement in a Separate Session" option below when that check succeeds; omit it otherwise (the other four options are always shown).
-
-Use AskUserQuestion:
-
-```json
-{
-  "questions": [{
-    "question": "Plan review complete. What would you like to do next?",
-    "header": "Next step",
-    "options": [
-      {"label": "Run auto-review", "description": "Run another round of structured agent review"},
-      {"label": "Review with revdiff", "description": "Open plan in revdiff for inline annotations"},
-      {"label": "Implement in a Subagent", "description": "Hand off implementation to a background subagent — reports back when done, keeps this session clean"},
-      {"label": "Implement in a Separate Session", "description": "Hand off implementation to a fresh agterm session, in the same workspace as this one — runs interactively, you can watch and drive it directly"},
-      {"label": "Done", "description": "Stop here — plan is ready for implementation"}
-    ],
-    "multiSelect": false
-  }]
-}
-```
-
-- **Run auto-review**: reset the round counter to 1, go to Step 1
-- **Review with revdiff**: invoke the `revdiff:revdiff` skill on the plan file. When it returns, repeat Step 5
-- **Implement in a Subagent**: first ask which model the implementer should run on, using AskUserQuestion:
-
-  ```json
-  {
-    "questions": [{
-      "question": "Which model should the implementer subagent use?",
-      "header": "Model",
-      "options": [
-        {"label": "Inherit", "description": "Use the same model as this session (default)"},
-        {"label": "Opus", "description": "Most capable — best for complex or subtle implementations"},
-        {"label": "Sonnet", "description": "Faster and cheaper — good for straightforward plans"},
-        {"label": "Haiku", "description": "Fastest and cheapest — for simple mechanical changes"}
-      ],
-      "multiSelect": false
-    }]
-  }
-  ```
-
-  Then use the Agent tool with `subagent_type: general-purpose` and `run_in_background: true` to dispatch the plan below. Pass `model` set to the chosen tier (`opus`, `sonnet`, or `haiku`); for **Inherit**, omit the `model` parameter entirely. Do NOT add task-by-task review scaffolding or extra process — this is a plain hand-off, matching what a fresh session would get:
-
-  ```
-  You have a new implementation plan to execute: PLAN_FILE
-
-  Read it fully, then implement every task in order, following its stated
-  testing approach. Run the project's tests and linter before treating any
-  task as done. When the whole plan is implemented, report a concise
-  summary of what changed, and flag any deviations from the plan or open
-  concerns.
-  ```
-
-  Tell the user implementation has been handed off to a background subagent (noting the chosen model) and they'll be notified when it completes. Stop completely — do NOT continue the review loop.
-- **Implement in a Separate Session**: hand off to a fresh agterm session in this same workspace. First ask which model it should run on, using the same AskUserQuestion as the Subagent option above (`Inherit`/`Opus`/`Sonnet`/`Haiku`); lower-case the chosen label for `MODEL` (empty string for Inherit).
-
-  Run: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/agterm-handoff.sh" "PLAN_FILE" "MODEL"` (substitute the real plan path for `PLAN_FILE` and the chosen model for `MODEL`).
-
-  On success (exit 0), the script's last stdout line is the new session's display name (e.g. `Implement: foo`) — tell the user implementation has been handed off to a new agterm session with that name, in this same workspace (noting the chosen model, unless Inherit), and they can switch to it to watch or drive it directly. On failure (non-zero exit), tell the user the handoff failed, quoting the script's stderr output. Do not fall back to a subagent silently. Either way, stop completely — do NOT continue the review loop.
-- **Done**: stop completely — do NOT suggest or begin implementation
+- **Arriving with an APPROVE verdict** (Step 3): tell the user the plan is approved and ready for implementation.
+- **Arriving after the round limit** (Step 4, which already reported "Review limit reached (3 rounds). Remaining issues listed above."): nothing further to report — just stop.
+- **Arriving after a revdiff pass returns** (Step 3's "Switch to revdiff" branch): tell the user the revdiff pass is done and review is complete.
