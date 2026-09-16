@@ -110,6 +110,8 @@ flowchart TD
     H -->|"done for now"| STOP(["stop — resumable later"])
 ```
 
+**Tip: keep a long-lived `oversight` session's cache warm.** If it'll sit open for hours between check-ins (e.g. spawning one iteration a day and returning to it later), run `/loop 50m keepalive ping — no action, one-word ack` in that session. A cache read refreshes the 1h prompt-cache TTL for ~0.1× the cost of letting it go cold and re-processing the whole context on your next real check-in. `/usage` shows the current cache state (`warm`/`miss`, time since last activity) to confirm it's working.
+
 **`plan` — flow**
 
 ```mermaid
