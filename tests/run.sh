@@ -435,7 +435,7 @@ assert_eq "prints the new session's display name on success" "Implement: example
 assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
 assert_contains "creates the session before flagging" "session new" "$(cat "$LOG")"
 TYPED_CMD="$(cat "$TYPED")"
-assert_contains "types a codex launch command with the accept-edits-equivalent flags" 'codex --sandbox workspace-write --ask-for-approval never "$(cat ' "$TYPED_CMD"
+assert_contains "types a codex launch command with the accept-edits-equivalent flags" 'codex --sandbox danger-full-access --ask-for-approval on-request "$(cat ' "$TYPED_CMD"
 PROMPT_PATH="${TYPED_CMD#*cat }"
 PROMPT_PATH="${PROMPT_PATH%)\"}"
 assert_eq "the prompt file the typed command reads actually exists" "yes" "$([ -f "$PROMPT_PATH" ] && echo yes || echo no)"
@@ -451,7 +451,7 @@ result=$(
   AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
   PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_HANDOFF_SCRIPT" "$CODEX_PLAN_FILE" "gpt-5.1-codex"
 )
-assert_contains "appends --model when a model is given" 'codex --sandbox workspace-write --ask-for-approval never --model gpt-5.1-codex "$(cat ' "$(cat "$TYPED")"
+assert_contains "appends --model when a model is given" 'codex --sandbox danger-full-access --ask-for-approval on-request --model gpt-5.1-codex "$(cat ' "$(cat "$TYPED")"
 rm -f "$LOG" "$TYPED"
 
 result=$(AGTERM_ENABLED="" bash "$CODEX_HANDOFF_SCRIPT" "$CODEX_PLAN_FILE" 2>&1; echo "exit:$?")

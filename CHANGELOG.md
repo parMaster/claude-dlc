@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.22.1 - 2026-09-16
+
+`codex-handoff.sh` (the `handoff` skill's implementation hand-off) now
+launches Codex with `--sandbox danger-full-access --ask-for-approval
+on-request` instead of `--sandbox workspace-write --ask-for-approval
+never`. Real-world use found workspace-write too restrictive for
+implementation sessions: `gofmt`, `golangci-lint`, and `docker` all need to
+write to caches/temp dirs outside the repo, and workspace-write blocked
+that with no way to grant an exception. `on-request` still lets Codex pause
+and ask when it judges an action risky, rather than dropping all gating.
+`codex-review-handoff.sh` (the `review-plan` skill's review hand-off) is
+unaffected — it stays on `workspace-write`/`never` since review sessions
+don't run formatters/linters/containers, only edit the plan file directly.
+
 ## planning 1.22.0 - 2026-09-15
 
 Adds `oversight`, a new skill for the epic-scoping phase before any

@@ -35,13 +35,13 @@ source "$SCRIPT_DIR/handoff-prompt.sh"
 PROMPT_FILE=$(mktemp "${TMPDIR:-/tmp}/codex-handoff.XXXXXX")
 build_handoff_prompt "$PLAN_FILE" > "$PROMPT_FILE"
 
-CODEX_FLAGS="--sandbox workspace-write --ask-for-approval never"
+CODEX_FLAGS="--sandbox danger-full-access --ask-for-approval on-request"
 if [ -n "$MODEL" ]; then
   CODEX_FLAGS="$CODEX_FLAGS --model $MODEL"
 fi
 
-# Implementation hand-offs start in accept-edits mode. Codex's nearest
-# equivalent to Claude's --permission-mode acceptEdits is a workspace-write
-# sandbox with approval turned off, rather than escalating all the way to
-# --dangerously-bypass-approvals-and-sandbox.
+# workspace-write blocked gofmt/golangci-lint/docker from writing to their
+# temp/cache dirs outside the repo, so implementation hand-offs use
+# danger-full-access instead. on-request (rather than never) still lets
+# Codex pause and ask when it judges an action risky.
 bash "$SCRIPT_DIR/codex-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE" "" "$CODEX_FLAGS"
