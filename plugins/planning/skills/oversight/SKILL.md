@@ -150,7 +150,9 @@ Two statuses only: `not started` and `done`. Every iteration starts at
 ## Step 5: Iteration hub
 
 This is where every path lands — a fresh WBS doc from Step 4, or a resumed
-one from Step 0. Show the current iteration list with status, then ask:
+one from Step 0. If every iteration in the doc is already `done`, don't show
+the usual menu — go to Step 6 (epic wrap-up) instead. Otherwise show the
+current iteration list with status, then ask:
 
 ```json
 {
@@ -209,6 +211,39 @@ one from Step 0. Show the current iteration list with status, then ask:
 
 - **Done for now**: stop. The WBS doc is already saved — the next time this
   skill runs against the same epic, it resumes from here (Step 0).
+
+## Step 6: Epic wrap-up
+
+Reached once every iteration is `done`. First ask whether any housekeeping is
+needed before closing the epic out — things like updating a README, bumping
+a changelog, tidying leftover branches, or anything else the iterations
+themselves didn't cover:
+
+```json
+{
+  "questions": [{
+    "question": "All iterations are done. Any housekeeping work needed before closing out this epic?",
+    "header": "Housekeeping",
+    "options": [
+      {"label": "No, wrap up now", "description": "Close the epic out — nothing else to do"},
+      {"label": "Yes, there's housekeeping", "description": "Describe what's needed before closing out"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+- If there's housekeeping: let the user describe it, do the work (or spawn a
+  session for it the same way Step 5 kicks off an iteration, if it's
+  substantial enough to warrant one), then return to this question — don't
+  assume one round covers everything.
+- Once housekeeping is confirmed done (or was never needed), close out the
+  epic: append a final Progress Log entry to the WBS doc marking the epic
+  complete (date + "Epic complete — all iterations done" plus a one-line
+  note of any housekeeping performed), then move the WBS doc itself into
+  `docs/plans/completed/`, matching the convention plans already use for
+  finished work. Report the move to the user and stop — this epic's
+  oversight session is finished.
 
 ## Key principles
 

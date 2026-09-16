@@ -4,6 +4,16 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.23.0 - 2026-09-16
+
+`oversight` skill now closes out an epic instead of leaving it at "every
+iteration done" with no next step. Once all iterations in the WBS doc are
+`done`, Step 5 routes to a new Step 6: ask whether any housekeeping is needed
+before closing out, do it (or spawn a session for it) if so, then append a
+final Progress Log entry marking the epic complete and move the WBS doc into
+`docs/plans/completed/`, matching the convention plan docs already follow.
+Based on feedback from the skill's first successful real-world run.
+
 ## global-rules 1.7.0 - 2026-09-16
 
 `setup.sh` now sets `bashOutputMaxChars` to 4000 (the harness floor) in
