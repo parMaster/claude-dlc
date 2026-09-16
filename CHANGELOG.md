@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.7.0 - 2026-09-16
+
+`setup.sh` now sets `bashOutputMaxChars` to 4000 (the harness floor) in
+`~/.claude/settings.json` if the user hasn't already set their own value.
+Motivated by a real recurring problem: models running commands like `go test
+./... > log; tail -300 log` and dumping hundreds of lines into context
+despite CLAUDE.md instructions not to. A `tail`-pattern-matching PreToolUse
+hook was considered and rejected — a model can trivially reproduce the same
+dump via Python/awk/cat, defeating a command-shape match. `bashOutputMaxChars`
+instead caps by actual output size regardless of the command that produced
+it: anything over the limit is saved to a file and the model sees a preview
+plus the path, which is the workflow the CLAUDE.md rule was already asking
+for.
+
 ## planning 1.22.1 - 2026-09-16
 
 `codex-handoff.sh` (the `handoff` skill's implementation hand-off) now
