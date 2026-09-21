@@ -142,7 +142,7 @@ The rules cover plan-first workflow, git hygiene, tests and lint before commit, 
 | Hook | Effect |
 |------|--------|
 | `block-root-find` | Denies `find` rooted at `/`. Scope the search to a directory. |
-| `block-coauthor` | Denies `git commit` / `gh pr create` / `gh pr edit` with a `Co-Authored-By` line. |
+| `block-coauthor` | Denies `git commit` / `gh pr create` / `gh pr edit` with a `Co-Authored-By` line or a claude.ai session link (`Claude-Session:` trailer). |
 
 ---
 

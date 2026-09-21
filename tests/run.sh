@@ -173,6 +173,19 @@ assert_contains "blocks gh pr edit with a Co-Authored-By line" '"permissionDecis
 result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'echo hi && git commit -m "hi Co-Authored-By: x"')
 assert_contains "blocks a Co-Authored-By commit chained after &&" '"permissionDecision": "deny"' "$result"
 
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'git commit -m "fix bug
+
+Claude-Session: https://claude.ai/code/session_01ABC"')
+assert_contains "blocks git commit with a Claude-Session trailer" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'gh pr create --title x --body "desc
+
+https://claude.ai/code/session_01ABC"')
+assert_contains "blocks gh pr create with a bare claude.ai session link" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'gh pr edit 5 --body "desc https://claude.ai/code/session_01ABC"')
+assert_contains "blocks gh pr edit with a bare claude.ai session link" '"permissionDecision": "deny"' "$result"
+
 result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'git commit -m "plain message"')
 assert_eq "allows a git commit with no Co-Authored-By line" "" "$result"
 
@@ -181,6 +194,9 @@ assert_eq "allows unrelated git commands" "" "$result"
 
 result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'grep -rn "Co-Authored-By" .')
 assert_eq "allows unrelated commands merely mentioning the phrase" "" "$result"
+
+result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'grep -rn "Claude-Session" .')
+assert_eq "allows unrelated commands merely mentioning Claude-Session" "" "$result"
 
 # ---------------------------------------------------------------------------
 # Shared fake agtermctl for planning/agterm-spawn.sh and

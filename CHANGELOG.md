@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.7.1 - 2026-09-21
+
+`block-coauthor` hook now also denies commit/PR commands carrying a claude.ai
+session link: the `Claude-Session:` trailer on commits and the bare
+`claude.ai/code/session_…` URL on PR descriptions, both injected by Claude
+Code's attribution system-reminder even when `attribution` is set to `""` in
+settings. The script keeps its name.
+
 ## planning 1.23.0 - 2026-09-16
 
 `oversight` skill now closes out an epic instead of leaving it at "every
