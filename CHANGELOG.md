@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.23.4 - 2026-09-24
+
+Checkbox-ticking guidance now leads with the `perl` range one-liner for a
+finished task and keeps Edit for a single box mid-task. Edit resends every
+long checkbox line twice, so it costs more output tokens than even a script
+when ticking a whole section.
+
 ## planning 1.23.3 - 2026-09-24
 
 Plan template's Progress Tracking section now says how to tick boxes: Edit

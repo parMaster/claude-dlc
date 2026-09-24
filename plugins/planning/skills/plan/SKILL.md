@@ -186,7 +186,7 @@ Test-only helpers count as dependencies. A fixture, builder, or assertion helper
 
 ## Progress Tracking
 - mark completed items with `[x]` immediately when done
-- tick boxes one at a time with Edit, including the line above if the text repeats across tasks; to tick a whole finished task: `perl -pi -e 's/- \[ \]/- [x]/ if /^### Task N:/.../^### Task/' <plan>` — never a script
+- to tick a whole finished task: `perl -pi -e 's/- \[ \]/- [x]/ if /^### Task N:/.../^### Task/' <plan>`; for a single box mid-task, use Edit with the line above if the text repeats — never a script
 - add newly discovered tasks with ➕ prefix
 - document issues/blockers with ⚠️ prefix
 
