@@ -4,6 +4,26 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.23.2 - 2026-09-24
+
+`plan-review` agent's "Test setup preconditions" check now covers full test
+lifecycle, not just setup ordering: verifies each new/modified test file is
+actually registered with the test runner, and traces interactions with
+earlier/later ordered tests, suite cleanup hooks, and repeat-run/`KEEP_*`
+flows. Flags a test that's never invoked, or a created resource that
+contaminates later specs or survives a declared cleanup path, as CRITICAL.
+
+## statusline 1.0.6 - 2026-09-24
+
+Add an opt-in Codex support path: `scripts/setup-codex.sh` configures Codex's
+native footer (`tui.status_line`) to mirror the Claude status line as closely
+as Codex's native item set allows — current dir, Git branch, model +
+reasoning effort, context use, five-hour use, weekly use. Comment-preserving,
+idempotent TOML edit via an embedded Python updater; validates before and
+after, atomic replace. README documents the command and Codex's native
+rendering limits (no prompt symbol, dirty marker, custom colors, or reset
+time).
+
 ## global-rules 1.7.1 - 2026-09-21
 
 `block-coauthor` hook now also denies commit/PR commands carrying a claude.ai

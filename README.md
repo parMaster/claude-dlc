@@ -47,6 +47,32 @@ flowchart TD
 
 ## Plugins
 
+### statusline
+
+Custom status line (robbyrussell-style).
+
+#### Claude Code
+
+```
+/plugin install statusline@parmaster-claude-dlc
+```
+
+Shows: current dir, git branch + dirty state (`✗`), model name, context %, 5h/7d usage rates with reset time.
+
+After install, run `claude --init-only` once to trigger the setup hook — it writes `statusLine` into `~/.claude/settings.json`. Then relaunch Claude normally.
+
+#### Codex
+
+Codex uses its native footer renderer. From this repository, run:
+
+```bash
+bash plugins/statusline/scripts/setup-codex.sh
+```
+
+Restart Codex after setup. The footer shows the current directory, Git branch, model and reasoning effort, context use, five-hour use, and weekly use. Codex controls the colors and labels; its native footer does not expose the Claude line's prompt symbol, dirty-tree marker, custom context color, or reset time.
+
+---
+
 ### planning
 
 Plans, plan reviews, PRs, and hand-offs to fresh sessions.
