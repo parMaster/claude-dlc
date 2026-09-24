@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.23.3 - 2026-09-24
+
+Plan template's Progress Tracking section now says how to tick boxes: Edit
+one at a time (with the line above for context, since checkbox text repeats
+across tasks), or a portable `perl` range one-liner to tick a whole task.
+Stops agents from writing Python scripts to flip a few checkboxes.
+
 ## planning 1.23.2 - 2026-09-24
 
 `plan-review` agent's "Test setup preconditions" check now covers full test
