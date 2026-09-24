@@ -12,6 +12,18 @@ session link: the `Claude-Session:` trailer on commits and the bare
 Code's attribution system-reminder even when `attribution` is set to `""` in
 settings. The script keeps its name.
 
+## planning 1.23.1 - 2026-09-24
+
+`spawn-session` Step 5 now gates against a real failure: a spawned session
+whose prompt opens with "Spawn a new session to..." instead of a direct
+imperative, so the recipient tries to spawn yet another session rather than
+doing the work. Before invoking the spawn script, the first line of
+`$PROMPT_FILE` is checked against known hand-off phrasing ("spawn", "start",
+"delegate", "hand off" + "session"/"agent"); a match exits non-zero with a
+message telling the author to fix line 1 and rerun. Recovery is a one-line
+`Edit` on the already-written prompt file, not a full re-author, since the
+expensive part (the task body) is untouched by the check.
+
 ## planning 1.23.0 - 2026-09-16
 
 `oversight` skill now closes out an epic instead of leaving it at "every

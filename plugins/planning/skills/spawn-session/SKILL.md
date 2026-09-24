@@ -79,8 +79,17 @@ PROMPT_FILE=$(mktemp "${TMPDIR:-/tmp}/agterm-spawn.XXXXXX")
 cat > "$PROMPT_FILE" <<'PROMPT_EOF'
 <task prompt from Step 1>
 PROMPT_EOF
+if head -n1 "$PROMPT_FILE" | grep -qiE '^(spawn|start|kick off|delegate|hand (this|it) off)\b.*\b(new )?(session|agent)\b'; then
+  echo "First line reads as a hand-off description, not a direct task. Rewrite line 1 of $PROMPT_FILE as an imperative (e.g. 'Plan the fix for...') and rerun." >&2
+  exit 1
+fi
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/SPAWN_SCRIPT" "$PWD" "SESSION_NAME" "$PROMPT_FILE" [WORKSPACE_NAME] [MODEL_FLAGS]
 ```
+
+If this check fails: don't rewrite the whole prompt. `Edit` just line 1 of the
+still-on-disk `$PROMPT_FILE` into a direct imperative, then rerun the same
+`bash "${CLAUDE_PLUGIN_ROOT}/scripts/SPAWN_SCRIPT" ...` command — the
+expensive body underneath is untouched.
 
 `SPAWN_SCRIPT` is `agterm-spawn.sh` for the Claude runtime, `codex-spawn.sh`
 for the Codex runtime. Arguments are positional, so a skipped workspace still
