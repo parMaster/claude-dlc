@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.8.0 - 2026-09-25
+
+New `block-inline-edit` PreToolUse hook denies editing files through an
+inline python/node/ruby script or in-place `sed -i` / `perl -i`, and points
+the agent at the Edit tool so the change shows as a readable diff instead of
+a script the user has to decode. `perl -i` on a plan under `docs/plans/`
+stays allowed for the planning skill's checkbox one-liner.
+
 ## planning 1.23.4 - 2026-09-24
 
 Checkbox-ticking guidance now leads with the `perl` range one-liner for a
