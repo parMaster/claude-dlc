@@ -112,6 +112,8 @@ The instant the review agent returns — foreground or background — your next 
   5. Otherwise (at least one REASONED finding was present): increment the round counter, and go to Step 1. Pass the fix list from step 1 into the round prompt as "Fixes applied since last round" — this is what step 8 of the reviewer's instructions and the "Fix verdicts" output section require.
 - **Done**: stop completely — do NOT suggest or begin implementation
 
+A finding that is real but outside the plan's scope — a pre-existing defect the plan did not cause and does not need fixed — is not a plan fix. Instead of editing it into the plan, offer to file it with `/backlog`, which owns the format, dedupe, and branch check.
+
 **If verdict is APPROVE**: go to Step 5.
 
 ## Step 4: Round limit

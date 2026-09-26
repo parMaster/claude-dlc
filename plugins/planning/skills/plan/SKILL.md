@@ -126,6 +126,10 @@ Two things go wrong when this is skipped, and both produce a plan that cannot co
 
 If a file is genuinely too large to hold, that is a signal to narrow the task's scope, not to skim the file.
 
+### Backlog items on touched files
+
+If `docs/backlog/` exists, check its items' `where` paths against the plan's `Modify` files. For each match marked `worth: yes`, ask with AskUserQuestion whether to fold it into the plan. A folded item gets its own checklist item in the task that touches its file, including `git rm docs/backlog/<slug>.md` in that task's commit, per `/backlog`'s lifecycle. Items marked `later` or `no` are context for the plan, not questions.
+
 ### Dependency contract check
 
 **Skip this step** if the plan introduces net-new code with no existing dependencies to verify.

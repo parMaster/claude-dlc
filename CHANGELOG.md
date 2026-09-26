@@ -4,6 +4,22 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.24.0 - 2026-09-26
+
+New `backlog` skill keeps deferred work in `docs/backlog/`, one file per
+item with `worth` / `where` / `added` frontmatter. It lists, briefs, fixes
+or drops items (`/planning:backlog`, `<slug>`, `--all`). Adapted from
+cc-thingz's `workflow:backlog`, with a different branch check: new items go
+on the default branch, or without asking on a feature branch whose diff
+(stack included) touches the item's `where` file; anything else asks. The
+default branch comes from `origin/HEAD` or the remote, never from a list of
+common names. Items take an optional `ticket: PROJ-123` field linking a
+tracker ticket filed for the bigger ones.
+
+`plan` now offers to fold `worth: yes` backlog items on files it modifies
+into the plan. `review-plan` offers to file out-of-scope findings to the
+backlog instead of editing them into the plan.
+
 ## global-rules 1.8.1 - 2026-09-26
 
 The setup hook (`claude --init-only`) now sets `spinnerVerbs` in
