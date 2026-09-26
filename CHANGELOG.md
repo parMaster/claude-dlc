@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.8.2 - 2026-09-26
+
+The setup hook now sets `attribution` to `{"commit": "", "pr": ""}` in
+`~/.claude/settings.json`, so Claude Code stops adding the Co-Authored-By
+trailer and PR attribution line instead of having the `block-coauthor` hook
+deny each commit first. Skipped if `attribution` is already set.
+
 ## planning 1.24.0 - 2026-09-26
 
 New `backlog` skill keeps deferred work in `docs/backlog/`, one file per

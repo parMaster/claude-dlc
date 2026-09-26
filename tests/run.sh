@@ -108,6 +108,19 @@ count=$(grep -cF "$IMPORT_LINE" "${TEST_HOME}/.claude/CLAUDE.md")
 assert_eq "skips if @import already present (idempotent)" "1" "$count"
 rm -rf "$TEST_HOME"
 
+TEST_HOME="$(mktemp -d)"
+mkdir -p "${TEST_HOME}/.claude"
+run_setup "$GLOBALRULES_SCRIPT" "$GLOBALRULES_ROOT"
+assert_eq "turns off commit/PR attribution" '{"commit":"","pr":""}' "$(jq -c '.attribution' "${TEST_HOME}/.claude/settings.json")"
+rm -rf "$TEST_HOME"
+
+TEST_HOME="$(mktemp -d)"
+mkdir -p "${TEST_HOME}/.claude"
+echo '{"attribution": true}' > "${TEST_HOME}/.claude/settings.json"
+run_setup "$GLOBALRULES_SCRIPT" "$GLOBALRULES_ROOT"
+assert_eq "keeps an existing attribution setting" "true" "$(jq -c '.attribution' "${TEST_HOME}/.claude/settings.json")"
+rm -rf "$TEST_HOME"
+
 # ---------------------------------------------------------------------------
 # global-rules/block-root-find.sh
 # ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@
 # 3. ensure ScheduleWakeup is in permissions.deny in ~/.claude/settings.json
 # 4. ensure bashOutputMaxChars is set in ~/.claude/settings.json
 # 5. ensure spinnerVerbs is set in ~/.claude/settings.json
+# 6. ensure attribution (commit/PR trailers) is off in ~/.claude/settings.json
 # Never overwrites existing content — only adds what's missing, idempotently.
 
 GLOBAL_CLAUDE="${HOME}/.claude/CLAUDE.md"
@@ -87,6 +88,21 @@ CURRENT_SPINNER=$(jq -r '.spinnerVerbs // "" | tostring' "$SETTINGS" 2>/dev/null
 if [ -z "$CURRENT_SPINNER" ]; then
   tmpfile=$(mktemp)
   if jq '.spinnerVerbs = {"mode": "replace", "verbs": ["Thinking", "Processing", "Working"]}' "$SETTINGS" > "$tmpfile" 2>/dev/null && [ -s "$tmpfile" ]; then
+    mv "$tmpfile" "$SETTINGS"
+  else
+    rm -f "$tmpfile"
+  fi
+fi
+
+# Turn off the Co-Authored-By trailer and PR attribution line at the source.
+# The block-coauthor hook still denies any that slip through, but without
+# this setting every commit hits that denial first and has to be retried.
+# Only set if the user hasn't already configured attribution — never clobber
+# an existing setting.
+CURRENT_ATTRIBUTION=$(jq -r 'if has("attribution") then "set" else "" end' "$SETTINGS" 2>/dev/null)
+if [ -z "$CURRENT_ATTRIBUTION" ]; then
+  tmpfile=$(mktemp)
+  if jq '.attribution = {"commit": "", "pr": ""}' "$SETTINGS" > "$tmpfile" 2>/dev/null && [ -s "$tmpfile" ]; then
     mv "$tmpfile" "$SETTINGS"
   else
     rm -f "$tmpfile"

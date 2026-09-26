@@ -164,6 +164,7 @@ Run `claude --init-only` once after install. The setup hook is additive and idem
 - denies `ScheduleWakeup` (a bare `/loop` with no interval then runs once; `/loop <interval>` still works)
 - sets `bashOutputMaxChars: 4000` so large Bash output is saved to a file and previewed instead of flooding context
 - replaces the spinner's whimsical verbs ("Kerfuffling…") with `Thinking` / `Processing` / `Working`
+- sets `attribution` to `{"commit": "", "pr": ""}` so Claude Code doesn't add a Co-Authored-By trailer or PR attribution line
 
 The rules cover plan-first workflow, git hygiene, tests and lint before commit, response brevity, and memory and Atlassian MCP discipline.
 
