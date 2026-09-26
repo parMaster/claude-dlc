@@ -4,6 +4,7 @@
 # 2. ensure CLAUDE_AFK_TIMEOUT_MS is set in ~/.claude/settings.json
 # 3. ensure ScheduleWakeup is in permissions.deny in ~/.claude/settings.json
 # 4. ensure bashOutputMaxChars is set in ~/.claude/settings.json
+# 5. ensure spinnerVerbs is set in ~/.claude/settings.json
 # Never overwrites existing content — only adds what's missing, idempotently.
 
 GLOBAL_CLAUDE="${HOME}/.claude/CLAUDE.md"
@@ -73,6 +74,19 @@ CURRENT_MAX_CHARS=$(jq -r '.bashOutputMaxChars // ""' "$SETTINGS" 2>/dev/null)
 if [ -z "$CURRENT_MAX_CHARS" ]; then
   tmpfile=$(mktemp)
   if jq '.bashOutputMaxChars = 4000' "$SETTINGS" > "$tmpfile" 2>/dev/null && [ -s "$tmpfile" ]; then
+    mv "$tmpfile" "$SETTINGS"
+  else
+    rm -f "$tmpfile"
+  fi
+fi
+
+# Replace the whimsical spinner verbs ("Kerfuffling…") with plain ones. Only
+# set if the user hasn't already configured their own spinnerVerbs — never
+# clobber an existing setting.
+CURRENT_SPINNER=$(jq -r '.spinnerVerbs // "" | tostring' "$SETTINGS" 2>/dev/null)
+if [ -z "$CURRENT_SPINNER" ]; then
+  tmpfile=$(mktemp)
+  if jq '.spinnerVerbs = {"mode": "replace", "verbs": ["Thinking", "Processing", "Working"]}' "$SETTINGS" > "$tmpfile" 2>/dev/null && [ -s "$tmpfile" ]; then
     mv "$tmpfile" "$SETTINGS"
   else
     rm -f "$tmpfile"

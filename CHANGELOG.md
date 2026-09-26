@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.8.1 - 2026-09-26
+
+The setup hook (`claude --init-only`) now sets `spinnerVerbs` in
+`~/.claude/settings.json` to replace mode with `Thinking` / `Processing` /
+`Working`, instead of the default whimsical verbs. Skipped if `spinnerVerbs`
+is already set.
+
 ## global-rules 1.8.0 - 2026-09-25
 
 New `block-inline-edit` PreToolUse hook denies editing files through an

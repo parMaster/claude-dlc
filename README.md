@@ -162,6 +162,7 @@ Run `claude --init-only` once after install. The setup hook is additive and idem
 - sets `CLAUDE_AFK_TIMEOUT_MS` to 24h so `AskUserQuestion` dialogs don't auto-submit after 60s
 - denies `ScheduleWakeup` (a bare `/loop` with no interval then runs once; `/loop <interval>` still works)
 - sets `bashOutputMaxChars: 4000` so large Bash output is saved to a file and previewed instead of flooding context
+- replaces the spinner's whimsical verbs ("Kerfuffling…") with `Thinking` / `Processing` / `Working`
 
 The rules cover plan-first workflow, git hygiene, tests and lint before commit, response brevity, and memory and Atlassian MCP discipline.
 
