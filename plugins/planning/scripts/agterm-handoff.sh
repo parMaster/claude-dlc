@@ -39,11 +39,48 @@ source "$SCRIPT_DIR/handoff-prompt.sh"
 PROMPT_FILE=$(mktemp "${TMPDIR:-/tmp}/agterm-handoff.XXXXXX")
 build_handoff_prompt "$PLAN_FILE" > "$PROMPT_FILE"
 
-CLAUDE_FLAGS="--permission-mode acceptEdits"
+# True when any settings file Claude Code reads sets
+# permissions.disableAutoMode to "disable" (how an org turns auto mode off).
+# Such a machine starts `--permission-mode auto` in Manual, not accept-edits,
+# so it must never be asked for auto. CLAUDE_MANAGED_SETTINGS_DIR overrides
+# the system managed-settings directory (for tests).
+auto_mode_disabled() {
+  local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+  local system_dir="${CLAUDE_MANAGED_SETTINGS_DIR:-}"
+  if [ -z "$system_dir" ]; then
+    case "$(uname -s)" in
+      Darwin) system_dir="/Library/Application Support/ClaudeCode" ;;
+      *) system_dir="/etc/claude-code" ;;
+    esac
+  fi
+  local f
+  for f in "$system_dir/managed-settings.json" "$system_dir"/managed-settings.d/*.json \
+           "$config_dir/remote-settings.json" "$config_dir/settings.json" \
+           "$PROJECT_ROOT/.claude/settings.json" "$PROJECT_ROOT/.claude/settings.local.json"; do
+    [ -f "$f" ] || continue
+    if [ "$(jq -r '.permissions.disableAutoMode // .disableAutoMode // empty' "$f" 2>/dev/null)" = "disable" ]; then
+      return 0
+    fi
+  done
+  # macOS MDM configuration profile (com.anthropic.claudecode domain).
+  local plist="/Library/Managed Preferences/com.anthropic.claudecode.plist"
+  if [ -f "$plist" ] && command -v plutil >/dev/null 2>&1 && \
+     [ "$(plutil -extract permissions.disableAutoMode raw -o - "$plist" 2>/dev/null)" = "disable" ]; then
+    return 0
+  fi
+  return 1
+}
+
+# Implementation hand-offs skip per-edit permission prompts: the whole point
+# is to implement the plan. Auto mode where the org allows it, accept-edits
+# where it doesn't.
+if auto_mode_disabled; then
+  CLAUDE_FLAGS="--permission-mode acceptEdits"
+else
+  CLAUDE_FLAGS="--permission-mode auto"
+fi
 if [ -n "$MODEL" ]; then
   CLAUDE_FLAGS="$CLAUDE_FLAGS --model $MODEL"
 fi
 
-# Implementation hand-offs start in accept-edits mode: the whole point is to
-# implement the plan, not to re-ask permission for every edit along the way.
 bash "$SCRIPT_DIR/agterm-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE" "" "$CLAUDE_FLAGS"

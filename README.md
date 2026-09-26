@@ -91,7 +91,7 @@ Plans, plan reviews, PRs, and hand-offs to fresh sessions.
 | `handoff` | Sends a plan to a fresh [agterm](https://github.com/umputun/agterm) session on Claude or Codex. Explicit-only: `/planning:handoff [plan-file]`. |
 | `spawn-session` | Sends an arbitrary task to a fresh [agterm](https://github.com/umputun/agterm) session. Also triggers from natural language ("spawn a new session for this"). |
 
-Hand-off sessions are flagged (`agtermctl session flag on`) so in-flight work shows up in [agterm](https://github.com/umputun/agterm)'s flagged view.
+Claude hand-off sessions start in auto mode, or accept-edits when an org setting turns auto mode off. Hand-off sessions are flagged (`agtermctl session flag on`) so in-flight work shows up in [agterm](https://github.com/umputun/agterm)'s flagged view.
 
 **Tip:** to keep a long-lived `oversight` session's prompt cache warm between check-ins, run `/loop 50m keepalive ping — no action, one-word ack` in it.
 

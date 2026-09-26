@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 1.24.1 - 2026-09-26
+
+Claude plan hand-offs (`agterm-handoff.sh`) now start the new session in auto
+mode, falling back to accept-edits when a settings file sets
+`permissions.disableAutoMode` to `"disable"` (managed settings, the
+server-managed cache, user or project settings, or the macOS MDM profile).
+Asking for auto there would start the session in Manual instead.
+
 ## global-rules 1.8.2 - 2026-09-26
 
 The setup hook now sets `attribution` to `{"commit": "", "pr": ""}` in

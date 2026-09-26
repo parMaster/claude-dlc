@@ -469,18 +469,22 @@ PLAN_FILE="${TEST_REPO}/docs/plans/2026-01-01-example.md"
 mkdir -p "$(dirname "$PLAN_FILE")"
 echo "# Example plan" > "$PLAN_FILE"
 
+HANDOFF_HOME="$(mktemp -d)"
+HANDOFF_MANAGED="$(mktemp -d)"
+
 LOG="$(mktemp)"
 TYPED="$(mktemp)"
 result=$(
   cd "$TEST_REPO" && \
   AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  HOME="$HANDOFF_HOME" CLAUDE_CONFIG_DIR="" CLAUDE_MANAGED_SETTINGS_DIR="$HANDOFF_MANAGED" \
   PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$HANDOFF_SCRIPT" "$PLAN_FILE"
 )
 assert_eq "prints the new session's display name on success" "Implement: example" "$result"
 assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
 assert_contains "creates the session before flagging" "session new" "$(cat "$LOG")"
 TYPED_CMD="$(cat "$TYPED")"
-assert_contains "types a claude launch command reading a prompt file" 'claude --permission-mode acceptEdits "$(cat ' "$TYPED_CMD"
+assert_contains "types a claude launch command in auto mode reading a prompt file" 'claude --permission-mode auto "$(cat ' "$TYPED_CMD"
 PROMPT_PATH="${TYPED_CMD#*cat }"
 PROMPT_PATH="${PROMPT_PATH%)\"}"
 assert_eq "the prompt file the typed command reads actually exists" "yes" "$([ -f "$PROMPT_PATH" ] && echo yes || echo no)"
@@ -489,6 +493,32 @@ assert_contains "prompt file references the plan path" "$PLAN_FILE" "$PROMPT_CON
 assert_contains "prompt file tells the session to read the plan fully" "Read it fully" "$PROMPT_CONTENT"
 assert_not_contains "prompt never mentions SendMessage callback" "SendMessage" "$PROMPT_CONTENT"
 rm -f "$LOG" "$TYPED"
+
+# Each place an org can turn auto mode off falls back to accept-edits.
+handoff_typed_with() {
+  local file="$1"
+  mkdir -p "$(dirname "$file")"
+  echo '{"permissions":{"disableAutoMode":"disable"}}' > "$file"
+  local log typed
+  log="$(mktemp)"; typed="$(mktemp)"
+  (
+    cd "$TEST_REPO" && \
+    AGTERMCTL_LOG="$log" AGTERMCTL_TYPED="$typed" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+    HOME="$HANDOFF_HOME" CLAUDE_CONFIG_DIR="" CLAUDE_MANAGED_SETTINGS_DIR="$HANDOFF_MANAGED" \
+    PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$HANDOFF_SCRIPT" "$PLAN_FILE" "opus" >/dev/null
+  )
+  cat "$typed"
+  rm -f "$file" "$log" "$typed"
+}
+for disabled_in in "${HANDOFF_MANAGED}/managed-settings.json" \
+                   "${HANDOFF_MANAGED}/managed-settings.d/10-policy.json" \
+                   "${HANDOFF_HOME}/.claude/remote-settings.json" \
+                   "${HANDOFF_HOME}/.claude/settings.json" \
+                   "${TEST_REPO}/.claude/settings.local.json"; do
+  assert_contains "falls back to accept-edits when ${disabled_in##*/} disables auto mode" \
+    'claude --permission-mode acceptEdits --model opus "$(cat ' "$(handoff_typed_with "$disabled_in")"
+done
+rm -rf "$HANDOFF_HOME" "$HANDOFF_MANAGED"
 
 result=$(AGTERM_ENABLED="" bash "$HANDOFF_SCRIPT" "$PLAN_FILE" 2>&1; echo "exit:$?")
 assert_contains "refuses to run when AGTERM_ENABLED is unset" "exit:1" "$result"
