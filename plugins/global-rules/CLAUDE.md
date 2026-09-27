@@ -15,6 +15,10 @@
 - For config/setting name changes, verify all references (grep) and update plan docs, memory, AND application code
 - For multi-file refactors, verify no duplicate declarations across files in the same package before claiming done
 
+## Code Comments
+- A comment states the "why" a reader needs at that spot, in 1–2 lines. Never restate what the code plainly does.
+- Never point elsewhere — no ticket, plan, spec, slice or PR reference. Inline the one clause of context the reader needs instead. The `block-comment-refs` hook denies the grep-able cases.
+
 ## Honesty About Uncertainty
 - Do NOT claim 'no regressions' without actually running the relevant test suites
 - Do NOT invent helper functions, verify they exist via grep/Read first

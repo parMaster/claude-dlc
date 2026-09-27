@@ -4,6 +4,17 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.9.0 - 2026-09-27
+
+New `block-comment-refs` PreToolUse hook on Edit, Write and MultiEdit. It
+denies a new comment line in a code file that holds a ticket ID, a
+Jira/Confluence/PR link, a commit SHA, a slice marker, or a path to a plan or
+spec doc, and asks for a comment that explains instead. Only added lines are
+checked, so existing comments never block an edit. Markdown, JSON and other
+non-code files are skipped. A new "Code Comments" section in `CLAUDE.md`
+covers the part a grep can't: state the why, in 1–2 lines. These rules used
+to live in planning's plan template, which no longer holds code.
+
 ## planning 2.0.1 - 2026-09-27
 
 `pr` uses a neutral `PROJ-1234` in its ticket-ID examples.

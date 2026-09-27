@@ -28,6 +28,15 @@
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/block-inline-edit.sh"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/block-comment-refs.sh"
+          }
+        ]
       }
     ]
   }

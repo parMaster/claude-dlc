@@ -267,6 +267,93 @@ result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "go test ./... | grep -v '^{'")
 assert_eq "allows unrelated commands" "" "$result"
 
 # ---------------------------------------------------------------------------
+# global-rules/block-comment-refs.sh
+# ---------------------------------------------------------------------------
+
+BLOCK_COMMENT_REFS_SCRIPT="${REPO_ROOT}/plugins/global-rules/scripts/block-comment-refs.sh"
+COMMENT_DIR="$(mktemp -d)"
+
+run_edit() {
+  jq -n --arg f "$1" --arg o "$2" --arg n "$3" \
+    '{tool_name:"Edit", tool_input:{file_path:$f, old_string:$o, new_string:$n}}' | bash "$BLOCK_COMMENT_REFS_SCRIPT"
+}
+
+run_write() {
+  jq -n --arg f "$1" --arg c "$2" \
+    '{tool_name:"Write", tool_input:{file_path:$f, content:$c}}' | bash "$BLOCK_COMMENT_REFS_SCRIPT"
+}
+
+run_multi() {
+  jq -n --arg f "$1" --arg o "$2" --arg n "$3" \
+    '{tool_name:"MultiEdit", tool_input:{file_path:$f, edits:[{old_string:"x", new_string:"y"}, {old_string:$o, new_string:$n}]}}' \
+    | bash "$BLOCK_COMMENT_REFS_SCRIPT"
+}
+
+echo "global-rules/block-comment-refs.sh"
+
+DENY='"permissionDecision": "deny"'
+
+result=$(run_edit main.go "x := 1" $'x := 1\n// PROJ-12: handle nil')
+assert_contains "Edit: blocks a ticket ID in a Go comment" "$DENY" "$result"
+assert_contains "deny reason names the matched ticket" 'ticket ID \"PROJ-12\"' "$result"
+assert_contains "deny reason says to rewrite the comment" "Rewrite it" "$result"
+
+result=$(run_edit app.py "x = 1" $'x = 1\n# see https://acme.atlassian.net/browse/ABC-9')
+assert_contains "Edit: blocks a Jira link in a Python comment" "$DENY" "$result"
+
+result=$(run_edit app.py "x = 1" $'x = 1\n# background: https://acme.atlassian.net/wiki/spaces/ENG/pages/123')
+assert_contains "Edit: blocks a Confluence link with no ticket ID in it" 'link \"https://acme.atlassian.net' "$result"
+
+result=$(run_edit run.sh "x=1" $'x=1\n# from https://github.com/o/r/pull/482')
+assert_contains "Edit: blocks a GitHub PR link in a shell comment" "$DENY" "$result"
+
+result=$(run_edit main.go "x" $'x\n\t// per docs/plans/2026-09-01-foo.md')
+assert_contains "Edit: blocks a pointer to a plan doc" "$DENY" "$result"
+
+result=$(run_edit main.go "x" $'x\n/* Slice B wires this up */')
+assert_contains "Edit: blocks a slice marker" "$DENY" "$result"
+
+result=$(run_edit main.go "x" $'x\n// reverted in 3fa9c2e')
+assert_contains "Edit: blocks a commit SHA" "$DENY" "$result"
+
+result=$(run_write "$COMMENT_DIR/new.go" $'package x\n\n// PROJ-7 workaround\nfunc F() {}')
+assert_contains "Write: blocks a ticket ID in a new file" "$DENY" "$result"
+
+result=$(run_multi main.ts "a" $'a\n// PROJ-3 fix')
+assert_contains "MultiEdit: blocks a ticket ID in any of the edits" "$DENY" "$result"
+
+result=$(run_edit main.go "x" $'x\n// UTF-8 input, SHA-256 digest, RFC-7231 dates, ISO-8601 times')
+assert_eq "allows standard names shaped like ticket IDs" "" "$result"
+
+result=$(run_edit main.go "x" $'x\nmsg := "PROJ-12 failed" // keep message stable')
+assert_eq "allows ticket IDs outside comment lines" "" "$result"
+
+result=$(run_edit main.go "x" $'x\n// retries 1234567 times at most, mask 0xdeadbeef')
+assert_eq "allows plain numbers and 0x hex constants" "" "$result"
+
+result=$(run_edit main.go "x" $'x\n// ids look like 550e8400-e29b-41d4-a716-446655440000')
+assert_eq "allows UUIDs" "" "$result"
+
+result=$(run_edit block.sh "x" $'x\n# Exception: `perl -i` on a plan under docs/plans/ is allowed')
+assert_eq "allows a bare docs/plans/ path that is not a doc pointer" "" "$result"
+
+result=$(run_edit README.md "x" $'x\n# PROJ-12 see docs/plans/2026-09-01-foo.md')
+assert_eq "allows anything in Markdown files" "" "$result"
+
+result=$(run_edit main.go $'// PROJ-12 old note\nx := 1' $'// PROJ-12 old note\nx := 2')
+assert_eq "Edit: allows a bad comment already in old_string" "" "$result"
+
+printf 'package x\n\n// PROJ-5 legacy\nfunc F() {}\n' > "$COMMENT_DIR/old.go"
+result=$(run_write "$COMMENT_DIR/old.go" $'package x\n\n// PROJ-5 legacy\nfunc F() { return }')
+assert_eq "Write: allows a bad comment already on disk" "" "$result"
+
+result=$(run_edit main.go "x" $'x\n// retries twice because the upstream drops the first request')
+assert_eq "allows a plain why-comment" "" "$result"
+
+result=$(jq -n '{tool_name:"Bash", tool_input:{command:"echo PROJ-1"}}' | bash "$BLOCK_COMMENT_REFS_SCRIPT")
+assert_eq "ignores other tools" "" "$result"
+
+# ---------------------------------------------------------------------------
 # Shared fake agtermctl for planning/agterm-spawn.sh and
 # planning/agterm-handoff.sh (agterm-handoff.sh delegates to agterm-spawn.sh
 # internally, so both sections exercise the same agtermctl surface).
