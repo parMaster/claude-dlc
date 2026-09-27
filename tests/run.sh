@@ -605,7 +605,7 @@ PROMPT_PATH="${PROMPT_PATH%)\"}"
 assert_eq "the prompt file the typed command reads actually exists" "yes" "$([ -f "$PROMPT_PATH" ] && echo yes || echo no)"
 PROMPT_CONTENT="$(cat "$PROMPT_PATH" 2>/dev/null || echo "")"
 assert_contains "prompt file references the plan path" "$CODEX_REVIEW_PLAN_FILE" "$PROMPT_CONTENT"
-assert_contains "prompt file tells the session to review it thoroughly" "Review it thoroughly" "$PROMPT_CONTENT"
+assert_contains "prompt file tells the session to review it in one pass" "Review it in one pass" "$PROMPT_CONTENT"
 rm -f "$LOG" "$TYPED"
 
 result=$(AGTERM_ENABLED="" bash "$CODEX_REVIEW_HANDOFF_SCRIPT" "$CODEX_REVIEW_PLAN_FILE" 2>&1; echo "exit:$?")
