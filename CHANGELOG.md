@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 2.0.2 - 2026-09-27
+
+`plan` draws what moves: a change to a flow, sequence or structure gets a
+small plain-text diagram (before → after for an existing flow), and grid-shaped
+content gets a table instead of prose. No mermaid — plans are read in the
+terminal.
+
 ## global-rules 1.9.0 - 2026-09-27
 
 New `block-comment-refs` PreToolUse hook on Edit, Write and MultiEdit. It

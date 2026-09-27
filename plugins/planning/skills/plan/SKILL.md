@@ -125,6 +125,7 @@ The test approach lives in the DoD, not in a separate question:
 - **DoD items are outcomes, not steps.** "Expired tokens get 401" is a DoD item; "add a check in middleware.go" is not. Each item names its proof.
 - **Name files and functions only where they carry meaning** — in Traps, or where a decision is about a specific place. Not as a to-do list.
 - **No history lessons** — don't narrate how the plan evolved or reference older plans' line numbers. If a prior decision is being reversed, one line in Decisions says so.
+- **Draw what moves.** When the change alters a flow, sequence, state machine or the shape of something (who calls whom, what runs before what), show it as a small plain-text diagram — boxes and arrows, never mermaid, since plans are read in the terminal — as before → after when an existing flow changes. Use a table where the content is a grid: options vs. trade-offs, inputs vs. outcomes, a mapping. Prose carries the why around them and doesn't redescribe what the picture shows.
 - **Progress**: the implementer ticks DoD and Wrap-up boxes as they're done, adds found work as new DoD items prefixed ➕, and marks blockers ⚠️.
 
 ## Step 2.5: Self-review
