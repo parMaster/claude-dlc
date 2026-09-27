@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.9.1 - 2026-09-27
+
+The "tests pass before commit" rule names the project's own test suite
+(`make test`, the CI test step, or `go test ./...`) instead of only
+`go test ./...`, so non-Go repos aren't pointed at the wrong command.
+
 ## planning 2.0.2 - 2026-09-27
 
 `plan` draws what moves: a change to a flow, sequence or structure gets a

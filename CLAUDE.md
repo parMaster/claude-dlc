@@ -73,6 +73,7 @@ The sibling repo `../cc-thingz` (MIT, Umputun) is the upstream reference. When p
 ## Local Development
 
 - Test a plugin locally: `claude --plugin-dir plugins/<name>`
+- Run `bash tests/run.sh` before committing — CI runs the same script. Hook and script changes need cases there.
 - Reload without restarting: `/reload-plugins`
 - Skills appear in `/` autocomplete the same as `commands/*.md` files — `commands/` is legacy-only now; use `skills/<name>/SKILL.md` for anything new. Both share one frontmatter schema (`description`, `argument-hint`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, ...) and the same `$ARGUMENTS`/`$0`/`$name` argument substitution.
 

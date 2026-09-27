@@ -9,7 +9,7 @@
 - **Stale branch** — before starting to plan or implement, and again right before the final commit, check whether the current branch is behind its remote tracking branch (`git fetch` then `git status`). If it's behind, resync immediately — `git pull --rebase` (or plain `git pull` if there are no local commits yet) — instead of discovering it later when `git push` is rejected as non-fast-forward. Resolve any conflicts the resync surfaces as part of finishing the work, not as a follow-up.
 
 ## Verification Before Commit
-- NEVER commit until all tests pass locally (run `go test ./...` first)
+- NEVER commit until all tests pass locally — run the project's test suite (`make test`, the CI test step, or `go test ./...`)
 - NEVER commit until the linter passes — run the appropriate linter for the project (e.g. `golangci-lint run ./...` for Go, `eslint .` for JS/TS) and fix any failures before committing
 - NEVER auto-commit when the user is mid-review or has indicated they'll commit manually
 - For config/setting name changes, verify all references (grep) and update plan docs, memory, AND application code
