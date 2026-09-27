@@ -6,322 +6,147 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, AskUserQuestion, Ente
 
 # Implementation Plan Creation
 
-Create an implementation plan in `docs/plans/yyyy-mm-dd-<task-name>.md`. Write as if the engineer implementing it has zero context about the codebase — document everything they need: which files to touch, actual code to write, exact commands to run, how to test it. Assume they are skilled but know nothing about this toolset or problem domain.
+Create a plan in `docs/plans/yyyy-mm-dd-<task-name>.md` that says **what** the change is, **why**, which **decisions** were made, what could **trip up** the implementer, and how we'll **know it's done**. It does not say what code to write — the implementer reads the codebase and picks files, code and test names itself; the compiler, tests and linter keep that honest.
+
+The reader is the user, who reads the whole plan and thinks it through — up to about ten minutes — and an implementer (often a fresh session) who is skilled and can explore the code but wasn't in this conversation. A small bug fix may need 20 lines; if a plan grows past ~150, the change is probably too big for one plan — say so and suggest splitting it.
 
 ## Step 0: Parse intent and gather context
 
-Before asking questions, understand what the user is working on:
+1. **Classify the kind of change** from the user's words: bug fix, refactor, feature, or migration. It sets how the Definition of Done handles tests (see Step 2).
 
-1. **Parse user's arguments** to identify intent:
-   - "add feature Z" / "implement W" → feature development
-   - "fix bug" / "debug issue" → bug fix plan
-   - "refactor X" / "improve Y" → refactoring plan
-   - "migrate to Z" / "upgrade W" → migration plan
-   - generic request → explore current work
+2. **Gather context** with direct tool calls (Read, Glob, Grep), not an Agent:
+   - feature: glob the feature area, read the 1–3 most relevant files, `ls` key dirs
+   - bug fix: grep for the error or function named, read the files involved, `git log --oneline -5`
+   - refactor/migration: read the key files of the area, grep for what imports them
+   - unclear: `git status`, `git log --oneline -5`, README.md / CLAUDE.md
 
-2. **Gather relevant context quickly** — use direct tool calls (Read, Glob, Grep), NOT an Agent. Keep discovery under 30 seconds in the default mode; deep-discovery mode below lifts both this budget and the file cap.
+   Keep it to about 5 files unless `docs/plans/` (or `completed/`) already holds a sibling plan for this feature, or the user says this is one slice of a bigger effort — then read as much as it takes to understand the call chains the change depends on.
 
-   **for feature development:**
-   - glob for files matching the feature area
-   - read 1-3 most relevant files to understand existing patterns
-   - check project structure with a quick `ls` of key directories
+3. **Resolve the real test command** — `Makefile` `test` target, else the CI workflow's test step, else the language default (`go test ./...`). The plan's Wrap-up uses it.
 
-   **for bug fixing:**
-   - grep for error messages or function names mentioned in the request
-   - read the specific file(s) involved
-   - check `git log --oneline -5` for recent changes
+4. Summarize findings in 3–5 bullets.
 
-   **for refactoring/migration:**
-   - glob for files matching the area being refactored
-   - read 2-3 key files to understand current structure
-   - grep for imports/references to identify dependencies
+## Step 1: Ask focused questions
 
-   **for generic/unclear requests:**
-   - check `git status` and `git log --oneline -5`
-   - read README.md or CLAUDE.md for project overview
-   - `ls` the top-level directory structure
+Show the context summary, then ask **one at a time** (a separate AskUserQuestion call each), skipping any the conversation already answered:
 
-   **CRITICAL: do NOT launch an Agent or read more than 5 files in this step.** This cap is on *discovery* only — Step 2's "Read what you will modify" pass is separate and uncapped.
+1. **Goal** — multiple choice, suggested answer from the discovered intent
+2. **Scope** — which components are involved; free text if discovery found only one
+3. **Constraints** — requirements, limits, things that must not change
 
-   **Deep-discovery mode** — the 5-file cap and 30-second budget above are the default, not a hard ceiling. Switch to deep mode when any of these become true:
-   - `docs/plans/` (including `completed/`) already contains a sibling plan for the same feature (checkable right here at Step 0)
-   - the user states, at any point, that this plan is part of a larger, multi-plan effort (a feature broken into slices, a WBS/parent doc)
-   - Step 1's scope/constraints answers reveal multi-plan or large-feature scope that wasn't apparent yet at Step 0
-
-   The first condition can be checked now. The other two usually can't be known until after Step 1 — when either fires there, go back and run the deep pass below before Step 2, rather than proceeding with shallow discovery just because the trigger came late.
-
-   In deep mode: read as many files as it takes to understand the actual call chains the plan's tasks depend on — no fixed file count, no 30-second budget. This is still a discovery pass, not a full audit, so keep it targeted to what the plan's tasks will actually call or touch.
-
-   **for Go repos — resolve the real test command, don't assume `go test ./...`:**
-   - check `Makefile` for a `test` target → use `make test`
-   - else check `.github/workflows/*.yml` / `.gitlab-ci.yml` for the test step → mirror that exact invocation
-   - else fall back to `go test ./...`
-
-   Use whichever command this resolves to everywhere the plan references "run full test suite."
-
-3. Synthesize findings into a brief context summary (3-5 bullet points)
-
-## Step 1: Present context and ask focused questions
-
-Show the discovered context, then ask questions **one at a time** — a separate AskUserQuestion tool call per question, never multiple questions batched into one call's `questions` array:
-
-1. **Plan purpose**: "what is the main goal?" — multiple choice with suggested answer based on discovered intent
-2. **Testing approach**: "TDD or regular?" — options: "TDD (tests first)" / "Regular (code first, then tests)". Ask this early because it shapes the task structure throughout the plan.
-3. **Scope**: "which components/files are involved?" — multiple choice with discovered files. The tool requires ≥2 options per question — if discovery turned up only one file/component, do not force a second fabricated option; ask this one as free text instead.
-4. **Constraints**: "any specific requirements or limitations?"
-5. **Plan title**: "short descriptive title?" — suggest based on intent
+Derive the plan's title (its H1 and the `<task-name>` in the filename) from the Goal; don't ask for it.
 
 ## Step 1.5: Explore approaches
 
-Once the problem is understood, propose implementation approaches:
+Skip if the approach is obvious, the user already chose it, or it's a clear bug fix.
 
-1. **Propose 2-3 different approaches** with trade-offs
-2. **Lead with recommended option** and explain reasoning
-3. **Present conversationally** — not a formal document yet
+Otherwise propose 2–3 approaches conversationally, recommended one first, each with how it works, pros, cons. Ask the user to pick with AskUserQuestion. The choice and the dropped alternatives go into **Decisions**.
 
-Example format:
-```
-I see three approaches:
+## Step 2: Investigate, then write the plan
 
-**Option A: [name]** (recommended)
-- how it works: ...
-- pros: ...
-- cons: ...
+### Investigate what the change relies on
 
-**Option B: [name]**
-- how it works: ...
-- pros: ...
-- cons: ...
+Read the code the change will call or build on — function bodies, not just names. You're looking for anything a fresh implementer would get wrong:
 
-Which direction appeals to you?
-```
+- behavior that differs from what the name suggests (a `GrantAccess` that grants USAGE but not CREATE)
+- errors that get re-wrapped or mapped to an unexpected status on the way out
+- state an earlier phase or migration already leaves in place
+- existing tests that pin behavior the change alters
+- ordering rules in an API or test setup
 
-Use AskUserQuestion to select the preferred approach before creating the plan.
+Each finding goes into **Traps**, stated as a fact with its location (`path/to/file.go` + function name). Findings that shaped the approach go into **Decisions**. Nothing here turns into code in the plan.
 
-**Skip this step** if the approach is obvious, user specified it, or it's a clear bug fix.
+### Backlog items
 
-## Step 2: Create plan file
+If `docs/backlog/` exists, match its items' `where` paths against the area the plan touches. For each match marked `worth: yes`, ask with AskUserQuestion whether to fold it in. A folded item gets its own DoD line, including `git rm docs/backlog/<slug>.md` in the final commit, per `/backlog`'s lifecycle. Items marked `later` or `no` are context, not questions.
 
-Check `docs/plans/` for existing files, then create `docs/plans/yyyy-mm-dd-<task-name>.md` (use current date).
+### Tests by kind of change
 
-### File structure first
+The test approach lives in the DoD, not in a separate question:
 
-Before defining tasks, map out which files will be created or modified and what each one is responsible for. This is where decomposition decisions get locked in.
+- **bug fix** — first DoD item: a test reproduces the bug and fails before the fix; it passes after.
+- **refactor** — first DoD item: the behavior being refactored is pinned by tests (unit, integration, whatever fits) before the change; the same tests pass unchanged after.
+- **feature / migration** — DoD lists what must be proven; the implementer picks the order and the test shape.
 
-- Design units with clear boundaries and well-defined interfaces — each file should have one clear responsibility
-- Prefer smaller, focused files; you reason best about code you can hold in context at once
-- Files that change together should live together; split by responsibility, not by technical layer
-- In existing codebases, follow established patterns; if a file is unwieldy, a split in the plan is reasonable
-
-This structure informs task decomposition — each task should produce self-contained changes that make sense independently.
-
-### Read what you will modify
-
-Before writing a task, read **in full** every file that task lists under `Modify`, and every file it lists under `Create` that already exists. Not a grep for the symbol, not the first 50 lines — the whole file. This is not part of Step 0's discovery budget and is not capped by it: discovery decides *what* the plan touches, this pass establishes *what is actually there* in the files it has already decided to touch.
-
-Two things go wrong when this is skipped, and both produce a plan that cannot compile:
-
-- **Helpers and fixtures.** A task writes `newFakeClientBuilder()` when the real signature is `newFakeClientBuilder(t, scheme)`, or declares a helper that already exists in the same package. Before writing any test code, read the existing test files in that same package — the ones the new tests will sit beside — and reuse their real fixture and helper names, with their real parameter lists.
-- **Existing assertions.** A task changes behavior that an existing test already pins (a returned `Result{}`, a status reason, an error string) and never lists the assertion as needing an update. Any test currently asserting on behavior a task changes is itself a `Modify` target — find those assertions while reading, and give each one an explicit checklist item.
-
-If a file is genuinely too large to hold, that is a signal to narrow the task's scope, not to skim the file.
-
-### Backlog items on touched files
-
-If `docs/backlog/` exists, check its items' `where` paths against the plan's `Modify` files. For each match marked `worth: yes`, ask with AskUserQuestion whether to fold it into the plan. A folded item gets its own checklist item in the task that touches its file, including `git rm docs/backlog/<slug>.md` in that task's commit, per `/backlog`'s lifecycle. Items marked `later` or `no` are context for the plan, not questions.
-
-### Dependency contract check
-
-**Skip this step** if the plan introduces net-new code with no existing dependencies to verify.
-
-Otherwise, before writing tasks: identify every external function, method, or API the plan's correctness depends on — things the plan will CALL, not things it will CREATE. For each one:
-
-1. Read its body (not just its name or signature)
-2. Record what it actually guarantees: privileges granted, errors returned and how they're wrapped, side effects, state left behind after it runs
-3. Flag any gap between the name's implied behavior and the body's actual behavior — these are the places plans silently go wrong
-
-This is a focused pass — typically 3–6 functions, not broad exploration. Record findings in the "Verified Dependency Behaviors" section of the plan.
-
-In deep-discovery mode (Step 0), widen this to every dependency any task actually calls — not a fixed 3–6 count. A function reused across several tasks needs verifying once; a wrong assumption about it otherwise silently reproduces itself into every task that calls it.
-
-Test-only helpers count as dependencies. A fixture, builder, or assertion helper the plan's test code calls is a function the plan's correctness depends on, even though it never ships — and it is the single most common place plans go wrong. It does not need a "Verified Dependency Behaviors" entry (that section is for shipped behavior), but its real signature does need to be right in every task that calls it.
-
-### Plan structure
+### Plan template
 
 ```markdown
-# [Plan Title]
+# [Title]
 
-**Goal:** [one sentence describing what this builds]
+**Goal:** [one sentence]
 
-**Architecture:** [2-3 sentences about the approach]
+**Kind of change:** [bug fix / refactor / feature / migration]
 
-**Tech Stack:** [key technologies/libraries involved]
+## Intent
 
----
+[What and why, a short paragraph. What's wrong or missing today, what changes.]
 
-## Context (from discovery)
-- files/components involved: [list from step 0]
-- related patterns found: [patterns discovered]
-- dependencies identified: [dependencies]
+## Decisions
 
-## Verified Dependency Behaviors
-*External functions/APIs this plan calls — verified by reading their bodies, not inferred from names. Omit if plan is net-new with no existing dependencies.*
+- **[decision]** — [why; which alternatives were dropped and why]
 
-- `FunctionName` (`path/to/file.go:NN`): [what it actually does — privileges granted, errors returned/wrapped, side effects, state left behind]
-- ...
+## Constraints / out of scope
 
-## Development Approach
-- **testing approach**: [TDD / Regular - from user preference]
-- complete each task fully before moving to the next
-- make small, focused changes
-- **CRITICAL: every task MUST include new/updated tests** for code changes
-- **CRITICAL: all tests must pass before starting next task**
-- **CRITICAL: update this plan file when scope changes during implementation**
-- **CRITICAL: single summary commit at the end** — no per-task commits; one commit covers all implementation + plan move when complete
-- **CRITICAL: run `golangci-lint run ./...` before committing** — fix all linter issues first
-- run tests after each change
-- maintain backward compatibility
+- [what must not break, what this plan deliberately doesn't do]
 
-## Technical Details
-- key design decisions and rationale
-- data structures and changes
-- parameters and formats
-- processing flow
+## Traps
 
-## Progress Tracking
-- mark completed items with `[x]` immediately when done
-- to tick a whole finished task: `perl -pi -e 's/- \[ \]/- [x]/ if /^### Task N:/.../^### Task/' <plan>`; for a single box mid-task, use Edit with the line above if the text repeats — never a script
-- add newly discovered tasks with ➕ prefix
-- document issues/blockers with ⚠️ prefix
+*Omit the section if there are none.*
 
-## Implementation Steps
+- [non-obvious fact about the code this change relies on] (`path/to/file`, `FuncName`)
 
-### Task 1: [specific name]
+## Definition of Done
 
-**Files:**
-- Create: `exact/path/to/new_file`
-- Modify: `exact/path/to/existing`
+- [ ] [checkable outcome] — proof: [test that shows it / command + expected output / what to observe]
 
-**If TDD:**
+## Work order
 
-- [ ] **Write failing tests** — happy path + error cases + edge cases
+*Omit unless order matters. One line per step.*
 
-```go
-func TestFunctionName_HappyPath(t *testing.T) { ... }
-func TestFunctionName_InvalidInput(t *testing.T) { ... }
-func TestFunctionName_EmptyResult(t *testing.T) { ... }
-```
+1. [step]
 
-- [ ] **Run tests to verify they fail**
+## Wrap-up
 
-  Run: `go test ./path/... -run TestFunctionName -v`
-  Expected: FAIL
-
-- [ ] **Write minimal implementation**
-
-```go
-func FunctionName(input Type) ReturnType {
-    // implementation
-}
-```
-
-- [ ] **Run tests to verify all pass**
-
-  Run: `go test ./path/... -run TestFunctionName -v`
-  Expected: PASS
-
-**If Regular:**
-
-- [ ] **Write implementation**
-
-```go
-func FunctionName(input Type) ReturnType {
-    // implementation
-}
-```
-
-- [ ] **Write tests** — happy path + error cases + edge cases
-
-```go
-func TestFunctionName_HappyPath(t *testing.T) { ... }
-func TestFunctionName_InvalidInput(t *testing.T) { ... }
-func TestFunctionName_EmptyResult(t *testing.T) { ... }
-```
-
-- [ ] **Run tests to verify all pass**
-
-  Run: `go test ./path/... -run TestFunctionName -v`
-  Expected: PASS
-
-### Task N-1: Verify acceptance criteria
-- [ ] verify all requirements from Goal are implemented
-- [ ] run full test suite: `<command resolved in Step 0, e.g. `make test` or `go test ./...`>`
-  - if failures look like shared-state flakiness — an assertion fails against a resource another test seems to have touched, failures aren't reproducible when the same test is run alone (`-run`), or which tests fail changes between runs — retry once with `-p=1` before treating it as a regression
-- [ ] run `golangci-lint run ./...` — fix all issues before proceeding
-- [ ] verify test coverage meets project standard
-
-### Task N: [Final] Wrap up and commit
-- [ ] update README.md if needed
-- [ ] update CLAUDE.md if new patterns discovered
-- [ ] move this plan to `docs/plans/completed/` — use `mkdir -p docs/plans/completed && mv <plan> docs/plans/completed/` (plain `mv`, not `git mv`: the plan is usually untracked, and the final `git add -A` stages the move either way)
-- [ ] single summary commit: all implementation changes + plan move in one commit
-- [ ] open draft PR — invoke `planning:pr`
+- [ ] full test suite passes: `<command from Step 0>`
+- [ ] linter passes: `<project linter>`
+- [ ] README.md / CLAUDE.md updated if behavior or patterns changed
+- [ ] move this plan to `docs/plans/completed/` (`mkdir -p docs/plans/completed && mv <plan> docs/plans/completed/`)
+- [ ] single commit: all changes + plan move
+- [ ] `planning:pr` — opens a draft PR, or updates the description of the one already open. Omit this line when the work goes straight to the default branch.
 
 ## Post-Completion
-*Items requiring manual intervention or external systems*
+
+*Omit if empty. Manual steps or external systems.*
 ```
 
-### No placeholders
+### Writing rules
 
-Every step must contain the actual content an engineer needs. These are plan failures — never write them:
-- "TBD", "TODO", "implement later", "fill in details"
-- "Add appropriate error handling" / "add validation" / "handle edge cases" (without showing the code)
-- "Write tests for the above" (without actual test code)
-- A single happy-path test when error cases or edge cases clearly exist — always enumerate: what inputs cause errors? what are the boundary values? what does the function return when there's nothing to return? Each scenario that can fail Sonar coverage gets its own named test function.
-- "Similar to Task N" (repeat the code — the engineer may read tasks out of order)
-- Steps that describe what to do without showing how — if a step changes code, show the code
-- References to types, functions, or methods not defined in any task
-
-### Code comment rules
-
-Comments inside example code shown in tasks must be self-contained — never a pointer to something else:
-
-- No ticket IDs, no links to Confluence/Jira/PRs, no commit SHAs
-- No `(Slice N)` markers or "see ... in Technical Details" pointers back into this plan
-- No `docs/specs/...` references — inline the one clause of context a reader needs, don't point at the spec
-- At most 1-2 lines; if it needs more than that to justify itself, the content belongs in this plan's prose, not in a code comment
-- State only the "why" a future reader needs at the call site to not re-break the thing — never restate what the code obviously does
-
-This applies to comments in the code itself. Plan-level cross-references (a WBS/slice note, "this plan supersedes the approach in `<prior-plan>`") stay in the plan's own prose sections — this rule doesn't touch those.
+- **No code.** No task-by-task code blocks, no test function bodies, no line numbers. One exception: a short snippet for a single genuinely tricky item (a query, a migration step, a regex) where prose would be ambiguous. A new interface, public signature or endpoint shape that other code will depend on is a decision — state it in Decisions; a signature line is fine, bodies still aren't.
+- **DoD items are outcomes, not steps.** "Expired tokens get 401" is a DoD item; "add a check in middleware.go" is not. Each item names its proof.
+- **Name files and functions only where they carry meaning** — in Traps, or where a decision is about a specific place. Not as a to-do list.
+- **No history lessons** — don't narrate how the plan evolved or reference older plans' line numbers. If a prior decision is being reversed, one line in Decisions says so.
+- **Progress**: the implementer ticks DoD and Wrap-up boxes as they're done, adds found work as new DoD items prefixed ➕, and marks blockers ⚠️.
 
 ## Step 2.5: Self-review
 
-After writing the complete plan, check it yourself before offering next steps. All 8 checks below are internal reasoning, not an announced procedure — where a check is faster with a tool call (a grep, a read) than by eyeballing, make the call and act on the result, but don't narrate it as its own step or report a "clean" pass; only surface something if you actually find and fix an issue.
+Check silently; mention only what you fixed.
 
-1. **Spec coverage** — skim each requirement. Can you point to a task that implements it? Add tasks for any gaps.
-2. **Placeholder scan** — search for any patterns from the "No placeholders" section above. Fix them.
-3. **Type consistency** — do method signatures and names used in later tasks match what's defined in earlier tasks? A function called `ParseConfig()` in Task 3 but `LoadConfig()` in Task 7 is a bug. Then check the same names against the real files: every helper, fixture, and function a task *calls* rather than creates must match the signature in the file you read, and no task may declare something that already exists in that package.
-4. **Dependency behavior check** — for each entry in "Verified Dependency Behaviors": does the plan's logic actually hold given what that function does? A function that grants USAGE+DML but not CREATE is not "full access" even if named that way.
-5. **Error/status tracing** — skip if the plan asserts no error outcomes or status codes. Otherwise, for every one asserted, trace it end-to-end: where the sentinel/error originates, every `%w` re-wrap on the way, and what the handler that receives it actually returns. Fix any task whose expected outcome doesn't match what the trace shows.
-6. **Test setup preconditions** — skip if the plan has no test setup steps. Otherwise walk each task's test setup in execution order against the API's actual state-transition/creation-order rules. Fix any step that would be rejected because it violates an ordering requirement.
-7. **Multi-phase state** — skip if the plan touches no migration, workflow, or staged operation. Otherwise check what earlier phases actually leave in place before a later task asserts on that state. Fix any assumption of absent state that an earlier phase already establishes.
-8. **Comment hygiene** — same as the other seven: check the plan's code blocks for ticket IDs (`[A-Z]{2,}-[0-9]+`), links (`https?://`), commit SHAs (`\b[0-9a-f]{7,40}\b`), `Slice [0-9A-Z]`, `see .* Technical Details`, and `docs/specs`. Skip a match that's actually a standard name, not a reference — `UTF-8`, `SHA-256`, `RFC-7231`, `AES-256`, `ISO-8601` and the like aren't ticket IDs. Rewrite any real hit per "Code comment rules" above.
+1. Every point in Intent has at least one DoD item that proves it.
+2. Every DoD item says how it's proven.
+3. Every Trap was checked against the source, not inferred from a name.
+4. Bug fix / refactor plans start the DoD with the test-first item.
+5. No code beyond the snippet and signature exceptions; nothing padded to look thorough. Past ~150 lines, suggest splitting instead of trimming.
 
-Fix issues inline. No need to re-review after fixing.
-
-These checks mirror what the separate `plan-review` agent verifies. Catching them here means fewer review rounds, not weaker review — the reviewer still runs the same checklist independently.
+These are the same things `plan-review` checks, so a clean self-review usually means a short review.
 
 ## Step 3: Report completion
 
-After self-review, tell the user: "created plan: `docs/plans/yyyymmdd-<task-name>.md`" and stop. Do not ask what to do next — the user calls `/planning:review-plan`, `revdiff:revdiff`, `/planning:handoff`, or begins implementation directly when ready.
+Tell the user: "created plan: `docs/plans/yyyy-mm-dd-<task-name>.md`" and stop. Don't ask what's next — the user calls `/planning:review-plan`, `revdiff:revdiff`, `/planning:handoff`, or starts implementing when ready.
 
 ## Key principles
 
-- **Zero context** — write as if the implementer knows nothing about this codebase; show the code, show the commands, show expected output
-- **One question at a time** — do not overwhelm with multiple questions
-- **Multiple choice preferred** — easier than open-ended when possible
-- **YAGNI ruthlessly** — minimal scope, no unnecessary features
-- **Lead with recommendation** — have an opinion, explain why, but let user decide
-- **Explore alternatives** — always propose 2-3 approaches before settling
-- **Single summary commit** — never commit per task; one commit at the end covers everything
-- **Complete code in every step** — if a step changes code, include the actual code block
+- **Intent over instructions** — say what and why; leave how to the implementer
+- **One question at a time**, multiple choice where possible
+- **Lead with a recommendation** — have an opinion, let the user decide
+- **YAGNI** — minimal scope, nothing "just in case"
+- **Single summary commit** — one commit at the end covers everything

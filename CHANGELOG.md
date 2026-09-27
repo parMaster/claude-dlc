@@ -4,6 +4,30 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 2.0.0 - 2026-09-27
+
+Plans move from code to intent. `plan` now writes goal, kind of change,
+intent, decisions, constraints, traps and a Definition of Done where every
+item names its proof, short enough to read and think through in about ten
+minutes (past ~150 lines
+it suggests splitting the change), with no pre-written code. The
+implementer picks files, code and tests. The "TDD or regular?" question is
+gone: a bug fix plan starts with a failing test that reproduces the bug, a
+refactor plan pins behavior with tests first, and a feature plan leaves test
+order to the implementer. "Verified Dependency Behaviors" becomes "Traps".
+
+`review-plan` runs one pass, with no repeat rounds, Haiku pre-pass,
+MECHANICAL/REASONED tags or `verify:` commands. The `plan-review` agent checks
+four things: does the DoD prove the intent, do the decisions hold up against
+the code, is a trap missing, is scope right. Finding nothing is a normal result.
+
+`pr` takes its Changes list from the branch diff, since plans no longer list
+files. The hand-off prompts point the implementer at the DoD.
+
+The previous version is tagged `planning-v1.24.1`. To use it for a session:
+`git worktree add <dir> planning-v1.24.1` then
+`claude --plugin-dir <dir>/plugins/planning`.
+
 ## planning 1.24.1 - 2026-09-26
 
 Claude plan hand-offs (`agterm-handoff.sh`) now start the new session in auto

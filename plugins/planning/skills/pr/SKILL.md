@@ -14,7 +14,9 @@ Open a draft PR with a structured title and plan-based description.
 2. Otherwise check `docs/plans/completed/` — most recently modified `.md` file
 3. Otherwise check `docs/plans/` — most recently modified `.md` file (excluding `completed/` and `wbs-*.md`)
 
-Read the plan file. Extract the **Goal** line and task list for use in the description.
+Read the plan file. Use its **Goal** line, Intent, Decisions and Definition of Done for the description.
+
+The plan doesn't list files, so take the changes from the branch itself: find the base with `git merge-base HEAD origin/main` (or the repo's default branch), then read `git diff --stat <base>...HEAD` and `git log --oneline <base>..HEAD`.
 
 ## Step 2: Check for existing PR
 
@@ -119,17 +121,17 @@ From the plan file, write a description following writing-style principles — d
 ```markdown
 ## What
 
-[1-2 sentences from the plan Goal — what was built and why. Start directly, no "This PR implements..."]
+[1-2 sentences from the plan's Goal and Intent — what was built and why. Start directly, no "This PR implements..."]
 
 ## Changes
 
-[bullet list of key changes, summarized from the plan's task list — meaningful level, not every checkbox]
+[bullet list of key changes from the branch diff, with the why from the plan's Decisions — meaningful level, not every file]
 - `path/to/file` — what changed and why
 - ...
 
 ## Testing
 
-[how to test — from the plan's verify task and testing approach. Include exact commands.]
+[how it's proven — from the plan's Definition of Done proofs. Include exact commands.]
 ```
 
 Rules:
@@ -155,8 +157,8 @@ EOF
 1. Read the current PR body from the `gh pr view` output in Step 2
 2. Read the new plan file (already done in Step 1)
 3. Determine what the current description is missing or what has changed:
-   - Are there new tasks/changes in the plan not yet reflected in the `## Changes` section?
-   - Has the testing approach changed?
+   - Are there changes in the branch diff not yet reflected in the `## Changes` section?
+   - Are there new Definition of Done proofs not yet in `## Testing`?
    - Are there new files or components involved?
 4. Compose an amended body that incorporates the additions — keep what's already there, add or update only what's new. Do not rewrite sections that are still accurate.
 5. Update the PR:

@@ -10,9 +10,9 @@ build_handoff_prompt() {
   cat <<EOF
 You have a new implementation plan to execute: $plan_file
 
-Read it fully, then implement every task in order, following its stated
-testing approach. Run the project's tests and linter before treating any
-task as done.
+Read it fully, then implement it until every Definition of Done item holds,
+proven the way the item says. Follow its Decisions and Traps; pick the code
+and tests yourself. Tick boxes as they're done, then work through Wrap-up.
 EOF
 }
 
@@ -21,8 +21,9 @@ build_review_prompt() {
   cat <<EOF
 You have a new implementation plan to review: $plan_file
 
-Review it thoroughly — check correctness, over-engineering, and test
-coverage, apply fixes, and iterate review rounds as needed until it's ready
-for implementation or a round limit is reached.
+Review it in one pass — does its Definition of Done prove the intent, do
+its decisions hold up against the code, is a trap missing, is scope right.
+Finding nothing is a fine result. Apply the fixes the user agrees to, then
+stop.
 EOF
 }

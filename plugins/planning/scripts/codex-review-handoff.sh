@@ -33,8 +33,8 @@ PROMPT_FILE=$(mktemp "${TMPDIR:-/tmp}/codex-review-handoff.XXXXXX")
 build_review_prompt "$PLAN_FILE" > "$PROMPT_FILE"
 
 # Workspace-write is needed even though the plan-review subagent itself is
-# read-only: the fix-and-re-review loop that runs between rounds edits the
-# plan file directly.
+# read-only: the session applies the agreed findings to the plan file
+# directly.
 CODEX_FLAGS="--sandbox workspace-write --ask-for-approval never"
 
 bash "$SCRIPT_DIR/codex-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE" "" "$CODEX_FLAGS"

@@ -1,12 +1,12 @@
 ---
 name: review-plan
-description: Review an implementation plan for completeness, correctness, over-engineering, and test coverage. Iterates review rounds until no critical issues remain or round limit hit. Activates on "review plan", "check the plan", "critique this plan", or as an optional step after planning:plan.
+description: Review an implementation plan in one pass — does the Definition of Done prove the intent, do the decisions hold up against the code, is a trap missing, is scope right. Activates on "review plan", "check the plan", "critique this plan", or as an optional step after planning:plan.
 allowed-tools: Read, Glob, Grep, Bash, Agent, AskUserQuestion, Edit
 ---
 
 # Plan Review
 
-Iterative structured critique of an implementation plan. A read-only review agent finds issues; the main session presents them and applies fixes on approval.
+One review pass by a read-only `plan-review` agent. The main session shows the findings and applies the ones the user wants. No repeat passes: the plan is short, and anything code-level gets caught during implementation by tests, the compiler and the linter.
 
 ## Step 0: Find the plan file
 
@@ -14,11 +14,11 @@ Iterative structured critique of an implementation plan. A read-only review agen
 2. Otherwise check `docs/plans/` — most recently modified `.md` (excluding `completed/` and `wbs-*.md`)
 3. If multiple plans exist and it's unclear which, list them and ask
 
-## Step 0.3: Choose review runtime
+## Step 1: Choose runtime and model
 
-Before running any review round, check availability: `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1`. If unavailable, skip this step entirely and continue to Step 0.5 — there's only one real choice (this session), so there's nothing to ask.
+Check whether a Codex hand-off is possible: `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1`.
 
-If available, ask with AskUserQuestion:
+If it is, ask with AskUserQuestion:
 
 ```json
 {
@@ -26,103 +26,65 @@ If available, ask with AskUserQuestion:
     "question": "Where should this review run?",
     "header": "Runtime",
     "options": [
-      {"label": "This session", "description": "Continue here — delegates each review round to the plan-review subagent, as it already does"},
-      {"label": "Spawn Codex session", "description": "Hand the whole review off to a freshly spawned Codex CLI session running this same skill there — this session's job ends once it's spawned"}
+      {"label": "This session", "description": "Run the plan-review subagent here"},
+      {"label": "Spawn Codex session", "description": "Hand the review off to a fresh Codex CLI session running this same skill — this session's job ends once it's spawned"}
     ],
     "multiSelect": false
   }]
 }
 ```
 
-**This session**: continue to Step 0.5.
+**Spawn Codex session**: run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/codex-review-handoff.sh" "PLAN_FILE"`. On success, the script's last stdout line is the new session's name (e.g. `Review: foo`) — tell the user the review was handed off to that session in this workspace. On failure, quote its stderr. Either way, stop — don't review in this session.
 
-**Spawn Codex session**: run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/codex-review-handoff.sh" "PLAN_FILE"` (substitute the real plan path for `PLAN_FILE`). No model question — the spawned session always uses whatever model Codex is configured to use by default.
-
-On success (exit 0), the script's last stdout line is the new session's display name (e.g. `Review: foo`) — tell the user the review has been handed off to a new Codex session with that name, in this same workspace, and they can switch to it to watch or drive it directly. On failure (non-zero exit), tell the user the hand-off failed, quoting the script's stderr output. Do not fall back to reviewing in this session silently. Either way, stop completely — do NOT run Step 0.5 or any review round in this session.
-
-## Step 0.5: Mechanical pre-pass
-
-Run once per plan, before the first review round, without asking which model — this one is always Haiku. Roughly 40% of round-1 findings in the measured history were grep-provable; clearing them here means the reasoned round spends its context on judgment instead of stale identifiers.
-
-Use the Agent tool with `subagent_type: planning:plan-review` and `model: "haiku"`, passing:
-
-```
-Plan file: PLAN_FILE
-Mode: mechanical
-```
-
-Print its report verbatim as your own chat message, same as Step 2 requires for a full round. Then apply every finding with the Edit tool and re-run each finding's own `verify:` command, fixing anything that still fails before continuing.
-
-Then go to Step 1 with the round counter at **1**. The pre-pass is not a round: it does not consume the 1–3 budget, and its fixes are **not** passed into round 1 as "Fixes applied since last round" — round 1 is still the first reasoned look at the whole plan, and telling the reviewer otherwise would make it narrow itself per step 8 of its own instructions.
-
-## Step 1: Spawn review agent
-
-Track the current round (start at 1, max 3 — the Step 0.5 pre-pass is not counted). Every time this step runs — first review, or a "Fix and re-review" continuation — first ask which model should run this round, using AskUserQuestion:
+**This session** (or no Codex hand-off available): ask which model runs the review:
 
 ```json
 {
   "questions": [{
-    "question": "Which model should review this round?",
+    "question": "Which model should review this plan?",
     "header": "Model",
     "options": [
-      {"label": "Opus", "description": "Most capable — best for catching subtle logic gaps or over-engineering"},
-      {"label": "Sonnet", "description": "Faster and cheaper — good for most plans"}
+      {"label": "Opus", "description": "Most capable — best at spotting a wrong decision or a missing trap"},
+      {"label": "Sonnet", "description": "Faster and cheaper — fine for most plans"}
     ],
     "multiSelect": false
   }]
 }
 ```
 
-Use the Agent tool with `subagent_type: planning:plan-review` — a dedicated read-only agent (`plugins/planning/agents/plan-review.md`) that only has Read/Glob/Grep/Bash; it cannot call Write, Edit, or NotebookEdit, so it cannot create, modify, or delete files no matter what its prompt says. Pass `model` set to the chosen tier (`opus` or `sonnet`). The review methodology, checklist, and output format live in the agent definition — this step only supplies what changes per call:
+## Step 2: Run the review
+
+Use the Agent tool with `subagent_type: planning:plan-review` and `model` set to the chosen tier. The agent can't write files — its `tools:` list has no Write or Edit. Its checklist and output format live in `plugins/planning/agents/plan-review.md`; pass only:
 
 ```
 Plan file: PLAN_FILE
-Review round: ROUND
 ```
 
-For ROUND > 1, append the "Fixes applied since last round" list (built in Step 3) to the prompt, each line as `[finding] → [what you did]`.
+The moment the agent returns, print its full report verbatim as your own message, before doing anything else. A background agent's output is gone once it finishes — this is the only way the user sees it.
 
-## Step 2: Present findings
+## Step 3: Apply and stop
 
-The instant the review agent returns — foreground or background — your next action, before anything else, is to print its full report verbatim as your own chat message. Not a summary, not "let me look into these first": paste the report, then stop. Do not Grep, Read, Edit, or otherwise start acting on findings before it's posted — that includes the "every finding was MECHANICAL, skip straight to Step 5" path in Step 3, which still needs the report shown first. This is mandatory, not optional, when Step 1 ran as a background agent: once a background agent finishes, its output is gone from the transcript — there is no panel or log the user can expand to see it afterward. Printing the report here is the only way the user ever sees it. Nothing — not Step 3's AskUserQuestion, not a fix already in progress — may be the first thing the user sees after a review round.
+**Verdict READY with nothing listed**: tell the user the plan is ready and stop.
 
-## Step 3: Decide next action
-
-**If verdict is NEEDS REVISION and round < 3**: use AskUserQuestion:
+**Otherwise** ask with AskUserQuestion:
 
 ```json
 {
   "questions": [{
-    "question": "Plan needs revision. What would you like to do?",
-    "header": "Next step",
+    "question": "Apply the review findings to the plan?",
+    "header": "Findings",
     "options": [
-      {"label": "Fix and re-review", "description": "Apply fixes from the findings, then run another review round"},
-      {"label": "Done", "description": "Stop here — I'll handle the fixes manually"}
+      {"label": "Apply 'Should fix'", "description": "Edit the plan for the Should-fix items only"},
+      {"label": "Apply all", "description": "Also apply the Consider items"},
+      {"label": "Done", "description": "Leave the plan as is — I'll handle it"}
     ],
     "multiSelect": false
   }]
 }
 ```
 
-- **Fix and re-review**:
-  1. Apply fixes to the plan file based on the findings (Edit tool). For any finding that reveals a pattern repeated across multiple tasks (the same wrong assumption about a function's behavior, the same stale reference, reused in several places) — grep/scan the whole plan for every other instance of that pattern and fix all of them now, not just the line(s) the reviewer flagged. When a finding says code needs more explanation, inline it per `planning:plan`'s "Code comment rules" — never resolve it by adding a comment that points back to Technical Details, a spec doc, or a ticket. Keep a running list of what you changed, phrased as one line per finding: `[finding] → [what you did]`.
-  2. For every MECHANICAL finding, re-run exactly its own `verify:` command and compare against the expected result — not a broader rescan of the whole plan "while you're at it." Do this silently alongside applying the fixes, not as an announced separate step; only surface it if a result doesn't match what the finding expected. Any that still fail must be fixed before continuing — do not spawn a new round with an unverified mechanical fix.
-  3. For every REASONED finding, check your own fix before moving on: read the source the fix now claims something about, and confirm the claim holds. A fix that rewrites a call must match the real signature in the file; a fix that changes an expected value must match what the code actually returns. Of the fixes measured across this loop's history, 45 were later judged incomplete and 26 had introduced a new problem — the next round is not the place to discover that. If a fix touches a task other than the flagged one, re-read that task in full too. Do this silently; surface only what you had to correct.
-  4. If **every** finding in this round was MECHANICAL (no REASONED findings at all): do not spawn a new agent round. All fixes are now verified by command, which is strictly stronger evidence than another read of the plan. Report the verify results to the user and go to Step 5.
-  5. Otherwise (at least one REASONED finding was present): increment the round counter, and go to Step 1. Pass the fix list from step 1 into the round prompt as "Fixes applied since last round" — this is what step 8 of the reviewer's instructions and the "Fix verdicts" output section require.
-- **Done**: stop completely — do NOT suggest or begin implementation
+When applying, edit the plan at its own level — change Intent, Decisions, Traps or DoD lines; don't answer a finding by adding code or file-by-file steps. If a finding says something about the code, check the source before writing it into the plan. Then report in one line what changed and stop. No second review pass.
 
-A finding that is real but outside the plan's scope — a pre-existing defect the plan did not cause and does not need fixed — is not a plan fix. Instead of editing it into the plan, offer to file it with `/backlog`, which owns the format, dedupe, and branch check.
+A finding that's real but outside the plan's scope — a pre-existing defect the plan doesn't cause or need fixed — isn't a plan edit. Offer to file it with `/backlog` instead.
 
-**If verdict is APPROVE**: go to Step 5.
-
-## Step 4: Round limit
-
-After 3 rounds without APPROVE, stop the auto-review loop. Show any remaining issues and tell the user: "Review limit reached (3 rounds). Remaining issues listed above." Then go to Step 5.
-
-## Step 5: Report and stop
-
-This is where every review path ends — auto-review approval or round limit. Report the outcome and stop. Do not ask what to do next — the user calls `/planning:handoff`, `revdiff:revdiff`, or begins implementation directly when ready.
-
-- **Arriving with an APPROVE verdict** (Step 3): tell the user the plan is approved and ready for implementation.
-- **Arriving after the round limit** (Step 4, which already reported "Review limit reached (3 rounds). Remaining issues listed above."): nothing further to report — just stop.
+Don't start implementation from here — the user calls `/planning:handoff`, `revdiff:revdiff`, or starts implementing when ready.
