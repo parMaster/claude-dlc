@@ -80,7 +80,7 @@ covers all code, not just code that came from a plan. Closes backlog item
   already in `old_string` / on disk — proof: `tests/run.sh` allow cases.
 - [x] Deny reason names the matched text and says to rewrite the comment —
   proof: a test asserts on the reason.
-- [ ] Hook registered for Edit, Write and MultiEdit — proof: read `hooks.json`;
+- [x] Hook registered for Edit, Write and MultiEdit — proof: read `hooks.json`;
   `/reload-plugins` then an Edit adding `// PROJ-1 fix` to a scratch `.go` file
   gets denied.
 - [x] "Code Comments" prose section in global-rules `CLAUDE.md`, 3–4 lines.
@@ -94,4 +94,4 @@ covers all code, not just code that came from a plan. Closes backlog item
 - [x] full test suite passes: `bash tests/run.sh`
 - [x] resync with remote (`git fetch && git status`)
 - [x] move this plan to `docs/plans/completed/`
-- [ ] single commit: all changes + plan move
+- [x] single commit: all changes + plan move
