@@ -4,6 +4,10 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 2.0.1 - 2026-09-27
+
+`pr` uses a neutral `PROJ-1234` in its ticket-ID examples.
+
 ## planning 2.0.0 - 2026-09-27
 
 Plans move from code to intent. `plan` now writes goal, kind of change,

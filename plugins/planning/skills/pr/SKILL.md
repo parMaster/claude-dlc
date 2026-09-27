@@ -32,7 +32,7 @@ gh pr view --json url,title,number,body 2>/dev/null
 
 Run: `git branch --show-current`
 
-If the branch name contains a pattern like `BP-1234`, `PROJ-42`, or similar (`[A-Z]+-[0-9]+`), extract it as the candidate ticket ID.
+If the branch name contains a pattern like `PROJ-1234`, `ABC-42`, or similar (`[A-Z]+-[0-9]+`), extract it as the candidate ticket ID.
 
 ## Step 4: Ask for PR details — one question at a time
 
@@ -63,7 +63,7 @@ If a ticket ID was detected from the branch, offer it as the first option:
     "question": "Ticket or epic ID?",
     "header": "Ticket ID",
     "options": [
-      {"label": "BP-1234", "description": "Detected from branch name"},
+      {"label": "PROJ-1234", "description": "Detected from branch name"},
       {"label": "No ticket", "description": "Not linked to a ticket"}
     ],
     "multiSelect": false
@@ -80,7 +80,7 @@ If no ID was detected, offer:
     "header": "Ticket ID",
     "options": [
       {"label": "No ticket", "description": "Not linked to a ticket"},
-      {"label": "Enter ID", "description": "Type the ticket ID (e.g. BP-1234)"}
+      {"label": "Enter ID", "description": "Type the ticket ID (e.g. PROJ-1234)"}
     ],
     "multiSelect": false
   }]
@@ -111,7 +111,7 @@ Suggest the title from the plan's **Goal** line (strip the "Goal:" prefix). Let 
 
 Format: `[type]: TICKET-ID - ticket title`
 
-- With ticket: `[feat]: BP-1234 - Add user authentication`
+- With ticket: `[feat]: PROJ-1234 - Add user authentication`
 - Without ticket: `[feat]: Add user authentication`
 
 ## Step 6: Generate PR description (new PR only)
