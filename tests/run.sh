@@ -363,6 +363,16 @@ AGTERM_FAKE_BIN="$(mktemp -d)"
 cat > "${AGTERM_FAKE_BIN}/agtermctl" <<'EOF'
 #!/usr/bin/env bash
 echo "$@" >> "${AGTERMCTL_LOG}"
+if [ "$1" = "session" ] && [ "$2" = "overlay" ] && [ "$3" = "result" ]; then
+  # AGTERMCTL_RESULT_JSON unset = the overlay program is still running.
+  if [ -n "${AGTERMCTL_RESULT_JSON:-}" ]; then echo "$AGTERMCTL_RESULT_JSON"; exit 0; fi
+  echo '{"ok":false,"error":"overlay still running"}'
+  exit 1
+fi
+if [ "$1" = "session" ] && [ "$2" = "overlay" ] && [ "$3" = "open" ] && [ -n "${AGTERMCTL_OPEN_ERROR:-}" ]; then
+  echo "error: ${AGTERMCTL_OPEN_ERROR}" >&2
+  exit 1
+fi
 if [ "$1" = "session" ] && [ "$2" = "new" ]; then
   if [ -n "${AGTERMCTL_SESSION_NEW_JSON:-}" ]; then
     echo "$AGTERMCTL_SESSION_NEW_JSON"
@@ -699,6 +709,137 @@ result=$(AGTERM_ENABLED="" bash "$CODEX_REVIEW_HANDOFF_SCRIPT" "$CODEX_REVIEW_PL
 assert_contains "refuses to run when AGTERM_ENABLED is unset" "exit:1" "$result"
 
 rm -rf "$CODEX_REVIEW_TEST_REPO"
+
+# ---------------------------------------------------------------------------
+# agterm/overlay.sh
+# ---------------------------------------------------------------------------
+
+OVERLAY_SCRIPT="${REPO_ROOT}/plugins/agterm/scripts/overlay.sh"
+
+echo "agterm/overlay.sh"
+
+OVERLAY_REPO="$(mktemp -d)"
+OVERLAY_REPO="$(cd "$OVERLAY_REPO" && pwd -P)"
+mkdir -p "$OVERLAY_REPO/docs/plans/completed" "$OVERLAY_REPO/sub" "$OVERLAY_REPO/it's dir"
+echo "# done" > "$OVERLAY_REPO/docs/plans/completed/old.md"
+echo "<p>hi</p>" > "$OVERLAY_REPO/sub/page.html"
+echo "# q" > "$OVERLAY_REPO/it's dir/a b.md"
+
+# run_overlay <cwd> <args...>; AGTERMCTL_RESULT_JSON and OVERLAY_SID (session id, default sess-1) pass through from the caller.
+run_overlay() {
+  local dir="$1"; shift
+  (cd "$dir" && AGTERMCTL_LOG="$LOG" AGTERM_SESSION_ID="${OVERLAY_SID-sess-1}" \
+    PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$OVERLAY_SCRIPT" "$@" 2>&1; echo "exit:$?")
+}
+
+LOG="$(mktemp)"
+result=$(run_overlay "$OVERLAY_REPO" md)
+assert_contains "md with no arg falls back to docs/plans/completed/" "opened $OVERLAY_REPO/docs/plans/completed/old.md" "$result"
+assert_contains "md opens glow -p through a login shell" "overlay open zsh -lc 'glow -p \"\$1\"' glow $OVERLAY_REPO/docs/plans/completed/old.md" "$(cat "$LOG")"
+assert_contains "md targets the caller's session" " --target sess-1" "$(head -1 "$LOG")"
+assert_contains "md sets --cwd to the file's directory" " --cwd $OVERLAY_REPO/docs/plans/completed" "$(head -1 "$LOG")"
+: > "$LOG"
+
+echo "# old" > "$OVERLAY_REPO/docs/plans/older.md"
+touch -t 202001010000 "$OVERLAY_REPO/docs/plans/older.md"
+echo "# new" > "$OVERLAY_REPO/docs/plans/newer.md"
+result=$(run_overlay "$OVERLAY_REPO" md)
+assert_contains "md with no arg picks the newest active plan by mtime" "opened $OVERLAY_REPO/docs/plans/newer.md" "$result"
+: > "$LOG"
+
+result=$(run_overlay "$OVERLAY_REPO/sub" md "../it's dir/a b.md")
+assert_contains "md resolves a relative path with a quote and a space" "opened $OVERLAY_REPO/it's dir/a b.md" "$result"
+assert_contains "md escapes the path for the shell" "glow it\\'s\\ dir/a\\ b.md" "$(sed "s|$OVERLAY_REPO/||" "$LOG")"
+: > "$LOG"
+
+result=$(AGTERMCTL_RESULT_JSON='{"result":{"exitCode":127},"ok":true}' run_overlay "$OVERLAY_REPO" md docs/plans/newer.md)
+assert_contains "reports glow exiting right after opening" "glow exited with status 127" "$result"
+assert_contains "glow failure exits 1" "exit:1" "$result"
+: > "$LOG"
+
+result=$(run_overlay "$OVERLAY_REPO/sub" html page.html)
+assert_contains "html opens the absolute file" "overlay open --html $OVERLAY_REPO/sub/page.html --cwd $OVERLAY_REPO/sub --navigation" "$(cat "$LOG")"
+assert_contains "html targets the caller's session" " --target sess-1" "$(cat "$LOG")"
+: > "$LOG"
+
+result=$(run_overlay "$OVERLAY_REPO" url http://localhost:5173/ --js)
+assert_contains "url passes the url and --js" "overlay open --url http://localhost:5173/ --js --size-percent 90 --target sess-1" "$(cat "$LOG")"
+: > "$LOG"
+
+result=$(AGTERMCTL_OPEN_ERROR="overlay already open" run_overlay "$OVERLAY_REPO" url https://example.com/)
+assert_contains "an overlay already open asks the user to close it" "close it (q or Cmd-W) and try again" "$result"
+assert_contains "an overlay already open exits 1" "exit:1" "$result"
+assert_not_contains "an overlay already open never closes it" "overlay close" "$(cat "$LOG")"
+: > "$LOG"
+
+result=$(AGTERMCTL_OPEN_ERROR="no such session: sess-1" run_overlay "$OVERLAY_REPO" url https://example.com/)
+assert_contains "other agtermctl errors pass through" "agtermctl: error: no such session: sess-1" "$result"
+: > "$LOG"
+
+result=$(run_overlay "$OVERLAY_REPO" url localhost:5173)
+assert_contains "url rejects a non-http(s)/file url" "not an http(s):// or file:// URL" "$result"
+assert_eq "rejected url never calls agtermctl" "" "$(cat "$LOG")"
+
+result=$(run_overlay "$OVERLAY_REPO" md missing.md)
+assert_contains "missing file fails" "no such file: missing.md" "$result"
+assert_eq "missing file never calls agtermctl" "" "$(cat "$LOG")"
+
+result=$(OVERLAY_SID="" run_overlay "$OVERLAY_REPO" md)
+assert_contains "refuses outside agterm" "not inside an agterm session" "$result"
+assert_contains "outside agterm exits 1" "exit:1" "$result"
+assert_eq "outside agterm never calls agtermctl" "" "$(cat "$LOG")"
+
+rm -rf "$OVERLAY_REPO/docs/plans"/*.md "$OVERLAY_REPO/docs/plans/completed"/*.md
+result=$(run_overlay "$OVERLAY_REPO" md)
+assert_contains "no plans at all fails" "no plans found" "$result"
+
+result=$(run_overlay "$OVERLAY_REPO" run htop)
+assert_contains "unknown kind (run) is refused" "usage: overlay.sh" "$result"
+assert_eq "unknown kind never calls agtermctl" "" "$(cat "$LOG")"
+
+rm -rf "$OVERLAY_REPO" "$LOG"
+
+# ---------------------------------------------------------------------------
+# agterm/approve-overlay.sh
+# ---------------------------------------------------------------------------
+
+APPROVE_OVERLAY_SCRIPT="${REPO_ROOT}/plugins/agterm/scripts/approve-overlay.sh"
+AGTERM_PLUGIN_ROOT="${FAKE_PLUGIN_ROOT_BASE}/parmaster-claude-dlc/agterm/1.0.0"
+
+echo "agterm/approve-overlay.sh"
+
+approve() { CLAUDE_PLUGIN_ROOT="$AGTERM_PLUGIN_ROOT" run_hook "$APPROVE_OVERLAY_SCRIPT" "$1"; }
+
+for cmd in \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \"docs/plans/x.md\"" \
+  "bash $AGTERM_PLUGIN_ROOT/scripts/overlay.sh html page.html" \
+  'bash "${CLAUDE_PLUGIN_ROOT}/scripts/overlay.sh" url "http://localhost:5173/" --js' \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \"\""; do
+  assert_contains "allows: $cmd" '"permissionDecision": "allow"' "$(approve "$cmd")"
+done
+
+for cmd in \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md; rm -rf ~" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md a.md && curl x" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md a.md || true" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md a.md | sh" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \"\$(whoami).md\"" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \`whoami\`" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md a.md > /tmp/x" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \$HOME/a.md" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md a.md
+rm -rf ~" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" run htop" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" mdx a.md" \
+  "bash /tmp/evil/scripts/overlay.sh md a.md" \
+  "agtermctl session overlay open htop --target x" \
+  "ls -la"; do
+  assert_eq "no decision: $cmd" "" "$(approve "$cmd")"
+done
+
+assert_eq "no decision without CLAUDE_PLUGIN_ROOT" "" \
+  "$(CLAUDE_PLUGIN_ROOT="" run_hook "$APPROVE_OVERLAY_SCRIPT" "bash /scripts/overlay.sh md")"
 
 rm -rf "$AGTERM_FAKE_BIN" "$TEST_REPO"
 

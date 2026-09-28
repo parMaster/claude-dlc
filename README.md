@@ -137,6 +137,22 @@ Writing style for technical communication.
 
 ---
 
+### agterm
+
+Opens things in an [agterm](https://github.com/umputun/agterm) overlay: a panel floating over the current session that closes on `q` (glow), Cmd-W or its close button.
+
+```
+/plugin install agterm@parmaster-claude-dlc
+```
+
+| Skill | What it does |
+|-------|--------------|
+| `overlay` | Opens a markdown file in `glow`, a local HTML file, or a URL. "Open the latest plan in glow" picks the newest file in `docs/plans/`, then `docs/plans/completed/`. Also triggers on "open <file> in an overlay", "show <file.html> in agterm", "open <url> in an overlay", or `/agterm:overlay [file\|url]`. |
+
+A PreToolUse hook approves the skill's own script calls, so it works in auto mode with no permission rule in settings. The hook approves only a single plain call of the plugin's `overlay.sh` with `md`, `html` or `url`, and stays silent for anything else. The script only ever runs `agtermctl session overlay open|result` against `$AGTERM_SESSION_ID`, and fails with a clear message outside agterm or when an overlay is already open. It can't run arbitrary programs; use agterm's own `agterm` skill for that.
+
+---
+
 ### statusline
 
 Custom status line: dir, git branch and dirty state, model, context %, 5h/7d usage.

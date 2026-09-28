@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 1.0.0 - 2026-09-29
+
+New plugin. The `overlay` skill opens a markdown file in `glow`, a local HTML
+file or a URL in an agterm overlay over the current session. With no file
+named, it opens the latest plan. A bundled PreToolUse hook approves only the
+skill's own viewer calls, so it works in auto mode without a settings rule.
+
 ## global-rules 1.9.1 - 2026-09-27
 
 The "tests pass before commit" rule names the project's own test suite
