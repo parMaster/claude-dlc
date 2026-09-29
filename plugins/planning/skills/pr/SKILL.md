@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Open a draft PR for the current feature. Composes title from ticket ID/type convention and generates description from the plan file. Activates on "open a PR", "create a draft PR", "open draft PR", or as the final step after plan implementation.
+description: Open a draft PR for the current feature. Composes title from ticket ID/type convention and generates description from the plan file. Activates only when the user asks: "open a PR", "create a draft PR", "open draft PR". Never offer it unprompted after implementation.
 allowed-tools: Read, Bash, AskUserQuestion
 ---
 

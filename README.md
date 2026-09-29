@@ -42,7 +42,7 @@ flowchart TD
     PL --> IM
     RP --> IM
     RD --> IM
-    IM --> DPR
+    IM -.->|manual, when you want one| DPR
 ```
 
 ## Plugins

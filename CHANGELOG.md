@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 2.0.3 - 2026-09-29
+
+Plans no longer end with a `planning:pr` wrap-up box, and the `pr` skill no
+longer triggers "as the final step after implementation". Opening a PR is
+manual now, so finishing a plan doesn't end with an offer to open one.
+
 ## agterm 1.0.0 - 2026-09-29
 
 New plugin. The `overlay` skill opens a markdown file in `glow`, a local HTML

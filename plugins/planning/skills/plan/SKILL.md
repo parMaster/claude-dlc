@@ -112,7 +112,6 @@ The test approach lives in the DoD, not in a separate question:
 - [ ] README.md / CLAUDE.md updated if behavior or patterns changed
 - [ ] move this plan to `docs/plans/completed/` (`mkdir -p docs/plans/completed && mv <plan> docs/plans/completed/`)
 - [ ] single commit: all changes + plan move
-- [ ] `planning:pr` — opens a draft PR, or updates the description of the one already open. Omit this line when the work goes straight to the default branch.
 
 ## Post-Completion
 
