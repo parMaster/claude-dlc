@@ -16,7 +16,7 @@ One review pass by a read-only `plan-review` agent. The main session shows the f
 
 ## Step 1: Choose runtime and model
 
-Check whether a hand-off to a separate session is possible: `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1`.
+A hand-off to a separate session is possible when `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1` succeeds **and** `agterm:spawn-session` is in your list of available skills. Don't invoke the skill to find out.
 
 If it is, ask with AskUserQuestion:
 
@@ -46,8 +46,6 @@ stop.
 ```
 
 Keep the first line a direct imperative; `spawn-session` rejects a prompt that opens by describing a hand-off. It asks runtime and model itself and reports the new session's name — don't ask those here. Once it reports, stop — don't review in this session.
-
-If the `agterm:spawn-session` skill isn't installed, say in one line that spawning needs the `agterm` plugin (`/plugin install agterm@parmaster-claude-dlc`), then carry on as **This session**.
 
 **This session** (or no hand-off available): ask which model runs the review:
 

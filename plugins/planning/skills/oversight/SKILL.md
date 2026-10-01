@@ -151,8 +151,16 @@ Two statuses only: `not started` and `done`. Every iteration starts at
 
 This is where every path lands — a fresh WBS doc from Step 4, or a resumed
 one from Step 0. If every iteration in the doc is already `done`, don't show
-the usual menu — go to Step 6 (epic wrap-up) instead. Otherwise show the
-current iteration list with status, then ask:
+the usual menu — go to Step 6 (epic wrap-up) instead.
+
+Before the menu, work out whether this session can spawn another one: it
+can when `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1`
+succeeds **and** `agterm:spawn-session` is in your list of available skills.
+Don't invoke the skill to find out. When it can't, the first option's
+description is "Print the kick-off prompt for a specific iteration, to
+paste into a session you open yourself".
+
+Show the current iteration list with status, then ask:
 
 ```json
 {
@@ -190,20 +198,25 @@ current iteration list with status, then ask:
   Run /planning:plan against this scope.
   ```
 
-  Invoke the `agterm:spawn-session` skill (Skill tool) with that prompt
-  as its argument — it handles the rest itself: asking which CLI/runtime
-  and model, naming and spawning the session. This skill doesn't ask those
-  questions; `spawn-session` already does. Append a Progress Log entry
-  noting the iteration was kicked off (date + iteration name) — status
-  stays `not started` until the user reports it done. Go back to Step 5
-  once `spawn-session` reports the outcome.
+  **If this session can spawn**: invoke the `agterm:spawn-session` skill
+  (Skill tool) with that prompt as its argument — it handles the rest
+  itself: asking which CLI/runtime and model, naming and spawning the
+  session. This skill doesn't ask those questions; `spawn-session` already
+  does. Append a Progress Log entry noting the iteration was kicked off
+  (date + iteration name). Go back to Step 5 once `spawn-session` reports
+  the outcome.
 
-  If the `agterm:spawn-session` skill isn't installed: say in one line
-  that spawning needs the `agterm` plugin
-  (`/plugin install agterm@parmaster-claude-dlc`), print the prompt so the
-  user can paste it into a session they open themselves, append no
-  Progress Log entry, and go back to Step 5. Don't plan the iteration in
-  this session — that pulls one iteration's detail into the epic session.
+  **If it can't** (no agterm here, or the `agterm` plugin isn't
+  installed): a manual kick-off is the normal path, not an error. Don't
+  try the skill. Print the full prompt in a code block as your own
+  message, ready to copy, and say in one line that the user pastes it
+  into a session they open themselves. Append a Progress Log entry: date +
+  iteration name + "prompt handed over for manual kick-off". Go back to
+  Step 5.
+
+  Either way, status stays `not started` until the user reports the
+  iteration done, and this session never plans the iteration itself —
+  that pulls one iteration's detail into the epic session.
 
 - **Mark an iteration done**: ask which iteration, update its status to
   `done` in the WBS doc and append a Progress Log entry (date + what

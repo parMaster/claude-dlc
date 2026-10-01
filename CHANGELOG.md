@@ -4,6 +4,18 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 3.0.1 - 2026-10-01
+
+`oversight` and `review-plan` now check up front whether a session can be
+spawned (inside agterm and `agterm:spawn-session` available) and no longer
+call the skill to find out, so a machine without agterm sees no
+"Unknown skill" error.
+
+Where it can't spawn, `oversight`'s "Kick off an iteration" is a manual
+kick-off: it prints the prompt in a code block to paste into your own session
+and logs "prompt handed over for manual kick-off" in the Progress Log.
+`review-plan` doesn't offer the spawn option there.
+
 ## agterm 1.2.1 - 2026-10-01
 
 `spawn-session` now takes the whole argument as the task prompt. It read

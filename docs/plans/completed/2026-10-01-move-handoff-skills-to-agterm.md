@@ -96,19 +96,25 @@ agterm/                                    skills/overlay
       dashboard files; `ls plugins/planning/skills` has no `handoff` or `spawn-session`.
 - [x] `agterm` holds both skills and the six scripts — proof: `ls plugins/agterm/skills plugins/agterm/scripts`;
       `claude --plugin-dir plugins/agterm` lists `/agterm:handoff` and `/agterm:spawn-session`.
-      ⚠️ `ls` checked; the `claude --plugin-dir` listing was not run.
+      `ls` checked; `agterm:spawn-session` loaded and ran from the installed plugin. `/agterm:handoff`
+      was not run.
 - [x] Nothing live points at the old names — proof:
       `grep -rnE 'planning:(handoff|spawn-session)|codex-review-handoff|build_review_prompt' plugins README.md tests docs/backlog .claude-plugin`
       returns nothing.
-- [ ] `review-plan` hands a review to a new session through `agterm:spawn-session`, on Claude or Codex —
+- [x] `review-plan` hands a review to a new session through `agterm:spawn-session`, on Claude or Codex —
       proof: inside agterm, run `/planning:review-plan` on a plan, pick the spawn option, and see a new
       session open with the review prompt; this session stops without running the review.
-      ⚠️ skill text written; the live run needs a session with the new plugin versions loaded.
+      Run live on Claude (Sonnet); the Codex runtime was not tried.
 - [ ] `review-plan` and `oversight` still work without the `agterm` plugin — proof: with only
       `claude --plugin-dir plugins/planning` inside agterm, `/planning:review-plan` with the spawn option
       names the missing plugin and runs the subagent review; `oversight`'s "Kick off an iteration" names
       the plugin, prints the iteration prompt, logs nothing and returns to the hub.
-      ⚠️ skill text written; not run live.
+      ⚠️ `review-plan` outside agterm passed live. The `oversight` fallback ran but read as an error
+      loop, so it was changed afterwards.
+- [ ] ➕ Where a session can't be spawned, both skills know it up front (no failed skill call);
+      `oversight` prints the kick-off prompt to copy and logs "prompt handed over for manual kick-off" —
+      proof: on a machine without agterm, "Kick off an iteration" shows no error, prints the prompt and
+      adds that Progress Log line.
 - [x] `plan`, `review-plan` and `oversight` point at `/agterm:handoff` and `agterm:spawn-session`.
 - [x] README: `handoff` and `spawn-session` rows and the auto-mode/flagged paragraph are under `agterm`;
       the planning intro no longer promises hand-offs; `agterm`'s descriptions in `plugin.json` and
