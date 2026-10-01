@@ -151,6 +151,22 @@ Opens things in an [agterm](https://github.com/umputun/agterm) overlay: a panel 
 
 A PreToolUse hook approves the skill's own script calls, so it works in auto mode with no permission rule in settings. The hook approves only a single plain call of the plugin's `overlay.sh` with `md`, `html` or `url`, and stays silent for anything else. The script only ever runs `agtermctl session overlay open|result` against `$AGTERM_SESSION_ID`, and fails with a clear message outside agterm or when an overlay is already open. It can't run arbitrary programs; use agterm's own `agterm` skill for that.
 
+#### Optional agterm key commands
+
+Two custom commands for agterm's `~/.config/agterm/keymap.conf` that open an overlay straight from a key, without going through Claude. Paste the ones you want, change the chords to taste, then run `agtermctl keymap reload`. Each is a single line.
+
+**Backlog Dashboard** builds the `planning` plugin's backlog dashboard for the session's repo and opens it. It needs the `planning` plugin from this marketplace, `git` and `jq`. In a folder with no backlog it shows the reason as a short message.
+
+```
+command "Backlog Dashboard" cmd+shift+b cd "$AGT_SESSION_PWD" && f=$(bash ~/.claude/plugins/marketplaces/parmaster-claude-dlc/plugins/planning/scripts/backlog-dashboard.sh 2>&1) && { agtermctl session overlay open --html "$f" --cwd "$(dirname "$f")" --navigation --js --size-percent 90 --target "$AGT_SESSION_ID" --socket "$AGT_SOCKET"; exit; }; agtermctl session hud "${f:-Backlog Dashboard failed}" --hide-after 4 --target "$AGT_SESSION_ID" --socket "$AGT_SOCKET"
+```
+
+**Glow Selection** opens the selected file path in `glow`. With nothing selected in agterm it uses the clipboard, which covers a program that captures the mouse and keeps its own selection (Claude Code in fullscreen mode). Spaces and backticks around the path are trimmed; a path that isn't a file gets a short "no such file" message.
+
+```
+command "Glow Selection" cmd+shift+g f=$AGT_SELECTION; [ -n "$f" ] || f=$(pbpaste); f=$(printf %s "$f" | head -1 | sed 's/^[[:space:]`]*//; s/[[:space:]`]*$//' | cut -c1-200); cd "$AGT_SESSION_PWD" && [ -f "$f" ] && { agtermctl session overlay open "zsh -lc 'glow -p \"\$1\"' glow $(printf %q "$f")" --cwd "$AGT_SESSION_PWD" --size-percent 90 --target "$AGT_SESSION_ID" --socket "$AGT_SOCKET"; exit; }; agtermctl session hud "Glow Selection: no such file: $f" --hide-after 4 --target "$AGT_SESSION_ID" --socket "$AGT_SOCKET"
+```
+
 ---
 
 ### statusline
