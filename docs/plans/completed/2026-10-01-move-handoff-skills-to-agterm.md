@@ -105,13 +105,13 @@ agterm/                                    skills/overlay
       proof: inside agterm, run `/planning:review-plan` on a plan, pick the spawn option, and see a new
       session open with the review prompt; this session stops without running the review.
       Run live on Claude (Sonnet); the Codex runtime was not tried.
-- [ ] `review-plan` and `oversight` still work without the `agterm` plugin — proof: with only
+- [x] `review-plan` and `oversight` still work without the `agterm` plugin — proof: with only
       `claude --plugin-dir plugins/planning` inside agterm, `/planning:review-plan` with the spawn option
       names the missing plugin and runs the subagent review; `oversight`'s "Kick off an iteration" names
       the plugin, prints the iteration prompt, logs nothing and returns to the hub.
-      ⚠️ `review-plan` outside agterm passed live. The `oversight` fallback ran but read as an error
-      loop, so it was changed afterwards.
-- [ ] ➕ Where a session can't be spawned, both skills know it up front (no failed skill call);
+      `review-plan` outside agterm passed live. The `oversight` fallback ran but read as an error
+      loop, so it was replaced by the item below. "Inside agterm, plugin missing" was not run.
+- [x] ➕ Where a session can't be spawned, both skills know it up front (no failed skill call);
       `oversight` prints the kick-off prompt to copy and logs "prompt handed over for manual kick-off" —
       proof: on a machine without agterm, "Kick off an iteration" shows no error, prints the prompt and
       adds that Progress Log line.
