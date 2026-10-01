@@ -75,6 +75,7 @@ The sibling repo `../cc-thingz` (MIT, Umputun) is the upstream reference. When p
 - Test a plugin locally: `claude --plugin-dir plugins/<name>`
 - Run `bash tests/run.sh` before committing — CI runs the same script. Hook and script changes need cases there.
 - Reload without restarting: `/reload-plugins`
+- Installed plugins come from GitHub, not this checkout: a change reaches `/plugin marketplace update` only after it is pushed. Push before telling the user to update or reload.
 - Skills appear in `/` autocomplete the same as `commands/*.md` files — `commands/` is legacy-only now; use `skills/<name>/SKILL.md` for anything new. Both share one frontmatter schema (`description`, `argument-hint`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, ...) and the same `$ARGUMENTS`/`$0`/`$name` argument substitution.
 
 ## Known Claude Code Limitations
