@@ -14,7 +14,13 @@ subagent: those are in-process, hidden, and die with this conversation.
 
 ## Step 1: Resolve the task prompt
 
-- Use `$0` if given.
+The task prompt passed as the argument, if any:
+
+<task-prompt>
+$ARGUMENTS
+</task-prompt>
+
+- If it isn't empty, use it verbatim, every line of it.
 - Otherwise write a self-contained prompt: what to do, which files/areas are
   involved, how to verify it's done. The new session cannot see this
   conversation.

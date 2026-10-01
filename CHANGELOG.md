@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 1.2.1 - 2026-10-01
+
+`spawn-session` now takes the whole argument as the task prompt. It read
+`$0`, which is only the first word, so a prompt passed by another skill
+(`review-plan`, `oversight`) arrived as a single word.
+
 ## planning 3.0.0 - 2026-10-01
 
 Breaking: the `handoff` and `spawn-session` skills and their scripts moved to
