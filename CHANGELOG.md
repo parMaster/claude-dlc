@@ -4,6 +4,31 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 3.0.0 - 2026-10-01
+
+Breaking: the `handoff` and `spawn-session` skills and their scripts moved to
+the `agterm` plugin. `/planning:handoff` is now `/agterm:handoff`, and
+`planning:spawn-session` is `agterm:spawn-session`; install `agterm` to keep
+them.
+
+`review-plan`'s "Spawn Codex session" option is now "Spawn a separate session"
+and goes through `agterm:spawn-session`, so the review can run on Claude or
+Codex. `codex-review-handoff.sh` is gone, and with it the fixed
+`--sandbox workspace-write --ask-for-approval never` flags: a Codex review
+session may now prompt for approvals.
+
+Without the `agterm` plugin, `review-plan` reviews in the current session and
+`oversight`'s "Kick off an iteration" prints the iteration prompt to paste
+into a session you open yourself.
+
+## agterm 1.2.0 - 2026-10-01
+
+Adds the `handoff` and `spawn-session` skills, moved from `planning` with
+their scripts (`agterm-handoff.sh`, `agterm-spawn.sh`, `agterm-session-new.sh`,
+`codex-handoff.sh`, `codex-spawn.sh`, `handoff-prompt.sh`). No behavior
+change. `build_review_prompt` is removed from `handoff-prompt.sh`; the review
+prompt now lives in `planning`'s `review-plan` skill.
+
 ## planning 2.1.0 - 2026-10-01
 
 `/planning:backlog --dashboard` builds one self-contained HTML page of every

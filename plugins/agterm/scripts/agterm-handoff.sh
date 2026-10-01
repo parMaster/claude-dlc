@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Hand off an implementation plan to a fresh agterm session running `claude`,
-# in the caller's own workspace. Shared by plan/SKILL.md, review-plan/SKILL.md,
-# and handoff/SKILL.md so the agtermctl sequence lives in one place instead of
-# three copies. Thin wrapper around the generic agterm-spawn.sh: builds the
+# in the caller's own workspace. Called by handoff/SKILL.md. Thin wrapper
+# around the generic agterm-spawn.sh: builds the
 # canned plan-hand-off prompt into a temp file and hands off in the current
 # workspace (no workspace grouping — matches this script's prior behavior).
 #

@@ -141,7 +141,7 @@ These are the same things `plan-review` checks, so a clean self-review usually m
 
 ## Step 3: Report completion
 
-Tell the user: "created plan: `docs/plans/yyyy-mm-dd-<task-name>.md`" and stop. Don't ask what's next — the user calls `/planning:review-plan`, `revdiff:revdiff`, `/planning:handoff`, or starts implementing when ready.
+Tell the user: "created plan: `docs/plans/yyyy-mm-dd-<task-name>.md`" and stop. Don't ask what's next — the user calls `/planning:review-plan`, `revdiff:revdiff`, `/agterm:handoff`, or starts implementing when ready.
 
 ## Key principles
 

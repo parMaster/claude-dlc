@@ -160,7 +160,7 @@ current iteration list with status, then ask:
     "question": "What would you like to do?",
     "header": "Next step",
     "options": [
-      {"label": "Kick off an iteration", "description": "Spawn a new session to plan a specific iteration, via planning:spawn-session"},
+      {"label": "Kick off an iteration", "description": "Spawn a new session to plan a specific iteration, via agterm:spawn-session"},
       {"label": "Mark an iteration done", "description": "Update status once an iteration is actually finished"},
       {"label": "Add or re-scope tickets", "description": "Add new tickets to this epic, or revisit the chunking decision"},
       {"label": "Done for now", "description": "Stop here — this session stays available to resume later"}
@@ -190,13 +190,20 @@ current iteration list with status, then ask:
   Run /planning:plan against this scope.
   ```
 
-  Invoke the `planning:spawn-session` skill (Skill tool) with that prompt
+  Invoke the `agterm:spawn-session` skill (Skill tool) with that prompt
   as its argument — it handles the rest itself: asking which CLI/runtime
   and model, naming and spawning the session. This skill doesn't ask those
   questions; `spawn-session` already does. Append a Progress Log entry
   noting the iteration was kicked off (date + iteration name) — status
   stays `not started` until the user reports it done. Go back to Step 5
   once `spawn-session` reports the outcome.
+
+  If the `agterm:spawn-session` skill isn't installed: say in one line
+  that spawning needs the `agterm` plugin
+  (`/plugin install agterm@parmaster-claude-dlc`), print the prompt so the
+  user can paste it into a session they open themselves, append no
+  Progress Log entry, and go back to Step 5. Don't plan the iteration in
+  this session — that pulls one iteration's detail into the epic session.
 
 - **Mark an iteration done**: ask which iteration, update its status to
   `done` in the WBS doc and append a Progress Log entry (date + what
@@ -254,7 +261,7 @@ themselves didn't cover:
 - **Persist, don't re-derive** — every decision (scope, DoD, chunking,
   status) lives in the WBS doc, not just this conversation's memory
 - **Delegate spawning, don't reimplement it** — kicking off an iteration
-  goes through `planning:spawn-session`, which already owns the
+  goes through `agterm:spawn-session`, which already owns the
   runtime/model questions and session creation; this skill only builds the
   task prompt
 - **Chunk only to avoid throwaway work** — grouping tickets into one

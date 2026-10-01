@@ -9,9 +9,8 @@ allowed-tools: Bash, AskUserQuestion
 
 # Handoff to a Separate Session
 
-Hand a plan straight to a fresh agterm session. `plan` and `review-plan` no
-longer offer implementation hand-off inline — this is the direct route from
-a finished plan to a running implementation.
+Hand a plan straight to a fresh agterm session — the direct route from a
+finished plan in `docs/plans/` to a running implementation.
 
 ## Step 1: Resolve the plan file
 
@@ -41,8 +40,7 @@ header "Runtime", single-select, options:
 ## Step 3: Choose a model
 
 Check the Step 2 answer before asking — do not default to the Claude tier
-list out of habit just because it's the familiar one from other planning
-skills. Codex gets its own, different question.
+list out of habit just because it's the familiar one. Codex gets its own, different question.
 
 **If Claude was chosen**, ask with `AskUserQuestion` — question "Which model
 should the new session use?", header "Model", single-select, options:

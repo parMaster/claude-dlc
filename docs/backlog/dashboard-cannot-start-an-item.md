@@ -24,5 +24,5 @@ Routes, cheapest first:
   lock down and clean up.
 - **Ask upstream** for a page-to-app hook in agterm (a GitHub Discussion); with one, the button is trivial.
 
-Pick the route first; the picker is the one that works today. Spawning should go through `spawn-session`,
-which is due to move to the `agterm` plugin.
+Pick the route first; the picker is the one that works today. Spawning should go through
+`agterm:spawn-session`.

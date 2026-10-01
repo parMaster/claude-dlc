@@ -75,7 +75,7 @@ Restart Codex after setup. The footer shows the current directory, Git branch, m
 
 ### planning
 
-Plans, plan reviews, PRs, and hand-offs to fresh sessions.
+Plans, plan reviews, a backlog, and PRs. Handing work to a fresh session goes through the `agterm` plugin below.
 
 ```
 /plugin install planning@parmaster-claude-dlc
@@ -83,15 +83,13 @@ Plans, plan reviews, PRs, and hand-offs to fresh sessions.
 
 | Skill | What it does |
 |-------|--------------|
-| `oversight` | Scopes a multi-plan epic: groups tickets into iterations, checks each against INVEST, sets an epic-level Definition of Done. Tracks progress in `docs/plans/wbs-<epic>.md` and can spawn a session per iteration. Meant to be revisited over the epic's lifetime. |
+| `oversight` | Scopes a multi-plan epic: groups tickets into iterations, checks each against INVEST, sets an epic-level Definition of Done. Tracks progress in `docs/plans/wbs-<epic>.md` and can spawn a session per iteration through `agterm:spawn-session`. Meant to be revisited over the epic's lifetime. |
 | `plan` | Writes `docs/plans/YYYY-MM-DD-<name>.md` at the level of intent: goal, decisions, constraints, traps (code that doesn't do what its name says, leftover state), and a Definition of Done where each item names its proof. No code — the implementer picks it. Test order follows the kind of change: a bug fix starts with a failing test that reproduces it, a refactor pins behavior with tests first. Sized to read and think through in about ten minutes; past ~150 lines it suggests splitting the change. Stops after writing the file. |
-| `review-plan` | One review pass via a read-only `plan-review` subagent: does the DoD prove the intent, do the decisions hold up against the code, is a trap missing, is scope right. "Nothing to flag" is a normal result. Findings are "Should fix" or "Consider"; you pick which to apply. Can hand the review off to a Codex session. |
+| `review-plan` | One review pass via a read-only `plan-review` subagent: does the DoD prove the intent, do the decisions hold up against the code, is a trap missing, is scope right. "Nothing to flag" is a normal result. Findings are "Should fix" or "Consider"; you pick which to apply. Inside agterm it can hand the review off to a fresh Claude or Codex session through `agterm:spawn-session`. |
 | `backlog` | Keeps deferred work in `docs/backlog/<slug>.md`, one file per item, triaged `worth: yes/later/no`, with an optional `ticket:` link to a Jira ticket. Lists and verifies items, walks them one at a time (`--all`) or opens one (`<slug>`) to fix or drop; a fix deletes the file in the same commit. `--dashboard` builds a single HTML page of the whole store (stat tiles that filter by worth, last 7 days, `where` not found and uncommitted; search; sort; area chips; rows that expand to the item body) and opens it through `agterm:overlay`, or prints its path outside agterm. Files new items after dedupe, on the default branch or on a feature branch whose changes touch the item's file; asks otherwise. `plan` offers matching `worth: yes` items for the plan, and `review-plan` offers to file out-of-scope findings here. Adapted from [cc-thingz](https://github.com/umputun/cc-thingz). |
 | `pr` | Opens a draft PR from the plan file, or amends the description if a PR already exists. |
-| `handoff` | Sends a plan to a fresh [agterm](https://github.com/umputun/agterm) session on Claude or Codex. Explicit-only: `/planning:handoff [plan-file]`. |
-| `spawn-session` | Sends an arbitrary task to a fresh [agterm](https://github.com/umputun/agterm) session. Also triggers from natural language ("spawn a new session for this"). |
 
-Claude hand-off sessions start in auto mode, or accept-edits when an org setting turns auto mode off. Hand-off sessions are flagged (`agtermctl session flag on`) so in-flight work shows up in [agterm](https://github.com/umputun/agterm)'s flagged view.
+Without the `agterm` plugin, `review-plan` reviews in the current session and `oversight` prints the iteration prompt for you to paste into a session you open yourself.
 
 **Tip:** to keep a long-lived `oversight` session's prompt cache warm between check-ins, run `/loop 50m keepalive ping — no action, one-word ack` in it.
 
@@ -139,7 +137,7 @@ Writing style for technical communication.
 
 ### agterm
 
-Opens things in an [agterm](https://github.com/umputun/agterm) overlay: a panel floating over the current session that closes on `q` (glow), Cmd-W or its close button.
+Helpers for [agterm](https://github.com/umputun/agterm): open things in an overlay (a panel floating over the current session that closes on `q` (glow), Cmd-W or its close button), and hand a plan or a task off to a fresh session.
 
 ```
 /plugin install agterm@parmaster-claude-dlc
@@ -148,8 +146,12 @@ Opens things in an [agterm](https://github.com/umputun/agterm) overlay: a panel 
 | Skill | What it does |
 |-------|--------------|
 | `overlay` | Opens a markdown file in `glow`, a local HTML file, or a URL. "Open the latest plan in glow" picks the newest file in `docs/plans/`, then `docs/plans/completed/`. Also triggers on "open <file> in an overlay", "show <file.html> in agterm", "open <url> in an overlay", or `/agterm:overlay [file\|url]`. HTML files and URLs open with JavaScript off unless `--js` is added. |
+| `handoff` | Sends a plan from `docs/plans/` to a fresh agterm session on Claude or Codex. Explicit-only: `/agterm:handoff [plan-file]`. |
+| `spawn-session` | Sends an arbitrary task to a fresh agterm session on Claude or Codex. Also triggers from natural language ("spawn a new session for this"). |
 
-A PreToolUse hook approves the skill's own script calls, so it works in auto mode with no permission rule in settings. The hook approves only a single plain call of the plugin's `overlay.sh` with `md`, `html` or `url`, and stays silent for anything else. The script only ever runs `agtermctl session overlay open|result` against `$AGTERM_SESSION_ID`, and fails with a clear message outside agterm or when an overlay is already open. It can't run arbitrary programs; use agterm's own `agterm` skill for that.
+Claude hand-off sessions start in auto mode, or accept-edits when an org setting turns auto mode off. Hand-off sessions are flagged (`agtermctl session flag on`) so in-flight work shows up in agterm's flagged view.
+
+A PreToolUse hook approves the `overlay` skill's own script calls, so it works in auto mode with no permission rule in settings. The hook approves only a single plain call of the plugin's `overlay.sh` with `md`, `html` or `url`, and stays silent for anything else. The script only ever runs `agtermctl session overlay open|result` against `$AGTERM_SESSION_ID`, and fails with a clear message outside agterm or when an overlay is already open. It can't run arbitrary programs; use agterm's own `agterm` skill for that.
 
 #### Optional agterm key commands
 

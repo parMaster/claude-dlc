@@ -37,7 +37,7 @@
     {
       "name": "agterm",
       "source": "./plugins/agterm",
-      "description": "Open markdown (via glow), HTML files and URLs in an agterm overlay over the current session"
+      "description": "agterm helpers — open markdown (via glow), HTML files and URLs in an overlay, and hand a plan or task off to a fresh Claude or Codex session"
     }
   ]
 }

@@ -16,7 +16,7 @@ One review pass by a read-only `plan-review` agent. The main session shows the f
 
 ## Step 1: Choose runtime and model
 
-Check whether a Codex hand-off is possible: `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1`.
+Check whether a hand-off to a separate session is possible: `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1`.
 
 If it is, ask with AskUserQuestion:
 
@@ -27,16 +27,29 @@ If it is, ask with AskUserQuestion:
     "header": "Runtime",
     "options": [
       {"label": "This session", "description": "Run the plan-review subagent here"},
-      {"label": "Spawn Codex session", "description": "Hand the review off to a fresh Codex CLI session running this same skill — this session's job ends once it's spawned"}
+      {"label": "Spawn a separate session", "description": "Hand the review off to a fresh Claude or Codex session — this session's job ends once it's spawned"}
     ],
     "multiSelect": false
   }]
 }
 ```
 
-**Spawn Codex session**: run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/codex-review-handoff.sh" "PLAN_FILE"`. On success, the script's last stdout line is the new session's name (e.g. `Review: foo`) — tell the user the review was handed off to that session in this workspace. On failure, quote its stderr. Either way, stop — don't review in this session.
+**Spawn a separate session**: invoke the `agterm:spawn-session` skill (Skill tool) with this prompt as its argument, `PLAN_FILE` filled in:
 
-**This session** (or no Codex hand-off available): ask which model runs the review:
+```
+Review the implementation plan at PLAN_FILE.
+
+Review it in one pass — does its Definition of Done prove the intent, do
+its decisions hold up against the code, is a trap missing, is scope right.
+Finding nothing is a fine result. Apply the fixes the user agrees to, then
+stop.
+```
+
+Keep the first line a direct imperative; `spawn-session` rejects a prompt that opens by describing a hand-off. It asks runtime and model itself and reports the new session's name — don't ask those here. Once it reports, stop — don't review in this session.
+
+If the `agterm:spawn-session` skill isn't installed, say in one line that spawning needs the `agterm` plugin (`/plugin install agterm@parmaster-claude-dlc`), then carry on as **This session**.
+
+**This session** (or no hand-off available): ask which model runs the review:
 
 ```json
 {
@@ -87,4 +100,4 @@ When applying, edit the plan at its own level — change Intent, Decisions, Trap
 
 A finding that's real but outside the plan's scope — a pre-existing defect the plan doesn't cause or need fixed — isn't a plan edit. Offer to file it with `/backlog` instead.
 
-Don't start implementation from here — the user calls `/planning:handoff`, `revdiff:revdiff`, or starts implementing when ready.
+Don't start implementation from here — the user calls `/agterm:handoff`, `revdiff:revdiff`, or starts implementing when ready.

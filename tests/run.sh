@@ -354,8 +354,8 @@ result=$(jq -n '{tool_name:"Bash", tool_input:{command:"echo PROJ-1"}}' | bash "
 assert_eq "ignores other tools" "" "$result"
 
 # ---------------------------------------------------------------------------
-# Shared fake agtermctl for planning/agterm-spawn.sh and
-# planning/agterm-handoff.sh (agterm-handoff.sh delegates to agterm-spawn.sh
+# Shared fake agtermctl for agterm/agterm-spawn.sh and
+# agterm/agterm-handoff.sh (agterm-handoff.sh delegates to agterm-spawn.sh
 # internally, so both sections exercise the same agtermctl surface).
 # ---------------------------------------------------------------------------
 
@@ -397,12 +397,12 @@ EOF
 chmod +x "${AGTERM_FAKE_BIN}/agtermctl"
 
 # ---------------------------------------------------------------------------
-# planning/agterm-session-new.sh
+# agterm/agterm-session-new.sh
 # ---------------------------------------------------------------------------
 
-SESSION_NEW_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/agterm-session-new.sh"
+SESSION_NEW_SCRIPT="${REPO_ROOT}/plugins/agterm/scripts/agterm-session-new.sh"
 
-echo "planning/agterm-session-new.sh"
+echo "agterm/agterm-session-new.sh"
 
 LOG="$(mktemp)"
 result=$(
@@ -437,12 +437,12 @@ assert_contains "refuses to run when session new returns no id (message)" "sessi
 rm -f "$LOG"
 
 # ---------------------------------------------------------------------------
-# planning/agterm-spawn.sh
+# agterm/agterm-spawn.sh
 # ---------------------------------------------------------------------------
 
-SPAWN_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/agterm-spawn.sh"
+SPAWN_SCRIPT="${REPO_ROOT}/plugins/agterm/scripts/agterm-spawn.sh"
 
-echo "planning/agterm-spawn.sh"
+echo "agterm/agterm-spawn.sh"
 
 SPAWN_PROMPT_FILE="$(mktemp)"
 echo "do the thing" > "$SPAWN_PROMPT_FILE"
@@ -500,12 +500,12 @@ rm -f "$LOG"
 rm -f "$SPAWN_PROMPT_FILE"
 
 # ---------------------------------------------------------------------------
-# planning/codex-spawn.sh
+# agterm/codex-spawn.sh
 # ---------------------------------------------------------------------------
 
-CODEX_SPAWN_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/codex-spawn.sh"
+CODEX_SPAWN_SCRIPT="${REPO_ROOT}/plugins/agterm/scripts/codex-spawn.sh"
 
-echo "planning/codex-spawn.sh"
+echo "agterm/codex-spawn.sh"
 
 CODEX_SPAWN_PROMPT_FILE="$(mktemp)"
 echo "do the thing" > "$CODEX_SPAWN_PROMPT_FILE"
@@ -553,12 +553,12 @@ assert_contains "refuses to run when the prompt file doesn't exist (message)" "p
 rm -f "$CODEX_SPAWN_PROMPT_FILE"
 
 # ---------------------------------------------------------------------------
-# planning/agterm-handoff.sh
+# agterm/agterm-handoff.sh
 # ---------------------------------------------------------------------------
 
-HANDOFF_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/agterm-handoff.sh"
+HANDOFF_SCRIPT="${REPO_ROOT}/plugins/agterm/scripts/agterm-handoff.sh"
 
-echo "planning/agterm-handoff.sh"
+echo "agterm/agterm-handoff.sh"
 
 TEST_REPO="$(mktemp -d)"
 (cd "$TEST_REPO" && git init -q)
@@ -622,12 +622,12 @@ assert_contains "refuses to run when AGTERM_ENABLED is unset" "exit:1" "$result"
 
 
 # ---------------------------------------------------------------------------
-# planning/codex-handoff.sh
+# agterm/codex-handoff.sh
 # ---------------------------------------------------------------------------
 
-CODEX_HANDOFF_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/codex-handoff.sh"
+CODEX_HANDOFF_SCRIPT="${REPO_ROOT}/plugins/agterm/scripts/codex-handoff.sh"
 
-echo "planning/codex-handoff.sh"
+echo "agterm/codex-handoff.sh"
 
 CODEX_TEST_REPO="$(mktemp -d)"
 (cd "$CODEX_TEST_REPO" && git init -q)
@@ -669,46 +669,6 @@ result=$(AGTERM_ENABLED="" bash "$CODEX_HANDOFF_SCRIPT" "$CODEX_PLAN_FILE" 2>&1;
 assert_contains "refuses to run when AGTERM_ENABLED is unset" "exit:1" "$result"
 
 rm -rf "$CODEX_TEST_REPO"
-
-# ---------------------------------------------------------------------------
-# planning/codex-review-handoff.sh
-# ---------------------------------------------------------------------------
-
-CODEX_REVIEW_HANDOFF_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/codex-review-handoff.sh"
-
-echo "planning/codex-review-handoff.sh"
-
-CODEX_REVIEW_TEST_REPO="$(mktemp -d)"
-(cd "$CODEX_REVIEW_TEST_REPO" && git init -q)
-CODEX_REVIEW_PLAN_FILE="${CODEX_REVIEW_TEST_REPO}/docs/plans/2026-01-01-example.md"
-mkdir -p "$(dirname "$CODEX_REVIEW_PLAN_FILE")"
-echo "# Example plan" > "$CODEX_REVIEW_PLAN_FILE"
-
-LOG="$(mktemp)"
-TYPED="$(mktemp)"
-result=$(
-  cd "$CODEX_REVIEW_TEST_REPO" && \
-  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
-  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_REVIEW_HANDOFF_SCRIPT" "$CODEX_REVIEW_PLAN_FILE"
-)
-assert_eq "prints the new session's display name on success" "Review: example" "$result"
-assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
-assert_contains "creates the session before flagging" "session new" "$(cat "$LOG")"
-TYPED_CMD="$(cat "$TYPED")"
-assert_contains "types a codex launch command with workspace-write flags" 'codex --sandbox workspace-write --ask-for-approval never "$(cat ' "$TYPED_CMD"
-assert_not_contains "never passes a --model flag" " --model" "$TYPED_CMD"
-PROMPT_PATH="${TYPED_CMD#*cat }"
-PROMPT_PATH="${PROMPT_PATH%)\"}"
-assert_eq "the prompt file the typed command reads actually exists" "yes" "$([ -f "$PROMPT_PATH" ] && echo yes || echo no)"
-PROMPT_CONTENT="$(cat "$PROMPT_PATH" 2>/dev/null || echo "")"
-assert_contains "prompt file references the plan path" "$CODEX_REVIEW_PLAN_FILE" "$PROMPT_CONTENT"
-assert_contains "prompt file tells the session to review it in one pass" "Review it in one pass" "$PROMPT_CONTENT"
-rm -f "$LOG" "$TYPED"
-
-result=$(AGTERM_ENABLED="" bash "$CODEX_REVIEW_HANDOFF_SCRIPT" "$CODEX_REVIEW_PLAN_FILE" 2>&1; echo "exit:$?")
-assert_contains "refuses to run when AGTERM_ENABLED is unset" "exit:1" "$result"
-
-rm -rf "$CODEX_REVIEW_TEST_REPO"
 
 # ---------------------------------------------------------------------------
 # agterm/overlay.sh
