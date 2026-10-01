@@ -762,6 +762,14 @@ assert_contains "html opens the absolute file" "overlay open --html $OVERLAY_REP
 assert_contains "html targets the caller's session" " --target sess-1" "$(cat "$LOG")"
 : > "$LOG"
 
+result=$(run_overlay "$OVERLAY_REPO/sub" html page.html --js)
+assert_contains "html passes --js" "overlay open --html $OVERLAY_REPO/sub/page.html --cwd $OVERLAY_REPO/sub --navigation --js --size-percent 90 --target sess-1" "$(cat "$LOG")"
+: > "$LOG"
+
+result=$(run_overlay "$OVERLAY_REPO/sub" html page.html)
+assert_not_contains "html without the flag keeps JavaScript off" "navigation --js" "$(cat "$LOG")"
+: > "$LOG"
+
 result=$(run_overlay "$OVERLAY_REPO" url http://localhost:5173/ --js)
 assert_contains "url passes the url and --js" "overlay open --url http://localhost:5173/ --js --size-percent 90 --target sess-1" "$(cat "$LOG")"
 : > "$LOG"
@@ -814,6 +822,7 @@ for cmd in \
   "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md" \
   "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \"docs/plans/x.md\"" \
   "bash $AGTERM_PLUGIN_ROOT/scripts/overlay.sh html page.html" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html \"/tmp/backlog-dashboard-repo-123/index.html\" --js" \
   'bash "${CLAUDE_PLUGIN_ROOT}/scripts/overlay.sh" url "http://localhost:5173/" --js' \
   "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \"\""; do
   assert_contains "allows: $cmd" '"permissionDecision": "allow"' "$(approve "$cmd")"
@@ -842,6 +851,129 @@ assert_eq "no decision without CLAUDE_PLUGIN_ROOT" "" \
   "$(CLAUDE_PLUGIN_ROOT="" run_hook "$APPROVE_OVERLAY_SCRIPT" "bash /scripts/overlay.sh md")"
 
 rm -rf "$AGTERM_FAKE_BIN" "$TEST_REPO"
+
+# ---------------------------------------------------------------------------
+# planning/backlog-dashboard.sh
+# ---------------------------------------------------------------------------
+
+DASHBOARD_SCRIPT="${REPO_ROOT}/plugins/planning/scripts/backlog-dashboard.sh"
+
+echo "planning/backlog-dashboard.sh"
+
+DASH_REPO="$(mktemp -d)"
+DASH_REPO="$(cd "$DASH_REPO" && pwd -P)"
+DASH_TMP="$(mktemp -d)"
+dash_git() { git -C "$DASH_REPO" -c user.name=t -c user.email=t@example.com "$@"; }
+# run_dashboard <cwd>
+run_dashboard() { (cd "$1" && TMPDIR="$DASH_TMP" bash "$DASHBOARD_SCRIPT" 2>&1; echo "exit:$?"); }
+# dash_item <file> <slug> <jq filter on the item>
+dash_item() { sed -n '/id="backlog-data"/{n;p;}' "$1" | jq -c --arg s "$2" ".items[] | select(.slug == \$s) | $3"; }
+dash_head() { sed -n '/id="backlog-data"/{n;p;}' "$1" | jq -c "$2"; }
+
+dash_git init -q -b main
+mkdir -p "$DASH_REPO/src/pkg/deep" "$DASH_REPO/docs"
+printf 'one\ntwo\nthree\n' > "$DASH_REPO/src/pkg/deep/code.go"
+echo "top" > "$DASH_REPO/Makefile"
+
+result=$(run_dashboard "$DASH_REPO")
+assert_contains "no docs/backlog/ is reported" "no docs/backlog/ in" "$result"
+assert_contains "no docs/backlog/ exits 1" "exit:1" "$result"
+assert_eq "no docs/backlog/ does not create it" "1" "$([ -d "$DASH_REPO/docs/backlog" ] && echo 0 || echo 1)"
+
+mkdir -p "$DASH_REPO/docs/backlog"
+cat > "$DASH_REPO/docs/backlog/good-where.md" <<'EOF'
+---
+worth: yes
+where: src/pkg/deep/code.go:2
+added: 2026-01-05
+ticket: PROJ-7
+---
+# a good anchor
+
+Body with </script><b>bold</b> & an ampersand.
+EOF
+cat > "$DASH_REPO/docs/backlog/gone-path.md" <<'EOF'
+---
+worth: later
+where: src/removed.go:10
+added: 2026-02-01
+---
+# path is gone
+EOF
+cat > "$DASH_REPO/docs/backlog/past-end.md" <<'EOF'
+---
+worth: no
+where: src/pkg/deep/code.go:99
+added: 2026-03-01
+---
+# line past the end
+EOF
+cat > "$DASH_REPO/docs/backlog/top-level.md" <<'EOF'
+---
+worth: yes
+where: Makefile
+added: 2026-03-02
+---
+# anchored to a top-level file
+EOF
+cat > "$DASH_REPO/docs/backlog/no-where.md" <<'EOF'
+---
+worth: yes
+added: 2026-04-01
+---
+# not anchored
+EOF
+dash_git add -A
+dash_git commit -q -m init
+cat > "$DASH_REPO/docs/backlog/brand-new.md" <<'EOF'
+---
+worth: later
+added: 2026-05-01
+---
+# never committed
+EOF
+echo "edited" >> "$DASH_REPO/docs/backlog/no-where.md"
+
+result=$(run_dashboard "$DASH_REPO/src")
+DASH_OUT=$(echo "$result" | head -1)
+assert_contains "exits 0 with items" "exit:0" "$result"
+assert_eq "prints the path of an existing file" "0" "$([ -f "$DASH_OUT" ] && echo 0 || echo 1)"
+assert_contains "writes under the temp dir" "$DASH_TMP/backlog-dashboard-" "$DASH_OUT"
+assert_not_contains "adds no file to the repo" "html" "$(dash_git status --porcelain)"
+assert_eq "page keeps one data and one code script tag" "2" "$(grep -c '</script>' "$DASH_OUT")"
+
+assert_eq "item carries its frontmatter and title" \
+  '["a good anchor","yes","src/pkg/deep/code.go:2","PROJ-7","2026-01-05"]' \
+  "$(dash_item "$DASH_OUT" good-where '[.title, .worth, .where, .ticket, .added]')"
+assert_eq "body with markup round-trips" 'Body with </script><b>bold</b> & an ampersand.' \
+  "$(sed -n '/id="backlog-data"/{n;p;}' "$DASH_OUT" | jq -r '.items[] | select(.slug == "good-where") | .body' | grep Body)"
+assert_eq "good where: area is two segments, found, committed" '["src/pkg",false,false]' \
+  "$(dash_item "$DASH_OUT" good-where '[.area, .whereMissing, .uncommitted]')"
+assert_eq "committed item has a touched date" "true" "$(dash_item "$DASH_OUT" good-where '.touched | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")')"
+assert_eq "missing path is flagged" "true" "$(dash_item "$DASH_OUT" gone-path '.whereMissing')"
+assert_eq "line past the end is flagged" "true" "$(dash_item "$DASH_OUT" past-end '.whereMissing')"
+assert_eq "top-level where: area is the file" '["Makefile",false]' "$(dash_item "$DASH_OUT" top-level '[.area, .whereMissing]')"
+assert_eq "no where: unanchored, modified counts as uncommitted" '["unanchored",false,true]' \
+  "$(dash_item "$DASH_OUT" no-where '[.area, .whereMissing, .uncommitted]')"
+assert_eq "untracked item: uncommitted with no touched date" '[true,""]' "$(dash_item "$DASH_OUT" brand-new '[.uncommitted, .touched]')"
+assert_eq "header: repo, count, branch, no warning without origin/HEAD" \
+  "[\"$(basename "$DASH_REPO")\",6,\"main\",false]" "$(dash_head "$DASH_OUT" '[.repo, .count, .branch, .offDefault]')"
+assert_eq "header: short commit" "$(dash_git rev-parse --short HEAD)" "$(dash_head "$DASH_OUT" '.commit' | tr -d '"')"
+
+dash_git update-ref refs/remotes/origin/main HEAD
+dash_git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
+run_dashboard "$DASH_REPO" > /dev/null
+assert_eq "on the default branch: no warning" '["main",false]' "$(dash_head "$DASH_OUT" '[.defaultBranch, .offDefault]')"
+dash_git checkout -q -b feature
+run_dashboard "$DASH_REPO" > /dev/null
+assert_eq "off the default branch: warning on" '["feature","main",true]' "$(dash_head "$DASH_OUT" '[.branch, .defaultBranch, .offDefault]')"
+
+DASH_PLAIN="$(mktemp -d)"
+result=$(run_dashboard "$DASH_PLAIN")
+assert_contains "outside a Git repo is reported" "not inside a Git repository" "$result"
+assert_contains "outside a Git repo exits 1" "exit:1" "$result"
+
+rm -rf "$DASH_REPO" "$DASH_TMP" "$DASH_PLAIN"
 
 # ---------------------------------------------------------------------------
 

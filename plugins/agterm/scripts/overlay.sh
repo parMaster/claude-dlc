@@ -5,7 +5,7 @@
 # script on the strength of that.
 #
 # Usage: overlay.sh md [file]     # no file = newest plan in docs/plans/, then docs/plans/completed/
-#        overlay.sh html <file>
+#        overlay.sh html <file> [--js]
 #        overlay.sh url <url> [--js]
 
 set -euo pipefail
@@ -65,9 +65,11 @@ case "$kind" in
     echo "opened $file"
     ;;
   html)
-    [ -n "$arg" ] || die "usage: overlay.sh html <file>"
+    [ -n "$arg" ] || die "usage: overlay.sh html <file> [--js]"
     file=$(abs_file "$arg") || exit 1
-    open_overlay --html "$file" --cwd "$(dirname "$file")" --navigation --size-percent 90
+    js=()
+    [ "${3:-}" = "--js" ] && js=(--js)
+    open_overlay --html "$file" --cwd "$(dirname "$file")" --navigation ${js[@]+"${js[@]}"} --size-percent 90
     echo "opened $file"
     ;;
   url)
@@ -81,6 +83,6 @@ case "$kind" in
     echo "opened $arg"
     ;;
   *)
-    die "usage: overlay.sh md [file] | html <file> | url <url> [--js]"
+    die "usage: overlay.sh md [file] | html <file> [--js] | url <url> [--js]"
     ;;
 esac

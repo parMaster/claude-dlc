@@ -1,7 +1,7 @@
 ---
 name: overlay
 description: Open a markdown file (rendered by glow), a local HTML file or a URL in an agterm overlay floating over the current session. Activates on "open the latest plan in glow", "show the plan in an overlay", "open <file.md> in glow", "open <file.md|file.html> in an overlay", "show <file.html> in agterm", "open <url> in an overlay". Only for viewing inside agterm; running programs or any other terminal control belongs to the agterm skill.
-argument-hint: "[file.md | file.html | url]"
+argument-hint: "[file.md | file.html | url] [--js]"
 allowed-tools: Bash
 ---
 
@@ -17,7 +17,7 @@ its close button; the session underneath is untouched.
 |---|---|---|
 | "the latest plan", "the plan" with no file named | `md` | none — the script picks the newest file in `docs/plans/`, then `docs/plans/completed/` |
 | a `.md` file | `md` | the path as given |
-| an `.html` / `.htm` file | `html` | the path as given |
+| an `.html` / `.htm` file | `html` | the path as given; add `--js` only if the page needs JavaScript |
 | an `http(s)://` or `file://` URL | `url` | the URL; add `--js` only if the page needs JavaScript |
 
 A path relative to the current directory is fine; the script resolves it.
@@ -32,6 +32,9 @@ so the plugin's hook can approve it without a prompt:
 ```
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/overlay.sh" <kind> "<argument>"
 ```
+
+`--js`, when needed, goes last: `… html "<file>" --js`. Write the path out in
+full; a `$VAR` or `$(…)` in the command makes the hook step aside and prompt.
 
 It prints `opened <path-or-url>` on success. On failure it prints a one-line
 reason on stderr (not inside agterm, file not found, no plans found, glow

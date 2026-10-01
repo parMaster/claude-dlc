@@ -1,7 +1,8 @@
 ---
 name: backlog
-description: Read, work, and maintain a Git repo's deferred-work items in docs/backlog/, one file per item. Use when the user says "backlog", "check backlog", "what's on my backlog", "work the backlog", "address the backlog", "add to backlog", "clean up backlog", or when a review or task produced items that are real but not being fixed now. Owns the item format and the create-then-delete lifecycle.
-allowed-tools: Read, Edit, Write, Bash, Grep, Glob, AskUserQuestion
+description: Read, work, and maintain a Git repo's deferred-work items in docs/backlog/, one file per item. Use when the user says "backlog", "check backlog", "what's on my backlog", "work the backlog", "address the backlog", "add to backlog", "clean up backlog", "show the backlog dashboard", "open the backlog in an overlay", or when a review or task produced items that are real but not being fixed now. Owns the item format and the create-then-delete lifecycle.
+argument-hint: "[slug | --all | --dashboard]"
+allowed-tools: Read, Edit, Write, Bash, Grep, Glob, Skill, AskUserQuestion
 ---
 
 # Backlog
@@ -88,6 +89,24 @@ Each of the last three is ONE line carrying a word and the fact behind it — th
 to take the call on trust, the fact is what lets him disagree with it, and the length is what keeps the
 briefing readable above its question. Judge all four against the repo as it stands rather than against
 the item's own account: the reasoning in a file goes stale the same way its `where` does.
+
+## The dashboard as the argument
+
+`/planning:backlog --dashboard` shows every item on one HTML page with filter tiles, search, sort and area
+chips. Check this mode before slug handling, like `--all`. It is a viewer: it changes no item and asks no
+fix-or-drop question. Also use it when the user asks to see, browse or open the backlog "as a dashboard"
+or "in an overlay".
+
+1. Run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/backlog-dashboard.sh"`. It prints the path of the page it
+   wrote to the temp dir. On failure it prints a one-line reason (not a Git repo, no `docs/backlog/`, no
+   items) — pass that on as is and stop.
+2. Inside agterm (`AGTERM_SESSION_ID` is set), invoke the `agterm:overlay` skill (Skill tool) with
+   `<path> --js`; the page's filters and search need JavaScript. Pass the printed path written out in
+   full.
+3. Outside agterm, or when that skill is not installed or reports a failure, give the user the path so it
+   can be opened in a browser. Do not open it some other way.
+
+The page is a snapshot of the working tree; run the command again to refresh it.
 
 ## Every item as the argument
 

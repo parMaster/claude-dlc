@@ -4,6 +4,21 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 2.1.0 - 2026-10-01
+
+`/planning:backlog --dashboard` builds one self-contained HTML page of every
+`docs/backlog/` item and opens it through `agterm:overlay`; outside agterm it
+prints the file's path. The page has stat tiles that filter (worth, added in
+the last 7 days, `where` not found, uncommitted), search, sort, area chips and
+rows that expand to the item body, plus a warning when the branch isn't the
+default one. It is written to the temp dir, never into the repo.
+
+## agterm 1.1.0 - 2026-10-01
+
+`overlay.sh html <file>` takes an optional trailing `--js`, like the `url`
+kind, so a local page can run its own JavaScript. Without the flag nothing
+changes.
+
 ## planning 2.0.3 - 2026-09-29
 
 Plans no longer end with a `planning:pr` wrap-up box, and the `pr` skill no
