@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 3.1.0 - 2026-10-06
+
+`review-plan` always reviews in the current session and no longer asks where
+to run. Plans are short and the review is quick, and the subagent's findings
+land in the session that has the context to apply them, so the "spawn a
+separate session" option went unused. It now asks only for the model.
+
 ## planning 3.0.1 - 2026-10-01
 
 `oversight` and `review-plan` now check up front whether a session can be

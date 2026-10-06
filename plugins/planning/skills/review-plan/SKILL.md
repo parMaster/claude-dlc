@@ -14,40 +14,9 @@ One review pass by a read-only `plan-review` agent. The main session shows the f
 2. Otherwise check `docs/plans/` — most recently modified `.md` (excluding `completed/` and `wbs-*.md`)
 3. If multiple plans exist and it's unclear which, list them and ask
 
-## Step 1: Choose runtime and model
+## Step 1: Choose the model
 
-A hand-off to a separate session is possible when `[ "$AGTERM_ENABLED" = "1" ] && command -v agtermctl >/dev/null 2>&1` succeeds **and** `agterm:spawn-session` is in your list of available skills. Don't invoke the skill to find out.
-
-If it is, ask with AskUserQuestion:
-
-```json
-{
-  "questions": [{
-    "question": "Where should this review run?",
-    "header": "Runtime",
-    "options": [
-      {"label": "This session", "description": "Run the plan-review subagent here"},
-      {"label": "Spawn a separate session", "description": "Hand the review off to a fresh Claude or Codex session — this session's job ends once it's spawned"}
-    ],
-    "multiSelect": false
-  }]
-}
-```
-
-**Spawn a separate session**: invoke the `agterm:spawn-session` skill (Skill tool) with this prompt as its argument, `PLAN_FILE` filled in:
-
-```
-Review the implementation plan at PLAN_FILE.
-
-Review it in one pass — does its Definition of Done prove the intent, do
-its decisions hold up against the code, is a trap missing, is scope right.
-Finding nothing is a fine result. Apply the fixes the user agrees to, then
-stop.
-```
-
-Keep the first line a direct imperative; `spawn-session` rejects a prompt that opens by describing a hand-off. It asks runtime and model itself and reports the new session's name — don't ask those here. Once it reports, stop — don't review in this session.
-
-**This session** (or no hand-off available): ask which model runs the review:
+The review runs in this session: the subagent's findings come back to the context that wrote the plan, which is what applying them needs. Ask with AskUserQuestion which model runs it:
 
 ```json
 {
