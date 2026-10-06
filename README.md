@@ -213,6 +213,26 @@ The rules cover plan-first workflow, git hygiene, tests and lint before commit, 
 
 ---
 
+### strict-bash
+
+For machines where auto mode is off and every Bash call that isn't on the allowlist asks for permission. Claude often glues several commands into one call, and no allow rule can match that. This plugin makes Claude send one command per call, so your allow rules match.
+
+Install it only on the machines that need it. Machines with auto mode on don't need it.
+
+```
+/plugin install strict-bash@parmaster-claude-dlc
+```
+
+Run `claude --init-only` once after install. The setup hook adds `head`, `tail`, `grep`, `wc`, `sort`, `uniq` and `jq` to `permissions.allow` in `~/.claude/settings.json`. It only adds what's missing and never touches your other rules. It never adds `xargs`, `sh` or `bash`: anything piped into those can run any command.
+
+| Hook | Effect |
+|------|--------|
+| `block-chained` | Denies a Bash call that chains commands: `&&`, `\|\|`, `;`, a background `&`, a newline between commands, `$(...)`, backticks, `<(...)`, loops and `if`/`case` blocks, `( ... )` / `{ ... }` groups. The denial tells Claude to run each command as its own call. |
+
+Pipes stay allowed. Claude Code checks each side of a pipe against your allow rules, so `make test 2>&1 | tail -5` runs without a prompt once `make test` is allowed. Operators inside quotes or heredoc bodies are just text and pass. So does the `"$(cat <<'EOF' ... EOF)"` form Claude uses for multi-line commit messages. The hook does nothing when the session is in `bypassPermissions` or auto mode.
+
+---
+
 ## Local development
 
 ```

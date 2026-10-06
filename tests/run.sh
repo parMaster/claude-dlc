@@ -959,6 +959,119 @@ assert_contains "outside a Git repo exits 1" "exit:1" "$result"
 rm -rf "$DASH_REPO" "$DASH_TMP" "$DASH_PLAIN"
 
 # ---------------------------------------------------------------------------
+# strict-bash/block-chained.sh
+# ---------------------------------------------------------------------------
+
+BLOCK_CHAINED_SCRIPT="${REPO_ROOT}/plugins/strict-bash/scripts/block-chained.sh"
+
+echo "strict-bash/block-chained.sh"
+
+chained() { run_hook "$BLOCK_CHAINED_SCRIPT" "$1"; }
+chained_in_mode() {
+  jq -n --arg m "$1" --arg c "$2" '{permission_mode:$m, tool_input:{command:$c}}' | bash "$BLOCK_CHAINED_SCRIPT"
+}
+
+DENY='"permissionDecision": "deny"'
+
+result=$(chained 'git fetch -q && git status -sb')
+assert_contains "denies &&" "$DENY" "$result"
+assert_contains "deny reason names the operator" 'found \"&&\"' "$result"
+assert_contains "deny reason says to split the calls" "its own Bash call" "$result"
+
+for cmd in \
+  'make test || true' \
+  'git status; git diff' \
+  'sleep 10 &' \
+  'git status
+git diff' \
+  'echo $(whoami)' \
+  'echo "dir: $(pwd)"' \
+  'echo `whoami`' \
+  'for f in *.go; do gofmt -l "$f"; done' \
+  'ls | while read f; do echo "$f"; done' \
+  'if true; then echo y; fi' \
+  '( cd sub; make )' \
+  '{ git status; }' \
+  'diff <(ls a) <(ls b)' \
+  'cat <<EOF
+x
+EOF
+rm -rf build' \
+  'git commit -m "$(cat <<'"'"'EOF'"'"'
+msg
+EOF
+)" && git push'; do
+  assert_contains "denies: $cmd" "$DENY" "$(chained "$cmd")"
+done
+
+for cmd in \
+  'git status -sb | head -1' \
+  'make swagger 2>&1 | tail -5' \
+  'go test ./... >&2' \
+  'go build ./... &> build.log' \
+  'go vet ./... |& grep -v vendor' \
+  'git commit -m "fix; also x && y"' \
+  "grep -E 'a|b&&c' file.txt" \
+  "jq '.a | .b' f.json" \
+  'echo "a \" ; b"' \
+  'cat <<< "a; b"' \
+  'git log --format=%H#x' \
+  'git status # check first; then diff' \
+  'go test ./... |
+  grep FAIL' \
+  'git commit -m "$(cat <<'"'"'EOF'"'"'
+Fix the login bug; add a test
+
+Run `make test` && check $(this).
+EOF
+)"' \
+  'gh pr create --title x --body "$(cat <<EOF
+body | with; ops
+EOF
+)"' \
+  'git commit -F - <<'"'"'EOF'"'"'
+msg; with && ops
+EOF' \
+  'echo ${HOME}'; do
+  assert_eq "allows: $cmd" "" "$(chained "$cmd")"
+done
+
+assert_eq "silent in bypassPermissions mode" "" "$(chained_in_mode bypassPermissions 'a && b')"
+assert_eq "silent in auto mode" "" "$(chained_in_mode auto 'a && b')"
+assert_contains "active in default mode" "$DENY" "$(chained_in_mode default 'a && b')"
+assert_contains "active in acceptEdits mode" "$DENY" "$(chained_in_mode acceptEdits 'a && b')"
+
+# ---------------------------------------------------------------------------
+# strict-bash/setup.sh
+# ---------------------------------------------------------------------------
+
+STRICT_SETUP_SCRIPT="${REPO_ROOT}/plugins/strict-bash/scripts/setup.sh"
+STRICT_ROOT="${FAKE_PLUGIN_ROOT_BASE}/parmaster-claude-dlc/strict-bash/1.0.0"
+STRICT_RULES='["Bash(head:*)","Bash(tail:*)","Bash(grep:*)","Bash(wc:*)","Bash(sort:*)","Bash(uniq:*)","Bash(jq:*)"]'
+
+echo "strict-bash/setup.sh"
+
+TEST_HOME="$(mktemp -d)"
+run_setup "$STRICT_SETUP_SCRIPT" "$STRICT_ROOT"
+assert_eq "creates settings.json with the filter allowlist" "$STRICT_RULES" \
+  "$(jq -c '.permissions.allow' "${TEST_HOME}/.claude/settings.json")"
+rm -rf "$TEST_HOME"
+
+TEST_HOME="$(mktemp -d)"
+mkdir -p "${TEST_HOME}/.claude"
+echo '{"model":"opus","permissions":{"allow":["Bash(make test)","Bash(grep:*)"],"deny":["ScheduleWakeup"]}}' > "${TEST_HOME}/.claude/settings.json"
+run_setup "$STRICT_SETUP_SCRIPT" "$STRICT_ROOT"
+run_setup "$STRICT_SETUP_SCRIPT" "$STRICT_ROOT"
+assert_eq "keeps existing entries first, adds only missing ones, no duplicates on rerun" \
+  '["Bash(make test)","Bash(grep:*)","Bash(head:*)","Bash(tail:*)","Bash(wc:*)","Bash(sort:*)","Bash(uniq:*)","Bash(jq:*)"]' \
+  "$(jq -c '.permissions.allow' "${TEST_HOME}/.claude/settings.json")"
+assert_eq "leaves other settings alone" '["opus",["ScheduleWakeup"]]' \
+  "$(jq -c '[.model, .permissions.deny]' "${TEST_HOME}/.claude/settings.json")"
+assert_not_contains "never allows commands that run their arguments" "xargs" \
+  "$(jq -c '.permissions.allow' "${TEST_HOME}/.claude/settings.json")"
+rm -rf "$TEST_HOME"
+
+# ---------------------------------------------------------------------------
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

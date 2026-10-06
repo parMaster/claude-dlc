@@ -38,6 +38,11 @@
       "name": "agterm",
       "source": "./plugins/agterm",
       "description": "agterm helpers — open markdown (via glow), HTML files and URLs in an overlay, and hand a plan or task off to a fresh Claude or Codex session"
+    },
+    {
+      "name": "strict-bash",
+      "source": "./plugins/strict-bash",
+      "description": "One command per Bash call — denies chained commands so each one can match an allow rule; for machines where auto mode is off"
     }
   ]
 }

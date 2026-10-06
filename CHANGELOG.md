@@ -4,6 +4,17 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## strict-bash 1.0.0 - 2026-10-06
+
+New plugin for machines where auto mode is off. Claude often chains several
+commands into one Bash call, and no allow rule can match that, so every call
+prompts. The `block-chained` hook denies chained calls (`&&`, `||`, `;`,
+background `&`, newlines, `$(...)`, backticks, loops, groups) and tells Claude
+to run each command on its own. Pipes, operators inside quotes or heredocs,
+and the `"$(cat <<'EOF' ... EOF)"` commit-message form pass. The setup hook
+adds read-only output filters (`head`, `tail`, `grep`, `wc`, `sort`, `uniq`,
+`jq`) to `permissions.allow`, so piped output doesn't prompt either.
+
 ## agterm 1.3.0 - 2026-10-06
 
 A Claude session started by `handoff` or `spawn-session` can report back to

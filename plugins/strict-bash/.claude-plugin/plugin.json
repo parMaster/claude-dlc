@@ -1,0 +1,11 @@
+{
+  "name": "strict-bash",
+  "description": "One command per Bash call — denies chained commands so each one can match an allow rule; for machines where auto mode is off",
+  "version": "1.0.0",
+  "author": {
+    "name": "parmaster"
+  },
+  "homepage": "https://github.com/parmaster/claude-dlc",
+  "repository": "https://github.com/parmaster/claude-dlc",
+  "license": "MIT"
+}
