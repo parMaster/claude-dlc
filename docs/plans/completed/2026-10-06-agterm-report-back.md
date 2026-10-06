@@ -65,4 +65,4 @@ Checked live in agterm before writing this: a child spawned with this footer sen
 
 ## Post-Completion
 
-- [ ] Live check after pushing and updating the plugin: spawn a session with `agterm:spawn-session` and tell it "report back the result". The result should arrive in the parent as a message from another session. Repeat once with `/agterm:handoff`.
+- [x] Live check after pushing and updating the plugin: spawn a session with `agterm:spawn-session` and tell it "report back the result". The result should arrive in the parent as a message from another session. Repeat once with `/agterm:handoff`.
