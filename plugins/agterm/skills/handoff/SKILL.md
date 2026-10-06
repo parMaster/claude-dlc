@@ -4,7 +4,7 @@ description: Hand off an implementation plan directly to a fresh agterm session 
 argument-hint: "[plan-file]"
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Bash, AskUserQuestion
+allowed-tools: Bash, AskUserQuestion, ListAgents
 ---
 
 # Handoff to a Separate Session
@@ -66,16 +66,25 @@ Never guess or substitute a model name of your own.
 
 ## Step 4: Hand off
 
+**Claude runtime only:** call `ListAgents` first. Its first line reads
+"This session is <name> [<ref>]"; `PARENT_NAME` is the bare `<name>`, without
+the bracketed ref. The new session gets it so it can report back here with
+`SendMessage` when asked. If `ListAgents` isn't available or gives no name,
+leave `PARENT_NAME` empty and hand off anyway.
+
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/HANDOFF_SCRIPT" "PLAN_FILE" "MODEL"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/HANDOFF_SCRIPT" "PLAN_FILE" "MODEL" ["PARENT_NAME"]
 ```
 
 `HANDOFF_SCRIPT` is `agterm-handoff.sh` for the Claude runtime,
-`codex-handoff.sh` for the Codex runtime.
+`codex-handoff.sh` for the Codex runtime (no `PARENT_NAME`: Codex has no
+`SendMessage`).
 
 ```bash
 # Claude, model chosen
-... agterm-handoff.sh "docs/plans/2026-09-09-foo.md" "opus"
+... agterm-handoff.sh "docs/plans/2026-09-09-foo.md" "opus" "claude-dlc-8d"
+# Claude, Inherit
+... agterm-handoff.sh "docs/plans/2026-09-09-foo.md" "" "claude-dlc-8d"
 # Codex, model chosen
 ... codex-handoff.sh "docs/plans/2026-09-09-foo.md" "gpt-5.1-codex"
 # Codex, Inherit

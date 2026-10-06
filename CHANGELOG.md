@@ -4,6 +4,16 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 1.3.0 - 2026-10-06
+
+A Claude session started by `handoff` or `spawn-session` can report back to
+the session that started it. Both skills call `ListAgents` for this session's
+Claude name and end the new session's prompt with a footer: report the result
+there with `SendMessage` when the task or the user asks. `agterm-handoff.sh`
+takes the name as a new optional third argument. Codex sessions get no footer.
+Typing a report into the parent's terminal was tried and dropped: the
+keystrokes answer a permission dialog that's open in the parent.
+
 ## planning 3.1.0 - 2026-10-06
 
 `review-plan` always reviews in the current session and no longer asks where

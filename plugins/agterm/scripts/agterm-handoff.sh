@@ -5,11 +5,14 @@
 # canned plan-hand-off prompt into a temp file and hands off in the current
 # workspace (no workspace grouping — matches this script's prior behavior).
 #
-# Usage: agterm-handoff.sh <plan-file> [model]
+# Usage: agterm-handoff.sh <plan-file> [model] [parent-name]
 #   [model]                model alias (e.g. "opus", "sonnet", "haiku") to run
 #                          the new session on, passed through as `--model`.
 #                          Omit (or pass "") to inherit whatever `claude`
 #                          launches with by default.
+#   [parent-name]          the calling session's Claude name (from ListAgents).
+#                          If given, the prompt ends with a footer telling the
+#                          new session to report back there via SendMessage.
 # Requires: AGTERM_ENABLED=1, agtermctl and jq on PATH.
 # On success: prints the new session's display name (e.g. "Implement: foo")
 # to stdout, exits 0.
@@ -19,6 +22,7 @@ set -euo pipefail
 
 PLAN_FILE="${1:?usage: agterm-handoff.sh <plan-file> [model]}"
 MODEL="${2:-}"
+PARENT_NAME="${3:-}"
 
 if [ "${AGTERM_ENABLED:-}" != "1" ] || ! command -v agtermctl >/dev/null 2>&1; then
   echo "agterm-handoff: not available — AGTERM_ENABLED is unset or agtermctl wasn't found on PATH" >&2
@@ -36,7 +40,7 @@ source "$SCRIPT_DIR/handoff-prompt.sh"
 # on the Linux CI runner). Left in place after this script returns — see
 # agterm-spawn.sh's comment on why the prompt file is never cleaned up.
 PROMPT_FILE=$(mktemp "${TMPDIR:-/tmp}/agterm-handoff.XXXXXX")
-build_handoff_prompt "$PLAN_FILE" > "$PROMPT_FILE"
+build_handoff_prompt "$PLAN_FILE" "$PARENT_NAME" > "$PROMPT_FILE"
 
 # True when any settings file Claude Code reads sets
 # permissions.disableAutoMode to "disable" (how an org turns auto mode off).

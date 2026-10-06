@@ -589,6 +589,28 @@ PROMPT_CONTENT="$(cat "$PROMPT_PATH" 2>/dev/null || echo "")"
 assert_contains "prompt file references the plan path" "$PLAN_FILE" "$PROMPT_CONTENT"
 assert_contains "prompt file tells the session to read the plan fully" "Read it fully" "$PROMPT_CONTENT"
 assert_not_contains "prompt never mentions SendMessage callback" "SendMessage" "$PROMPT_CONTENT"
+NO_FOOTER_PROMPT="$PROMPT_CONTENT"
+rm -f "$LOG" "$TYPED"
+
+# A parent name adds a report-back footer after the unchanged hand-off text.
+LOG="$(mktemp)"
+TYPED="$(mktemp)"
+(
+  cd "$TEST_REPO" && \
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  HOME="$HANDOFF_HOME" CLAUDE_CONFIG_DIR="" CLAUDE_MANAGED_SETTINGS_DIR="$HANDOFF_MANAGED" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$HANDOFF_SCRIPT" "$PLAN_FILE" "" "claude-dlc-8d" >/dev/null
+)
+TYPED_CMD="$(cat "$TYPED")"
+PROMPT_PATH="${TYPED_CMD#*cat }"
+PROMPT_PATH="${PROMPT_PATH%)\"}"
+PROMPT_CONTENT="$(cat "$PROMPT_PATH" 2>/dev/null || echo "")"
+assert_eq "prompt with a parent name starts with the unchanged hand-off text" \
+  "$NO_FOOTER_PROMPT" "$(printf '%s\n' "$PROMPT_CONTENT" | head -n "$(printf '%s\n' "$NO_FOOTER_PROMPT" | wc -l)")"
+assert_contains "footer names the parent session" "Spawned from Claude session claude-dlc-8d." "$PROMPT_CONTENT"
+assert_contains "footer says how to report back" 'SendMessage (to: "claude-dlc-8d")' "$PROMPT_CONTENT"
+assert_contains "footer reports only when asked" "When the task or the user asks you" "$PROMPT_CONTENT"
+assert_eq "footer appears once" "1" "$(printf '%s\n' "$PROMPT_CONTENT" | grep -c 'Spawned from Claude session')"
 rm -f "$LOG" "$TYPED"
 
 # Each place an org can turn auto mode off falls back to accept-edits.
@@ -653,6 +675,7 @@ assert_eq "the prompt file the typed command reads actually exists" "yes" "$([ -
 PROMPT_CONTENT="$(cat "$PROMPT_PATH" 2>/dev/null || echo "")"
 assert_contains "prompt file references the plan path" "$CODEX_PLAN_FILE" "$PROMPT_CONTENT"
 assert_contains "prompt file tells the session to read the plan fully" "Read it fully" "$PROMPT_CONTENT"
+assert_not_contains "codex prompt has no report-back footer" "SendMessage" "$PROMPT_CONTENT"
 rm -f "$LOG" "$TYPED"
 
 LOG="$(mktemp)"

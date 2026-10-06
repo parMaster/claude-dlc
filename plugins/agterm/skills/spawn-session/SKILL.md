@@ -2,7 +2,7 @@
 name: spawn-session
 description: Hand off an arbitrary task to a freshly spawned, independent agterm session running its own `claude` or `codex` process — not a background subagent. Activates on "spawn a new session for this", "hand this off to a new session", "start a separate session for this job", "delegate this to a new terminal session", "run this in a separate/parallel session", "spin up a session for this slice", or when the user is slicing a larger job into pieces to hand off one at a time.
 argument-hint: "[task description]"
-allowed-tools: Bash, AskUserQuestion
+allowed-tools: Bash, AskUserQuestion, ListAgents
 ---
 
 # Spawn a Task in a Separate Session
@@ -72,6 +72,19 @@ what the user typed.
 
 ## Step 5: Write the prompt and spawn — in one command
 
+**Claude runtime only:** call `ListAgents` first. Its first line reads
+"This session is <name> [<ref>]"; `PARENT_NAME` is the bare `<name>`, without
+the bracketed ref. End the prompt with the footer below so the new session
+can report back here with `SendMessage` when asked. Codex gets no footer (it
+has no `SendMessage`), and neither does a Claude spawn where `ListAgents`
+isn't available or gives no name — spawn anyway.
+
+```
+---
+Spawned from Claude session PARENT_NAME. When the task or the user asks you
+to report back, send the result there with SendMessage (to: "PARENT_NAME").
+```
+
 One chained Bash call: a step gets a fresh shell, so `$PROMPT_FILE` is gone by
 the next call (and one call means one approval prompt, one focus steal). The
 heredoc must be **quoted** (`<<'PROMPT_EOF'`) so the prompt text isn't shell-
@@ -83,6 +96,7 @@ script does that and exits non-zero with a reason.
 PROMPT_FILE=$(mktemp "${TMPDIR:-/tmp}/agterm-spawn.XXXXXX")
 cat > "$PROMPT_FILE" <<'PROMPT_EOF'
 <task prompt from Step 1>
+<footer, Claude runtime with a PARENT_NAME only>
 PROMPT_EOF
 if head -n1 "$PROMPT_FILE" | grep -qiE '^(spawn|start|kick off|delegate|hand (this|it) off)\b.*\b(new )?(session|agent)\b'; then
   echo "First line reads as a hand-off description, not a direct task. Rewrite line 1 of $PROMPT_FILE as an imperative (e.g. 'Plan the fix for...') and rerun." >&2

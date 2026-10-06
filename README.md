@@ -151,6 +151,8 @@ Helpers for [agterm](https://github.com/umputun/agterm): open things in an overl
 
 Claude hand-off sessions start in auto mode, or accept-edits when an org setting turns auto mode off. Hand-off sessions are flagged (`agtermctl session flag on`) so in-flight work shows up in agterm's flagged view.
 
+A Claude session started by `handoff` or `spawn-session` can report back to the session that started it. Its prompt ends with a short footer naming the parent's Claude session (found with `ListAgents`). When the task or you ask it to "report back", it sends the result there with `SendMessage`. Codex sessions don't get the footer.
+
 A PreToolUse hook approves the `overlay` skill's own script calls, so it works in auto mode with no permission rule in settings. The hook approves only a single plain call of the plugin's `overlay.sh` with `md`, `html` or `url`, and stays silent for anything else. The script only ever runs `agtermctl session overlay open|result` against `$AGTERM_SESSION_ID`, and fails with a clear message outside agterm or when an overlay is already open. It can't run arbitrary programs; use agterm's own `agterm` skill for that.
 
 #### Optional agterm key commands
