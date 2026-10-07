@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## strict-bash 1.1.0 - 2026-10-07
+
+New `session-start` hook. It tells Claude the one-command-per-call rule at
+session start, so the first chained call isn't wasted on a denial, and it
+sets `NO_COLOR=1` for Bash commands through `CLAUDE_ENV_FILE`. Without color
+codes Claude stops piping output through `sed` to strip them, which prompted
+every time because `sed` isn't allowlisted.
+
 ## strict-bash 1.0.0 - 2026-10-06
 
 New plugin for machines where auto mode is off. Claude often chains several

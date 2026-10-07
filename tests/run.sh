@@ -1042,6 +1042,25 @@ assert_contains "active in default mode" "$DENY" "$(chained_in_mode default 'a &
 assert_contains "active in acceptEdits mode" "$DENY" "$(chained_in_mode acceptEdits 'a && b')"
 
 # ---------------------------------------------------------------------------
+# strict-bash/session-start.sh
+# ---------------------------------------------------------------------------
+
+SESSION_START_SCRIPT="${REPO_ROOT}/plugins/strict-bash/scripts/session-start.sh"
+
+echo "strict-bash/session-start.sh"
+
+ENV_FILE="$(mktemp)"
+echo 'export FOO=bar' > "$ENV_FILE"
+result=$(echo '{"hook_event_name":"SessionStart","source":"startup"}' | CLAUDE_ENV_FILE="$ENV_FILE" bash "$SESSION_START_SCRIPT")
+assert_contains "reminds Claude to run one command per call" "its own Bash call" "$result"
+assert_eq "appends NO_COLOR and keeps existing env lines" $'export FOO=bar\nexport NO_COLOR=1' "$(cat "$ENV_FILE")"
+rm -f "$ENV_FILE"
+
+result=$(echo '{}' | env -u CLAUDE_ENV_FILE bash "$SESSION_START_SCRIPT"; echo "exit:$?")
+assert_contains "still reminds without CLAUDE_ENV_FILE" "its own Bash call" "$result"
+assert_contains "exits 0 without CLAUDE_ENV_FILE" "exit:0" "$result"
+
+# ---------------------------------------------------------------------------
 # strict-bash/setup.sh
 # ---------------------------------------------------------------------------
 
