@@ -1053,6 +1053,7 @@ ENV_FILE="$(mktemp)"
 echo 'export FOO=bar' > "$ENV_FILE"
 result=$(echo '{"hook_event_name":"SessionStart","source":"startup"}' | CLAUDE_ENV_FILE="$ENV_FILE" bash "$SESSION_START_SCRIPT")
 assert_contains "reminds Claude to run one command per call" "its own Bash call" "$result"
+assert_contains "reminds Claude to write paths literally" 'instead of using variables like $TMPDIR' "$result"
 assert_eq "appends NO_COLOR and keeps existing env lines" $'export FOO=bar\nexport NO_COLOR=1' "$(cat "$ENV_FILE")"
 rm -f "$ENV_FILE"
 

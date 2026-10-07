@@ -8,4 +8,4 @@ if [ -n "$CLAUDE_ENV_FILE" ]; then
   echo 'export NO_COLOR=1' >> "$CLAUDE_ENV_FILE"
 fi
 
-echo "Run each command as its own Bash call: chained commands (&&, ||, ;, \$(...), loops) are denied so each call can match an allow rule. Pipes into filters like head, tail or grep are fine. Use Read, Grep or Glob to read and search files."
+echo "Run each command as its own Bash call: chained commands (&&, ||, ;, \$(...), loops) are denied so each call can match an allow rule. Pipes into filters like head, tail or grep are fine. Use Read, Grep or Glob to read and search files. Write paths out literally instead of using variables like \$TMPDIR: a command with \$VAR in it always asks for permission."

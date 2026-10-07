@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## strict-bash 1.1.1 - 2026-10-07
+
+The session-start reminder also tells Claude to write paths out literally.
+A command with `$VAR` in it, like `$TMPDIR/test.log`, always asks for
+permission, because Claude Code can't check what the variable holds.
+
 ## strict-bash 1.1.0 - 2026-10-07
 
 New `session-start` hook. It tells Claude the one-command-per-call rule at
