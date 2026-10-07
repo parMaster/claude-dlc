@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.10.0 - 2026-10-07
+
+New rule: inside agterm, with the `huddle` skill installed, Claude asks
+questions whose options need explaining through a huddle page instead of
+AskUserQuestion. The page can show trade-offs, diagrams and numbers next to
+each option. Quick yes/no questions stay in the terminal.
+
 ## strict-bash 1.1.1 - 2026-10-07
 
 The session-start reminder also tells Claude to write paths out literally.

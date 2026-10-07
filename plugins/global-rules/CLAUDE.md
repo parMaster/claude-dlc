@@ -50,6 +50,7 @@
 - Don't recap what you just did beyond one sentence — the diff/output already shows it.
 - Don't restate the question or the plan back before acting on it.
 - Long-form content belongs in the artifact itself (plan, code, report) — don't narrate it again in chat on top of that.
+- **Rich decisions go to huddle** — inside agterm (`AGTERM_ENABLED=1`) with the `huddle` skill installed, ask any question whose options need real explaining (trade-offs, pros/cons, diagrams, numbers) through huddle instead of AskUserQuestion, so the user can weigh them without first reading up on each one. Quick yes/no or one-word picks stay in AskUserQuestion.
 
 ## CLI Best Practices
 - Don't put `sleep` in front of curl or other CLIs, i.e. `sleep 3 && curl -f ....`
