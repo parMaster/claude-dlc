@@ -11,8 +11,8 @@
 #                          Omit (or pass "") to inherit whatever `claude`
 #                          launches with by default.
 #   [parent-name]          the calling session's Claude name (from ListAgents).
-#                          If given, the prompt ends with a footer telling the
-#                          new session to report back there via SendMessage.
+#                          If given, the prompt ends with a footer naming the
+#                          parent session, with no instruction attached.
 # Requires: AGTERM_ENABLED=1, agtermctl and jq on PATH.
 # On success: prints the new session's display name (e.g. "Implement: foo")
 # to stdout, exits 0.

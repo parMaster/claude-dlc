@@ -19,8 +19,7 @@ EOF
     cat <<EOF
 
 ---
-Spawned from Claude session $parent_name. When the task or the user asks you
-to report back, send the result there with SendMessage (to: "$parent_name").
+Spawned from Claude session $parent_name.
 EOF
   fi
 }

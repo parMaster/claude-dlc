@@ -75,14 +75,14 @@ what the user typed.
 **Claude runtime only:** call `ListAgents` first. Its first line reads
 "This session is <name> [<ref>]"; `PARENT_NAME` is the bare `<name>`, without
 the bracketed ref. End the prompt with the footer below so the new session
-can report back here with `SendMessage` when asked. Codex gets no footer (it
+knows where it came from. The footer carries no instruction: any "report back"
+wording led spawned sessions to message this one unasked. Codex gets no footer (it
 has no `SendMessage`), and neither does a Claude spawn where `ListAgents`
 isn't available or gives no name — spawn anyway.
 
 ```
 ---
-Spawned from Claude session PARENT_NAME. When the task or the user asks you
-to report back, send the result there with SendMessage (to: "PARENT_NAME").
+Spawned from Claude session PARENT_NAME.
 ```
 
 One chained Bash call: a step gets a fresh shell, so `$PROMPT_FILE` is gone by

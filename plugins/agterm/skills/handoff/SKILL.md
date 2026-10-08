@@ -68,8 +68,8 @@ Never guess or substitute a model name of your own.
 
 **Claude runtime only:** call `ListAgents` first. Its first line reads
 "This session is <name> [<ref>]"; `PARENT_NAME` is the bare `<name>`, without
-the bracketed ref. The new session gets it so it can report back here with
-`SendMessage` when asked. If `ListAgents` isn't available or gives no name,
+the bracketed ref. The new session gets it as a plain "Spawned from" line so
+it knows where it came from. If `ListAgents` isn't available or gives no name,
 leave `PARENT_NAME` empty and hand off anyway.
 
 ```bash

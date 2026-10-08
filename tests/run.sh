@@ -608,8 +608,7 @@ PROMPT_CONTENT="$(cat "$PROMPT_PATH" 2>/dev/null || echo "")"
 assert_eq "prompt with a parent name starts with the unchanged hand-off text" \
   "$NO_FOOTER_PROMPT" "$(printf '%s\n' "$PROMPT_CONTENT" | head -n "$(printf '%s\n' "$NO_FOOTER_PROMPT" | wc -l)")"
 assert_contains "footer names the parent session" "Spawned from Claude session claude-dlc-8d." "$PROMPT_CONTENT"
-assert_contains "footer says how to report back" 'SendMessage (to: "claude-dlc-8d")' "$PROMPT_CONTENT"
-assert_contains "footer reports only when asked" "When the task or the user asks you" "$PROMPT_CONTENT"
+assert_eq "footer gives no SendMessage instruction" "0" "$(printf '%s\n' "$PROMPT_CONTENT" | grep -c 'SendMessage')"
 assert_eq "footer appears once" "1" "$(printf '%s\n' "$PROMPT_CONTENT" | grep -c 'Spawned from Claude session')"
 rm -f "$LOG" "$TYPED"
 

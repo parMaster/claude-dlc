@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 1.3.1 - 2026-10-08
+
+The footer on spawned and handed-off sessions is now just "Spawned from Claude
+session <name>." with no instruction. Any wording about reporting back made the
+new session message the parent unasked, because task prompts use "report back"
+to mean "tell me when you're done".
+
 ## global-rules 1.10.0 - 2026-10-07
 
 New rule: inside agterm, with the `huddle` skill installed, Claude asks
