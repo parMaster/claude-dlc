@@ -4,6 +4,22 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.11.0 - 2026-10-09
+
+New `style-reminder` hook. It adds a short reminder to every prompt: answer
+first, one idea per sentence, no noun stacks, keep the small words. Rules
+loaded at session start lose weight as the context grows. Past sessions show
+dense replies from about 80k of context on, often by the third prompt. The
+reminder costs about 60 tokens a prompt.
+
+Response Brevity rewritten so each rule can be checked against a reply. New
+rules borrowed from ASD-STE100 (Simplified Technical English) target dense
+text: one idea per sentence, at most 3 nouns in a row, keep articles and
+linking words, verbs for actions, name who acts, one name per thing, lists
+for 3+ points. Dropped the "stays fixed once corrected" and "reread the
+draft" rules: nothing enforced them. The huddle rule moved to Workflow, since
+it is about how to ask, not about length.
+
 ## agterm 1.3.1 - 2026-10-08
 
 The footer on spawned and handed-off sessions is now just "Spawned from Claude

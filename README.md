@@ -190,7 +190,7 @@ Run `claude --init-only` once after install. The setup hook is additive and idem
 - replaces the spinner's whimsical verbs ("Kerfuffling…") with `Thinking` / `Processing` / `Working`
 - sets `attribution` to `{"commit": "", "pr": ""}` so Claude Code doesn't add a Co-Authored-By trailer or PR attribution line
 
-The rules cover plan-first workflow, git hygiene, tests and lint before commit, response brevity, asking rich questions through [huddle](https://github.com/skkap/claude-skills/tree/master/plugins/huddle) when it's installed, and memory and Atlassian MCP discipline.
+The rules cover plan-first workflow, git hygiene, tests and lint before commit, short and readable replies (with rules borrowed from ASD-STE100, Simplified Technical English), asking rich questions through [huddle](https://github.com/skkap/claude-skills/tree/master/plugins/huddle) when it's installed, and memory and Atlassian MCP discipline.
 
 | Hook | Effect |
 |------|--------|
@@ -198,6 +198,7 @@ The rules cover plan-first workflow, git hygiene, tests and lint before commit, 
 | [`block-coauthor`](plugins/global-rules/scripts/block-coauthor.sh) | Denies `git commit` / `gh pr create` / `gh pr edit` with a `Co-Authored-By` line or a claude.ai session link (`Claude-Session:` trailer). |
 | [`block-inline-edit`](plugins/global-rules/scripts/block-inline-edit.sh) | Denies file edits through an inline python/node/ruby script or `sed -i` / `perl -i`, and points to the Edit tool instead. `perl -i` on `docs/plans/` is allowed (checkbox ticking). |
 | [`block-comment-refs`](plugins/global-rules/scripts/block-comment-refs.sh) | Denies Edit/Write when a *new* comment line in a code file points somewhere instead of explaining: a ticket ID, a Jira/Confluence/PR link, a commit SHA, a slice marker, or a path to a `docs/plans`/`docs/specs` doc. Standard names (UTF-8, SHA-256, RFC-7231…), Markdown and existing comments pass. |
+| [`style-reminder`](plugins/global-rules/scripts/style-reminder.sh) | Adds a short reminder of the reply rules to every prompt: answer first, one idea per sentence, no noun stacks, keep the small words. Rules loaded at session start fade as the context grows; this keeps them near the end. About 60 tokens a prompt. |
 
 ---
 

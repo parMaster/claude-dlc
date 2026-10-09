@@ -1041,6 +1041,29 @@ assert_contains "active in default mode" "$DENY" "$(chained_in_mode default 'a &
 assert_contains "active in acceptEdits mode" "$DENY" "$(chained_in_mode acceptEdits 'a && b')"
 
 # ---------------------------------------------------------------------------
+# global-rules/style-reminder.sh
+# ---------------------------------------------------------------------------
+
+STYLE_REMINDER_SCRIPT="${REPO_ROOT}/plugins/global-rules/scripts/style-reminder.sh"
+GLOBALRULES_CLAUDE_MD="${REPO_ROOT}/plugins/global-rules/CLAUDE.md"
+
+echo "global-rules/style-reminder.sh"
+
+result=$(echo '{"hook_event_name":"UserPromptSubmit","prompt":"hi"}' | bash "$STYLE_REMINDER_SCRIPT"; echo "exit:$?")
+assert_contains "reminds one idea per sentence" "One idea per sentence, at most 25 words" "$result"
+assert_contains "reminds about noun stacks" "No stacks of more than 3 nouns" "$result"
+assert_contains "reminds to keep small words" "Keep the small words" "$result"
+assert_contains "exits 0 on a prompt" "exit:0" "$result"
+
+result=$(echo '{}' | bash "$STYLE_REMINDER_SCRIPT"; echo "exit:$?")
+assert_contains "exits 0 on empty input" "exit:0" "$result"
+
+# The reminder repeats rules from CLAUDE.md; a rename in one place must not go unnoticed.
+for rule in "One idea per sentence" "No noun stacks" "Keep the small words"; do
+  assert_contains "CLAUDE.md has the rule: $rule" "$rule" "$(cat "$GLOBALRULES_CLAUDE_MD")"
+done
+
+# ---------------------------------------------------------------------------
 # strict-bash/session-start.sh
 # ---------------------------------------------------------------------------
 
