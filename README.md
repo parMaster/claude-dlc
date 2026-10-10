@@ -240,7 +240,7 @@ Stops Claude from creating git worktrees. All work stays in the checkout you hav
 | [`block-worktree-create`](plugins/no-worktrees/scripts/block-worktree-create.sh) | Fails a worktree that Claude Code creates inside a session, such as for a subagent with `isolation: "worktree"`. Claude sees the reason and carries on in the checkout. |
 | [`block-worktree-tools`](plugins/no-worktrees/scripts/block-worktree-tools.sh) | Denies the `EnterWorktree` tool and a Bash `git worktree add`, with or without global options such as `-C <dir>`. `git worktree list`, `remove` and `prune` stay allowed, so you can still clean up an old worktree. A mention inside quotes, like a commit message or a grep pattern, passes. |
 
-The block runs in every permission mode. It covers what Claude does inside a session. Starting a session with `claude --worktree` is your own request, and in testing with `--plugin-dir` the plugin did not stop it. The plugin has no setting: to allow worktrees again, disable it in `/plugin` and run `/reload-plugins`. Commands you type in your own shell are not affected.
+The block runs in every permission mode. It covers what Claude does inside a session. Starting one with `claude --worktree` still works, because a plugin's hook does not fire for that flag. To allow worktrees again, disable the plugin in `/plugin` and run `/reload-plugins`.
 
 ---
 

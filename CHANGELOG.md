@@ -12,8 +12,8 @@ Claude Code makes inside a session, such as for a subagent with worktree
 isolation. A `PreToolUse` hook denies the `EnterWorktree` tool and a Bash
 `git worktree add`. `git worktree list`, `remove` and `prune` stay allowed.
 
-Starting a session with `claude --worktree` is not blocked: in testing with
-`--plugin-dir` the hook did not fire for it.
+Starting a session with `claude --worktree` is not blocked: the hook does not
+fire for it, with the plugin installed or loaded through `--plugin-dir`.
 
 The block is hooks only, with no edits to `settings.json`, so disabling the
 plugin in `/plugin` removes all of it.
