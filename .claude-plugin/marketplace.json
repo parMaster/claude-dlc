@@ -43,6 +43,11 @@
       "name": "strict-bash",
       "source": "./plugins/strict-bash",
       "description": "One command per Bash call — denies chained commands so each one can match an allow rule; for machines where auto mode is off"
+    },
+    {
+      "name": "no-worktrees",
+      "source": "./plugins/no-worktrees",
+      "description": "Stops Claude from creating git worktrees, so all work stays in the checkout you have open"
     }
   ]
 }

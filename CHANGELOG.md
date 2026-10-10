@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## no-worktrees 1.0.0 - 2026-10-10
+
+New plugin. It stops Claude from creating git worktrees, so all work stays in
+the checkout you have open. A `WorktreeCreate` hook fails a worktree that
+Claude Code makes inside a session, such as for a subagent with worktree
+isolation. A `PreToolUse` hook denies the `EnterWorktree` tool and a Bash
+`git worktree add`. `git worktree list`, `remove` and `prune` stay allowed.
+
+Starting a session with `claude --worktree` is not blocked: in testing with
+`--plugin-dir` the hook did not fire for it.
+
+The block is hooks only, with no edits to `settings.json`, so disabling the
+plugin in `/plugin` removes all of it.
+
 ## global-rules 1.11.0 - 2026-10-09
 
 New `style-reminder` hook. It adds a short reminder to every prompt: answer

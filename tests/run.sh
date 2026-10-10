@@ -1114,6 +1114,71 @@ assert_not_contains "never allows commands that run their arguments" "xargs" \
 rm -rf "$TEST_HOME"
 
 # ---------------------------------------------------------------------------
+# no-worktrees/block-worktree-create.sh
+# ---------------------------------------------------------------------------
+
+WORKTREE_CREATE_SCRIPT="${REPO_ROOT}/plugins/no-worktrees/scripts/block-worktree-create.sh"
+WORKTREE_OFF_MSG="Worktrees are turned off on this machine"
+
+echo "no-worktrees/block-worktree-create.sh"
+
+WT_INPUT='{"hook_event_name":"WorktreeCreate","worktree_name":"feat","worktree_path":"/tmp/repo/.claude/worktrees/feat","isolation":"worktree"}'
+WT_ERR="$(mktemp)"
+result=$(echo "$WT_INPUT" | bash "$WORKTREE_CREATE_SCRIPT" 2>"$WT_ERR"; echo "exit:$?")
+assert_eq "prints no path and exits non-zero" "exit:1" "$result"
+assert_contains "tells why on stderr" "$WORKTREE_OFF_MSG" "$(cat "$WT_ERR")"
+WT_CREATE_TEXT="$(cat "$WT_ERR")"
+rm -f "$WT_ERR"
+
+# ---------------------------------------------------------------------------
+# no-worktrees/block-worktree-tools.sh
+# ---------------------------------------------------------------------------
+
+WORKTREE_TOOLS_SCRIPT="${REPO_ROOT}/plugins/no-worktrees/scripts/block-worktree-tools.sh"
+
+echo "no-worktrees/block-worktree-tools.sh"
+
+result=$(jq -n '{tool_name:"EnterWorktree", tool_input:{name:"feat"}}' | bash "$WORKTREE_TOOLS_SCRIPT")
+assert_contains "denies the EnterWorktree tool" "$DENY" "$result"
+assert_contains "deny reason says worktrees are off" "$WORKTREE_OFF_MSG" "$result"
+WT_DENY_TEXT="$result"
+
+for cmd in \
+  'git worktree add ../x' \
+  'git worktree add -b feat ../x main' \
+  'git -C /some/repo worktree add ../x' \
+  'git -C "/some repo" worktree add ../x' \
+  'git --no-pager -c core.editor=true worktree add ../x' \
+  '/usr/bin/git worktree add ../x' \
+  'git fetch && git worktree add ../x'; do
+  assert_contains "denies: $cmd" "$DENY" "$(run_hook "$WORKTREE_TOOLS_SCRIPT" "$cmd")"
+done
+
+for cmd in \
+  'git worktree list' \
+  'git worktree remove ../x' \
+  'git worktree prune' \
+  'grep -rn "git worktree add" .' \
+  'git commit -m "doc: git worktree add"' \
+  "git commit -m 'first line
+
+then git worktree add in the body'" \
+  'git log --grep worktree' \
+  'git status'; do
+  assert_eq "no decision: $cmd" "" "$(run_hook "$WORKTREE_TOOLS_SCRIPT" "$cmd")"
+done
+
+result=$(jq -n '{tool_name:"Bash", permission_mode:"auto", tool_input:{command:"git worktree add ../x"}}' | bash "$WORKTREE_TOOLS_SCRIPT")
+assert_contains "denies in auto mode too" "$DENY" "$result"
+
+result=$(jq -n '{tool_name:"Bash", permission_mode:"bypassPermissions", tool_input:{command:"git worktree add ../x"}}' | bash "$WORKTREE_TOOLS_SCRIPT")
+assert_contains "denies in bypassPermissions mode too" "$DENY" "$result"
+
+for hint in "no-worktrees" "/plugin" "disable" "ALLOW" "env"; do
+  assert_not_contains "block text gives no off switch ($hint)" "$hint" "${WT_CREATE_TEXT} ${WT_DENY_TEXT}"
+done
+
+# ---------------------------------------------------------------------------
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

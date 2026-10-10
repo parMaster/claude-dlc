@@ -223,6 +223,27 @@ Pipes stay allowed. Claude Code checks each side of a pipe against your allow ru
 
 ---
 
+### [no-worktrees](plugins/no-worktrees)
+
+Stops Claude from creating git worktrees. All work stays in the checkout you have open. Install it if a worktree only costs you:
+
+- You never run two writing sessions in one repo, so you don't need the isolation.
+- A worktree is a different folder, so the edits don't show in your open editor window.
+- Your allow rules for the repo don't match the new folder, so with auto mode off every command prompts.
+
+```
+/plugin install no-worktrees@parmaster-claude-dlc
+```
+
+| Hook | Effect |
+|------|--------|
+| [`block-worktree-create`](plugins/no-worktrees/scripts/block-worktree-create.sh) | Fails a worktree that Claude Code creates inside a session, such as for a subagent with `isolation: "worktree"`. Claude sees the reason and carries on in the checkout. |
+| [`block-worktree-tools`](plugins/no-worktrees/scripts/block-worktree-tools.sh) | Denies the `EnterWorktree` tool and a Bash `git worktree add`, with or without global options such as `-C <dir>`. `git worktree list`, `remove` and `prune` stay allowed, so you can still clean up an old worktree. A mention inside quotes, like a commit message or a grep pattern, passes. |
+
+The block runs in every permission mode. It covers what Claude does inside a session. Starting a session with `claude --worktree` is your own request, and in testing with `--plugin-dir` the plugin did not stop it. The plugin has no setting: to allow worktrees again, disable it in `/plugin` and run `/reload-plugins`. Commands you type in your own shell are not affected.
+
+---
+
 ## Local development
 
 ```
