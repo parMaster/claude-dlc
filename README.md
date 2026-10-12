@@ -194,7 +194,7 @@ The rules cover plan-first workflow, git hygiene, tests and lint before commit, 
 
 | Hook | Effect |
 |------|--------|
-| [`block-root-find`](plugins/global-rules/scripts/block-root-find.sh) | Denies `find` rooted at `/`. Scope the search to a directory. |
+| [`block-root-find`](plugins/global-rules/scripts/block-root-find.sh) | Denies `find` rooted at `/` or at a home dir (`~`, `$HOME`, `/Users/<name>`). Scope the search to a project directory. |
 | [`block-coauthor`](plugins/global-rules/scripts/block-coauthor.sh) | Denies `git commit` / `gh pr create` / `gh pr edit` with a `Co-Authored-By` line or a claude.ai session link (`Claude-Session:` trailer). |
 | [`block-inline-edit`](plugins/global-rules/scripts/block-inline-edit.sh) | Denies file edits through an inline python/node/ruby script or `sed -i` / `perl -i`, and points to the Edit tool instead. `perl -i` on `docs/plans/` is allowed (checkbox ticking). |
 | [`block-comment-refs`](plugins/global-rules/scripts/block-comment-refs.sh) | Denies Edit/Write when a *new* comment line in a code file points somewhere instead of explaining: a ticket ID, a Jira/Confluence/PR link, a commit SHA, a slice marker, or a path to a `docs/plans`/`docs/specs` doc. Standard names (UTF-8, SHA-256, RFC-7231…), Markdown and existing comments pass. |

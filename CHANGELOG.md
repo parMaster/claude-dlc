@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.11.2 - 2026-10-12
+
+`block-root-find` now also denies a `find` rooted at a home dir: `~`,
+`$HOME`, `/Users/<name>`, `/home/<name>`, `/root`, or `/Users` itself.
+An agent blocked on `find /` simply retried with its home dir, which
+is nearly as slow. A `find` below a home dir, like `~/go/src`, still runs.
+
 ## global-rules 1.11.1 - 2026-10-12
 
 New "Reproduce, then fix" rule under Verification Before Commit. When a

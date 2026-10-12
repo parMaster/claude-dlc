@@ -134,7 +134,7 @@ run_hook() {
 
 echo "global-rules/block-root-find.sh"
 
-result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'gem_path=$(find / -type d -path "*bibook-rails-base-models*" -not -path "*/node_modules/*" 2>/dev/null | head -5); echo "$gem_path"')
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'gem_path=$(find / -type d -path "*example-gem*" -not -path "*/vendor/*" 2>/dev/null | head -5); echo "$gem_path"')
 assert_contains "blocks root find embedded in \$(...) assignment" '"permissionDecision": "deny"' "$result"
 
 result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find /')
@@ -148,6 +148,30 @@ assert_contains "blocks find / chained after &&" '"permissionDecision": "deny"' 
 
 result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'echo `find / -name foo.txt`')
 assert_contains "blocks find / inside backtick substitution" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find /Users/alice -name "foo.rb" 2>/dev/null')
+assert_contains "blocks find rooted at a macOS home dir" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find /home/dev/ -name foo')
+assert_contains "blocks find rooted at a Linux home dir with trailing slash" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find /Users -name foo')
+assert_contains "blocks find rooted at /Users" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find ~ -name foo')
+assert_contains "blocks find rooted at ~" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find "$HOME" -name foo')
+assert_contains "blocks find rooted at quoted \$HOME" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'x=$(find ${HOME}/)')
+assert_contains "blocks find rooted at \${HOME}/ inside \$(...)" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find ~/go/src -name "*.rb"')
+assert_eq "allows find rooted below ~" "" "$result"
+
+result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find "$HOME/go/src" -name "*.rb"')
+assert_eq "allows find rooted below \$HOME" "" "$result"
 
 result=$(run_hook "$BLOCK_ROOT_FIND_SCRIPT" 'find /Users/gusto/go/src/claude-dlc -name "*.go"')
 assert_eq "allows find rooted at a real absolute project path" "" "$result"

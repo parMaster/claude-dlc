@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# PreToolUse hook (Bash): blocks `find` rooted at `/` — a full-filesystem scan.
+# PreToolUse hook (Bash): blocks `find` rooted at `/` or at a home dir
+# (`~`, `$HOME`, `/Users/<name>`, `/home/<name>`) — both scan far too much.
 #
 # permissions.deny only splits a command on shell operators (&& ; | etc.) and
 # can't see inside $(...) command substitution or a variable assignment, so a
@@ -9,14 +10,15 @@
 
 COMMAND=$(jq -r '.tool_input.command // empty')
 
-PATTERN='(^|[[:space:];&|(`])find[[:space:]]+(-[A-Za-z]+[[:space:]]+)*/([[:space:]]|$)'
+ROOTS='(/|/(Users|home)/?|/(Users|home)/[^/[:space:]"'"'"']+/?|/root/?|~/?|\$HOME/?|\$\{HOME\}/?)'
+PATTERN='(^|[[:space:];&|(`])find[[:space:]]+(-[A-Za-z]+[[:space:]]+)*["'"'"']?'"$ROOTS"'["'"'"']?([[:space:];&|)`]|$)'
 
 if [[ -n "$COMMAND" ]] && echo "$COMMAND" | grep -Eq "$PATTERN"; then
   jq -n '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
       permissionDecision: "deny",
-      permissionDecisionReason: "Full-filesystem find (`find /...`) is blocked. Scope the search to a specific directory instead of the root filesystem."
+      permissionDecisionReason: "A find rooted at `/` or at a home dir is blocked. Scope the search to a specific project or subdirectory instead."
     }
   }'
 fi
