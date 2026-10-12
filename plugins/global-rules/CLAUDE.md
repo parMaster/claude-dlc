@@ -12,6 +12,7 @@
 ## Verification Before Commit
 - NEVER commit until all tests pass locally — run the project's test suite (`make test`, the CI test step, or `go test ./...`)
 - NEVER commit until the linter passes — run the appropriate linter for the project (e.g. `golangci-lint run ./...` for Go, `eslint .` for JS/TS) and fix any failures before committing
+- **Reproduce, then fix** — when a test fails, see it fail before you fix it. A CI log of the failure already counts. After the fix, one passing run proves it. Don't stash or revert a finished fix to watch the test fail again.
 - NEVER auto-commit when the user is mid-review or has indicated they'll commit manually
 - For config/setting name changes, verify all references (grep) and update plan docs, memory, AND application code
 - For multi-file refactors, verify no duplicate declarations across files in the same package before claiming done

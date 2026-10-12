@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 1.11.1 - 2026-10-12
+
+New "Reproduce, then fix" rule under Verification Before Commit. When a
+test fails, Claude sees it fail first, and a CI log counts as that proof.
+After the fix, one passing run is enough. Claude no longer stashes a
+finished fix to watch the test fail again. No hook can enforce this,
+because a `git stash` hook can't tell this case from a valid stash.
+
 ## no-worktrees 1.0.0 - 2026-10-10
 
 New plugin. It stops Claude from creating git worktrees, so all work stays in
