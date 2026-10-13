@@ -65,16 +65,24 @@ for f in docs/backlog/*.md; do
   fi
 
   # No commit yet gives an empty date; the page shows that as uncommitted, not as an error.
-  touched=$(git log -1 --format=%cs -- "$f" 2>/dev/null || true)
+  touched=$(git log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M' -- "$f" 2>/dev/null || true)
   uncommitted=false
   [ -z "$(git status --porcelain -- "$f")" ] || uncommitted=true
 
+  # `added` has no time of day. Borrow it from the commit that created the file, but only
+  # when that commit landed on the same day; otherwise the time would belong to another date.
+  added=$(fm added "$f")
+  created=$(git log --diff-filter=A --format=%cd --date=format-local:'%Y-%m-%d %H:%M' -- "$f" 2>/dev/null | tail -1 || true)
+  added_at=$added
+  case "$created" in "$added "*) added_at=$created ;; esac
+
   jq -n --arg slug "$slug" --arg title "${title:-$slug}" --arg worth "$(fm worth "$f")" \
-    --arg where "$where" --arg ticket "$(fm ticket "$f")" --arg added "$(fm added "$f")" \
+    --arg where "$where" --arg ticket "$(fm ticket "$f")" --arg added "$added" --arg addedAt "$added_at" \
     --arg body "$body" --arg area "$area" --arg touched "$touched" \
     --argjson whereMissing "$missing" --argjson uncommitted "$uncommitted" \
     '{slug: $slug, title: $title, worth: $worth, where: $where, ticket: $ticket, added: $added,
-      body: $body, area: $area, touched: $touched, whereMissing: $whereMissing, uncommitted: $uncommitted}' \
+      addedAt: $addedAt, body: $body, area: $area, touched: $touched, whereMissing: $whereMissing,
+      uncommitted: $uncommitted}' \
     >> "$items"
 done
 

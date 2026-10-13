@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 3.2.0 - 2026-10-13
+
+Backlog dashboard, from daily use:
+
+- `q` closes the overlay, unless the search box or the sort menu has focus.
+- The default sort is newest first.
+- Dates read `YY-MM-DD HH:MM`, not "16d ago". `added` takes its time from the
+  commit that created the file when that commit landed on the same day;
+  otherwise it stays a bare date.
+- Item titles and bodies use JetBrains Mono at 16px, weight 600, with the
+  system monospace font as the fallback.
+- The `where` not found, uncommitted and oldest item tiles are gone. Rows still
+  flag a `where` that isn't found and an uncommitted item.
+
 ## strict-bash 1.2.0 - 2026-10-13
 
 New hook `block-inline-edit`, moved here from `global-rules`. It denies file

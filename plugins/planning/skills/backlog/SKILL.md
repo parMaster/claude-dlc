@@ -106,7 +106,7 @@ or "in an overlay".
 3. Outside agterm, or when that skill is not installed or reports a failure, give the user the path so it
    can be opened in a browser. Do not open it some other way.
 
-The page is a snapshot of the working tree; run the command again to refresh it.
+The page is a snapshot of the working tree; run the command again to refresh it. `q` closes the overlay.
 
 ## Every item as the argument
 

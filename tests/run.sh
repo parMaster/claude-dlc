@@ -875,7 +875,8 @@ added: 2026-04-01
 # not anchored
 EOF
 dash_git add -A
-dash_git commit -q -m init
+# A fixed commit time, on the day good-where says it was added.
+GIT_COMMITTER_DATE="2026-01-05T10:20:00" dash_git commit -q -m init
 cat > "$DASH_REPO/docs/backlog/brand-new.md" <<'EOF'
 ---
 worth: later
@@ -900,7 +901,10 @@ assert_eq "body with markup round-trips" 'Body with </script><b>bold</b> & an am
   "$(sed -n '/id="backlog-data"/{n;p;}' "$DASH_OUT" | jq -r '.items[] | select(.slug == "good-where") | .body' | grep Body)"
 assert_eq "good where: area is two segments, found, committed" '["src/pkg",false,false]' \
   "$(dash_item "$DASH_OUT" good-where '[.area, .whereMissing, .uncommitted]')"
-assert_eq "committed item has a touched date" "true" "$(dash_item "$DASH_OUT" good-where '.touched | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")')"
+assert_eq "committed item has a touched date and time" '"2026-01-05 10:20"' "$(dash_item "$DASH_OUT" good-where '.touched')"
+assert_eq "added on the commit's day takes the commit's time" '"2026-01-05 10:20"' "$(dash_item "$DASH_OUT" good-where '.addedAt')"
+assert_eq "added on another day stays a bare date" '"2026-02-01"' "$(dash_item "$DASH_OUT" gone-path '.addedAt')"
+assert_eq "uncommitted item keeps its bare added date" '"2026-05-01"' "$(dash_item "$DASH_OUT" brand-new '.addedAt')"
 assert_eq "missing path is flagged" "true" "$(dash_item "$DASH_OUT" gone-path '.whereMissing')"
 assert_eq "line past the end is flagged" "true" "$(dash_item "$DASH_OUT" past-end '.whereMissing')"
 assert_eq "top-level where: area is the file" '["Makefile",false]' "$(dash_item "$DASH_OUT" top-level '[.area, .whereMissing]')"

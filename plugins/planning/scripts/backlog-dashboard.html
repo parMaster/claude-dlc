@@ -20,7 +20,7 @@
     margin: 0; padding: 20px 24px 40px; background: var(--bg); color: var(--text);
     font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
-  code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+  code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
   header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 14px; }
   h1 { font-size: 20px; margin: 0; }
   .sub { color: var(--dim); }
@@ -53,13 +53,17 @@
   .row { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; }
   .head { display: flex; gap: 12px; padding: 10px 12px; cursor: pointer; align-items: flex-start; }
   .badge {
-    flex: none; width: 46px; text-align: center; border-radius: 4px; padding: 1px 0; margin-top: 2px;
+    flex: none; width: 46px; text-align: center; border-radius: 4px; padding: 1px 0; margin-top: 4px;
     font-size: 11px; font-weight: 600; text-transform: uppercase; color: #fff; background: var(--no);
   }
   .badge.yes { background: var(--yes); }
   .badge.later { background: var(--later); }
-  .title { font-weight: 600; }
-  .meta { color: var(--dim); font-size: 12px; display: flex; flex-wrap: wrap; gap: 2px 12px; }
+  .title, pre.body {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 16px; font-weight: 600;
+  }
+  .title { font-weight: 700; }
+  .meta { color: var(--dim); font-size: 13px; display: flex; flex-wrap: wrap; gap: 2px 12px; }
   .flag { color: var(--warn); }
   pre.body {
     margin: 0; padding: 10px 12px 12px 70px; border-top: 1px solid var(--line);
@@ -74,11 +78,11 @@
 <header id="header"></header>
 <div class="tiles" id="tiles"></div>
 <div class="controls">
-  <input id="search" type="search" placeholder="Search title, slug, where, body ( / )" autocomplete="off">
+  <input id="search" type="search" placeholder="Search title, slug, where, body ( / ) · q quits" autocomplete="off">
   <select id="sort" aria-label="Sort">
-    <option value="triage">yes, later, no · oldest first</option>
     <option value="newest">newest first</option>
     <option value="oldest">oldest first</option>
+    <option value="triage">yes, later, no · oldest first</option>
     <option value="touched">recently touched</option>
   </select>
 </div>
@@ -94,7 +98,7 @@ __BACKLOG_DATA__
   var items = data.items;
   var DAY = 864e5;
   var now = Date.now();
-  var state = { filter: 'all', area: null, query: '', sort: 'triage' };
+  var state = { filter: 'all', area: null, query: '', sort: 'newest' };
   var open = {};
 
   function el(tag, cls, text) {
@@ -107,13 +111,8 @@ __BACKLOG_DATA__
     var t = Date.parse(date);
     return isNaN(t) ? null : Math.max(0, Math.floor((now - t) / DAY));
   }
-  function ago(d) {
-    if (d == null) return 'unknown';
-    if (d < 1) return 'today';
-    if (d < 60) return d + 'd ago';
-    if (d < 730) return Math.floor(d / 30) + 'mo ago';
-    return Math.floor(d / 365) + 'y ago';
-  }
+  // YYYY-MM-DD[ HH:MM] shown as YY-MM-DD[ HH:MM]; anything else is shown as written.
+  function stamp(s) { return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(2) : s; }
   items.forEach(function (it) {
     it.age = days(it.added);
     it.haystack = [it.title, it.slug, it.where, it.ticket, it.body].join('\n').toLowerCase();
@@ -124,22 +123,20 @@ __BACKLOG_DATA__
     yes: function (it) { return it.worth === 'yes'; },
     later: function (it) { return it.worth === 'later'; },
     no: function (it) { return it.worth === 'no'; },
-    recent: function (it) { return it.age != null && it.age < 7; },
-    stale: function (it) { return it.whereMissing; },
-    uncommitted: function (it) { return it.uncommitted; }
+    recent: function (it) { return it.age != null && it.age < 7; }
   };
   var tileDefs = [
     ['all', 'all items'], ['yes', 'worth yes'], ['later', 'worth later'], ['no', 'worth no'],
-    ['recent', 'added in 7 days'], ['stale', 'where not found'], ['uncommitted', 'uncommitted']
+    ['recent', 'added in 7 days']
   ];
   var rank = { yes: 0, later: 1, no: 2 };
   var sorts = {
     triage: function (a, b) {
       var r = (a.worth in rank ? rank[a.worth] : 3) - (b.worth in rank ? rank[b.worth] : 3);
-      return r || a.added.localeCompare(b.added) || a.slug.localeCompare(b.slug);
+      return r || a.addedAt.localeCompare(b.addedAt) || a.slug.localeCompare(b.slug);
     },
-    newest: function (a, b) { return b.added.localeCompare(a.added) || a.slug.localeCompare(b.slug); },
-    oldest: function (a, b) { return a.added.localeCompare(b.added) || a.slug.localeCompare(b.slug); },
+    newest: function (a, b) { return b.addedAt.localeCompare(a.addedAt) || a.slug.localeCompare(b.slug); },
+    oldest: function (a, b) { return a.addedAt.localeCompare(b.addedAt) || a.slug.localeCompare(b.slug); },
     touched: function (a, b) { return b.touched.localeCompare(a.touched) || a.slug.localeCompare(b.slug); }
   };
 
@@ -169,11 +166,6 @@ __BACKLOG_DATA__
       });
       box.appendChild(t);
     });
-    var ages = items.map(function (it) { return it.age; }).filter(function (a) { return a != null; });
-    var oldest = el('div', 'tile static');
-    oldest.appendChild(el('b', null, ages.length ? ago(Math.max.apply(null, ages)).replace(' ago', '') : '–'));
-    oldest.appendChild(el('span', null, 'oldest item'));
-    box.appendChild(oldest);
   }
 
   function renderChips() {
@@ -215,8 +207,8 @@ __BACKLOG_DATA__
         it.where + (it.whereMissing ? ' (not found)' : '')));
       if (it.ticket) meta.appendChild(el('span', null, it.ticket));
       meta.appendChild(el('span', null, it.area));
-      meta.appendChild(el('span', null, 'added ' + ago(it.age)));
-      meta.appendChild(el('span', null, it.touched ? 'touched ' + it.touched : 'never committed'));
+      meta.appendChild(el('span', null, 'added ' + (stamp(it.addedAt) || 'unknown')));
+      meta.appendChild(el('span', null, it.touched ? 'touched ' + stamp(it.touched) : 'never committed'));
       if (it.uncommitted) meta.appendChild(el('span', 'flag', 'uncommitted'));
       main.appendChild(meta);
       head.appendChild(main);
@@ -240,11 +232,18 @@ __BACKLOG_DATA__
     state.sort = e.target.value;
     renderRows();
   });
+  // The overlay's own close command; a plain browser tab has no such bridge.
+  function quit() {
+    if (window.agterm && agterm.request) agterm.request('session.overlay.close');
+    else window.close();
+  }
   document.addEventListener('keydown', function (e) {
+    var typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
     if (e.key === '/' && document.activeElement !== search) { e.preventDefault(); search.focus(); }
     else if (e.key === 'Escape' && document.activeElement === search) {
       search.value = ''; state.query = ''; search.blur(); renderRows();
     }
+    else if (e.key === 'q' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); quit(); }
   });
 
   renderHeader();
