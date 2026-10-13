@@ -58,17 +58,30 @@
   }
   .badge.yes { background: var(--yes); }
   .badge.later { background: var(--later); }
-  .title, pre.body {
+  .title, .body {
     font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 16px; font-weight: 600;
+    font-size: 16px;
   }
   .title { font-weight: 700; }
   .meta { color: var(--dim); font-size: 13px; display: flex; flex-wrap: wrap; gap: 2px 12px; }
   .flag { color: var(--warn); }
-  pre.body {
+  .file { background: none; border: 0; padding: 0; color: var(--accent); cursor: copy; }
+  .file:hover { text-decoration: underline; }
+  .body {
+    font-weight: 300;
     margin: 0; padding: 10px 12px 12px 70px; border-top: 1px solid var(--line);
-    white-space: pre-wrap; overflow-wrap: anywhere;
+    overflow-wrap: anywhere;
   }
+  .body > * { margin: 0 0 10px; }
+  .body > :last-child { margin-bottom: 0; }
+  .body h3 { font-size: inherit; font-weight: 700; }
+  .body strong { font-weight: 700; }
+  .body ul, .body ol { padding-left: 1.6em; }
+  .body code, .body pre { font: inherit; background: var(--bg); border-radius: 4px; }
+  .body code { padding: 0 4px; }
+  .body pre { padding: 8px 10px; white-space: pre-wrap; }
+  .body blockquote { padding-left: 12px; border-left: 3px solid var(--line); color: var(--dim); }
+  .body a { color: var(--accent); }
   .empty { color: var(--dim); padding: 24px 0; text-align: center; }
   [hidden] { display: none; }
 </style>
@@ -110,6 +123,89 @@ __BACKLOG_DATA__
   function days(date) {
     var t = Date.parse(date);
     return isNaN(t) ? null : Math.max(0, Math.floor((now - t) / DAY));
+  }
+  // A page loaded from a file is not a secure context, so the async clipboard API may be
+  // missing; the selection-based copy works there, inside the click that asked for it.
+  function copy(text, done) {
+    var t = el('textarea');
+    t.value = text;
+    t.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(t);
+    t.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (err) {}
+    t.remove();
+    if (ok || !navigator.clipboard) return done(ok);
+    navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+  }
+  // Inline markdown: `code`, **bold**, *italic*, [text](http link). Built from text nodes
+  // only, so nothing in an item body can turn into markup or script.
+  function inline(parent, text) {
+    var re = /`([^`]+)`|\*\*([^*]+)\*\*|\*([^*\s][^*]*)\*|\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g;
+    var last = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+      if (m[1] != null) parent.appendChild(el('code', null, m[1]));
+      else if (m[2] != null) parent.appendChild(el('strong', null, m[2]));
+      else if (m[3] != null) parent.appendChild(el('em', null, m[3]));
+      else { var a = el('a', null, m[4]); a.href = m[5]; parent.appendChild(a); }
+      last = re.lastIndex;
+    }
+    if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
+  }
+  var fenceRe = /^\s*(```|~~~)/, headRe = /^#{1,6}\s+(.*)$/, itemRe = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
+  var tableRe = /^\s*\|/, quoteRe = /^\s*>\s?/;
+  function startsBlock(line) {
+    return fenceRe.test(line) || headRe.test(line) || itemRe.test(line) || tableRe.test(line) || quoteRe.test(line);
+  }
+  // Block markdown: fenced code, headings, lists, quotes, paragraphs. A table stays as
+  // typed, in a code block, where its columns still line up.
+  function markdown(src) {
+    var box = el('div', 'body');
+    var lines = src.split('\n'), i = 0, m, buf, node;
+    while (i < lines.length) {
+      var line = lines[i];
+      if (!line.trim()) { i++; continue; }
+      if ((m = fenceRe.exec(line))) {
+        buf = [];
+        for (i++; i < lines.length && lines[i].trim().indexOf(m[1]) !== 0; i++) buf.push(lines[i]);
+        i++;
+        box.appendChild(el('pre', null, buf.join('\n')));
+      } else if ((m = headRe.exec(line))) {
+        node = el('h3');
+        inline(node, m[1]);
+        box.appendChild(node);
+        i++;
+      } else if (tableRe.test(line)) {
+        buf = [];
+        for (; i < lines.length && tableRe.test(lines[i]); i++) buf.push(lines[i].trim());
+        box.appendChild(el('pre', null, buf.join('\n')));
+      } else if (quoteRe.test(line)) {
+        buf = [];
+        for (; i < lines.length && quoteRe.test(lines[i]); i++) buf.push(lines[i].replace(quoteRe, ''));
+        node = el('blockquote');
+        inline(node, buf.join(' '));
+        box.appendChild(node);
+      } else if ((m = itemRe.exec(line))) {
+        node = el(/\d/.test(m[2]) ? 'ol' : 'ul');
+        while (i < lines.length && (m = itemRe.exec(lines[i]))) {
+          var li = el('li'), text = m[3];
+          li.style.marginLeft = (m[1].length * 0.6) + 'em';
+          // An indented line under an item continues that item.
+          for (i++; i < lines.length && /^\s+\S/.test(lines[i]) && !startsBlock(lines[i]); i++) text += ' ' + lines[i].trim();
+          inline(li, text);
+          node.appendChild(li);
+        }
+        box.appendChild(node);
+      } else {
+        buf = [];
+        for (; i < lines.length && lines[i].trim() && !startsBlock(lines[i]); i++) buf.push(lines[i].trim());
+        node = el('p');
+        inline(node, buf.join(' '));
+        box.appendChild(node);
+      }
+    }
+    return box;
   }
   // YYYY-MM-DD[ HH:MM] shown as YY-MM-DD[ HH:MM]; anything else is shown as written.
   function stamp(s) { return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(2) : s; }
@@ -202,17 +298,30 @@ __BACKLOG_DATA__
       var main = el('div');
       main.appendChild(el('div', 'title', it.title));
       var meta = el('div', 'meta');
-      meta.appendChild(el('span', 'mono', it.slug));
+      var name = it.slug + '.md';
+      var file = el('button', 'file mono', name);
+      file.type = 'button';
+      file.title = 'Copy ' + it.file;
+      file.addEventListener('click', function (e) {
+        e.stopPropagation();
+        copy(it.file, function (ok) {
+          file.textContent = ok ? 'copied ' + it.file : 'copy failed';
+          setTimeout(function () { file.textContent = name; }, 1200);
+        });
+      });
+      meta.appendChild(file);
       if (it.where) meta.appendChild(el('span', 'mono' + (it.whereMissing ? ' flag' : ''),
         it.where + (it.whereMissing ? ' (not found)' : '')));
       if (it.ticket) meta.appendChild(el('span', null, it.ticket));
       meta.appendChild(el('span', null, it.area));
-      meta.appendChild(el('span', null, 'added ' + (stamp(it.addedAt) || 'unknown')));
-      meta.appendChild(el('span', null, it.touched ? 'touched ' + stamp(it.touched) : 'never committed'));
-      if (it.uncommitted) meta.appendChild(el('span', 'flag', 'uncommitted'));
       main.appendChild(meta);
+      var dates = el('div', 'meta');
+      dates.appendChild(el('span', null, 'added ' + (stamp(it.addedAt) || 'unknown')));
+      dates.appendChild(el('span', null, it.touched ? 'touched ' + stamp(it.touched) : 'never committed'));
+      if (it.uncommitted) dates.appendChild(el('span', 'flag', 'uncommitted'));
+      main.appendChild(dates);
       head.appendChild(main);
-      var body = el('pre', 'body', it.body.replace(/^\n+|\s+$/g, ''));
+      var body = markdown(it.body);
       body.hidden = !open[it.slug];
       head.addEventListener('click', function () {
         open[it.slug] = !open[it.slug];

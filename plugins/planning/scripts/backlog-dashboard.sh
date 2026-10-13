@@ -76,11 +76,11 @@ for f in docs/backlog/*.md; do
   added_at=$added
   case "$created" in "$added "*) added_at=$created ;; esac
 
-  jq -n --arg slug "$slug" --arg title "${title:-$slug}" --arg worth "$(fm worth "$f")" \
+  jq -n --arg slug "$slug" --arg file "$f" --arg title "${title:-$slug}" --arg worth "$(fm worth "$f")" \
     --arg where "$where" --arg ticket "$(fm ticket "$f")" --arg added "$added" --arg addedAt "$added_at" \
     --arg body "$body" --arg area "$area" --arg touched "$touched" \
     --argjson whereMissing "$missing" --argjson uncommitted "$uncommitted" \
-    '{slug: $slug, title: $title, worth: $worth, where: $where, ticket: $ticket, added: $added,
+    '{slug: $slug, file: $file, title: $title, worth: $worth, where: $where, ticket: $ticket, added: $added,
       addedAt: $addedAt, body: $body, area: $area, touched: $touched, whereMissing: $whereMissing,
       uncommitted: $uncommitted}' \
     >> "$items"

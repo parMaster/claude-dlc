@@ -4,6 +4,18 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 3.3.0 - 2026-10-13
+
+Backlog dashboard rows:
+
+- A row shows the item's file name (`<slug>.md`), not the bare slug. Click it
+  to copy the path from the repo root, such as `docs/backlog/<slug>.md`.
+- The dates moved to their own line under the file, `where` and area.
+- Item bodies use weight 300.
+- Item bodies render as markdown: headings, lists, quotes, fenced code, inline
+  code, bold, italic and links. A table is shown as typed, in a code block. The
+  renderer is a small script inside the page, so the page still loads nothing.
+
 ## planning 3.2.0 - 2026-10-13
 
 Backlog dashboard, from daily use:

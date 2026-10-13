@@ -897,6 +897,7 @@ assert_eq "page keeps one data and one code script tag" "2" "$(grep -c '</script
 assert_eq "item carries its frontmatter and title" \
   '["a good anchor","yes","src/pkg/deep/code.go:2","PROJ-7","2026-01-05"]' \
   "$(dash_item "$DASH_OUT" good-where '[.title, .worth, .where, .ticket, .added]')"
+assert_eq "item carries its path from the repo root" '"docs/backlog/good-where.md"' "$(dash_item "$DASH_OUT" good-where '.file')"
 assert_eq "body with markup round-trips" 'Body with </script><b>bold</b> & an ampersand.' \
   "$(sed -n '/id="backlog-data"/{n;p;}' "$DASH_OUT" | jq -r '.items[] | select(.slug == "good-where") | .body' | grep Body)"
 assert_eq "good where: area is two segments, found, committed" '["src/pkg",false,false]' \
