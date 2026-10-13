@@ -236,61 +236,6 @@ result=$(run_hook "$BLOCK_COAUTHOR_SCRIPT" 'grep -rn "Claude-Session" .')
 assert_eq "allows unrelated commands merely mentioning Claude-Session" "" "$result"
 
 # ---------------------------------------------------------------------------
-# global-rules/block-inline-edit.sh
-# ---------------------------------------------------------------------------
-
-BLOCK_INLINE_EDIT_SCRIPT="${REPO_ROOT}/plugins/global-rules/scripts/block-inline-edit.sh"
-
-echo "global-rules/block-inline-edit.sh"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 - <<'EOF'
-p='internal/handler/subsidiaries_test.go'
-s=open(p).read()
-s=s.replace('a','b')
-open(p,'w').write(s)
-EOF
-go test ./...")
-assert_contains "blocks python heredoc that writes a file" '"permissionDecision": "deny"' "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 -c \"import pathlib; pathlib.Path('x.go').write_text('y')\"")
-assert_contains "blocks python -c with write_text" '"permissionDecision": "deny"' "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "node -e \"require('fs').writeFileSync('a.js','x')\"")
-assert_contains "blocks node -e with writeFileSync" '"permissionDecision": "deny"' "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "sed -i '' 's/foo/bar/' main.go")
-assert_contains "blocks sed -i" '"permissionDecision": "deny"' "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "sed -Ei 's/foo/bar/' main.go")
-assert_contains "blocks sed with combined -Ei flags" '"permissionDecision": "deny"' "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "gofmt -l . && sed --in-place 's/a/b/' x")
-assert_contains "blocks sed --in-place chained after &&" '"permissionDecision": "deny"' "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "perl -pi -e 's/foo/bar/' main.go")
-assert_contains "blocks perl -pi on a code file" '"permissionDecision": "deny"' "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "perl -pi -e 's/- \[ \]/- [x]/ if /^### Task 2:/.../^### Task/' docs/plans/2026-09-25-x.md")
-assert_eq "allows perl -pi checkbox ticking on a plan" "" "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 -c 'import json,sys; print(json.load(sys.stdin)[\"a\"])' < f.json")
-assert_eq "allows python -c that only reads" "" "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 - <<'EOF'
-print(open('f.txt').read())
-EOF")
-assert_eq "allows python heredoc that only reads" "" "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "sed -n '1,20p' main.go")
-assert_eq "allows sed without -i" "" "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "perl -ne 'print if /x/' f")
-assert_eq "allows perl without -i" "" "$result"
-
-result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "go test ./... | grep -v '^{'")
-assert_eq "allows unrelated commands" "" "$result"
-
-# ---------------------------------------------------------------------------
 # global-rules/block-comment-refs.sh
 # ---------------------------------------------------------------------------
 
@@ -1063,6 +1008,61 @@ assert_eq "silent in bypassPermissions mode" "" "$(chained_in_mode bypassPermiss
 assert_eq "silent in auto mode" "" "$(chained_in_mode auto 'a && b')"
 assert_contains "active in default mode" "$DENY" "$(chained_in_mode default 'a && b')"
 assert_contains "active in acceptEdits mode" "$DENY" "$(chained_in_mode acceptEdits 'a && b')"
+
+# ---------------------------------------------------------------------------
+# strict-bash/block-inline-edit.sh
+# ---------------------------------------------------------------------------
+
+BLOCK_INLINE_EDIT_SCRIPT="${REPO_ROOT}/plugins/strict-bash/scripts/block-inline-edit.sh"
+
+echo "strict-bash/block-inline-edit.sh"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 - <<'EOF'
+p='internal/handler/subsidiaries_test.go'
+s=open(p).read()
+s=s.replace('a','b')
+open(p,'w').write(s)
+EOF
+go test ./...")
+assert_contains "blocks python heredoc that writes a file" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 -c \"import pathlib; pathlib.Path('x.go').write_text('y')\"")
+assert_contains "blocks python -c with write_text" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "node -e \"require('fs').writeFileSync('a.js','x')\"")
+assert_contains "blocks node -e with writeFileSync" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "sed -i '' 's/foo/bar/' main.go")
+assert_contains "blocks sed -i" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "sed -Ei 's/foo/bar/' main.go")
+assert_contains "blocks sed with combined -Ei flags" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "gofmt -l . && sed --in-place 's/a/b/' x")
+assert_contains "blocks sed --in-place chained after &&" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "perl -pi -e 's/foo/bar/' main.go")
+assert_contains "blocks perl -pi on a code file" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "perl -pi -e 's/- \[ \]/- [x]/ if /^### Task 2:/.../^### Task/' docs/plans/2026-09-25-x.md")
+assert_eq "allows perl -pi checkbox ticking on a plan" "" "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 -c 'import json,sys; print(json.load(sys.stdin)[\"a\"])' < f.json")
+assert_eq "allows python -c that only reads" "" "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 - <<'EOF'
+print(open('f.txt').read())
+EOF")
+assert_eq "allows python heredoc that only reads" "" "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "sed -n '1,20p' main.go")
+assert_eq "allows sed without -i" "" "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "perl -ne 'print if /x/' f")
+assert_eq "allows perl without -i" "" "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "go test ./... | grep -v '^{'")
+assert_eq "allows unrelated commands" "" "$result"
 
 # ---------------------------------------------------------------------------
 # global-rules/style-reminder.sh

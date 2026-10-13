@@ -196,7 +196,6 @@ The rules cover plan-first workflow, git hygiene, tests and lint before commit, 
 |------|--------|
 | [`block-root-find`](plugins/global-rules/scripts/block-root-find.sh) | Denies `find` rooted at `/` or at a home dir (`~`, `$HOME`, `/Users/<name>`). Scope the search to a project directory. |
 | [`block-coauthor`](plugins/global-rules/scripts/block-coauthor.sh) | Denies `git commit` / `gh pr create` / `gh pr edit` with a `Co-Authored-By` line or a claude.ai session link (`Claude-Session:` trailer). |
-| [`block-inline-edit`](plugins/global-rules/scripts/block-inline-edit.sh) | Denies file edits through an inline python/node/ruby script or `sed -i` / `perl -i`, and points to the Edit tool instead. `perl -i` on `docs/plans/` is allowed (checkbox ticking). |
 | [`block-comment-refs`](plugins/global-rules/scripts/block-comment-refs.sh) | Denies Edit/Write when a *new* comment line in a code file points somewhere instead of explaining: a ticket ID, a Jira/Confluence/PR link, a commit SHA, a slice marker, or a path to a `docs/plans`/`docs/specs` doc. Standard names (UTF-8, SHA-256, RFC-7231…), Markdown and existing comments pass. |
 | [`style-reminder`](plugins/global-rules/scripts/style-reminder.sh) | Adds a short reminder of the reply rules to every prompt: answer first, one idea per sentence, no noun stacks, keep the small words. Rules loaded at session start fade as the context grows; this keeps them near the end. About 60 tokens a prompt. To check whether it helps, run `python3 tools/readability.py`: it compares sentence length and complaints about walls of text before and after the hook, grouped by context size. Past results are in [`tools/readability.md`](tools/readability.md). |
 
@@ -204,9 +203,10 @@ The rules cover plan-first workflow, git hygiene, tests and lint before commit, 
 
 ### [strict-bash](plugins/strict-bash)
 
-For machines where auto mode is off and every Bash call that isn't on the allowlist asks for permission. Claude often glues several commands into one call, and no allow rule can match that. This plugin makes Claude send one command per call, so your allow rules match.
+Keeps Claude's Bash calls small and readable. It has two hooks:
 
-Install it only on the machines that need it. Machines with auto mode on don't need it.
+- **One command per call.** With auto mode off, every Bash call that isn't on the allowlist asks for permission. Claude often glues several commands into one call, and no allow rule can match that. `block-chained` makes Claude send one command per call, so your allow rules match. It does nothing in auto mode.
+- **Edits as diffs.** Claude sometimes edits files through a python heredoc or `sed -i`. To approve that, you have to decode a script to find the one line it changes. `block-inline-edit` sends Claude to the Edit tool instead, so you see a diff. It runs in every mode, auto mode too, so the transcript shows readable diffs.
 
 ```
 /plugin install strict-bash@parmaster-claude-dlc
@@ -217,9 +217,10 @@ Run `claude --init-only` once after install. The setup hook adds `head`, `tail`,
 | Hook | Effect |
 |------|--------|
 | [`block-chained`](plugins/strict-bash/scripts/block-chained.sh) | Denies a Bash call that chains commands: `&&`, `\|\|`, `;`, a background `&`, a newline between commands, `$(...)`, backticks, `<(...)`, loops and `if`/`case` blocks, `( ... )` / `{ ... }` groups. The denial tells Claude to run each command as its own call. |
+| [`block-inline-edit`](plugins/strict-bash/scripts/block-inline-edit.sh) | Denies file edits through an inline python/node/ruby script or `sed -i` / `perl -i`, and points to the Edit tool instead. `perl -i` on `docs/plans/` is allowed (checkbox ticking). |
 | [`session-start`](plugins/strict-bash/scripts/session-start.sh) | Tells Claude the one-command-per-call rule when a session starts, resumes or is compacted, so it doesn't learn it from a denial, and to write paths out literally: a command with `$VAR` in it, like `$TMPDIR/x.log`, always prompts. Also sets `NO_COLOR=1` for Bash commands only (your terminal and Claude's own UI keep their colors), so Claude doesn't pipe output through `sed` to strip color codes. `sed` stays off the allowlist because it can write files. |
 
-Pipes stay allowed. Claude Code checks each side of a pipe against your allow rules, so `make test 2>&1 | tail -5` runs without a prompt once `make test` is allowed. Operators inside quotes or heredoc bodies are just text and pass. So does the `"$(cat <<'EOF' ... EOF)"` form Claude uses for multi-line commit messages. The hook does nothing when the session is in `bypassPermissions` or auto mode.
+Pipes stay allowed. Claude Code checks each side of a pipe against your allow rules, so `make test 2>&1 | tail -5` runs without a prompt once `make test` is allowed. Operators inside quotes or heredoc bodies are just text and pass. So does the `"$(cat <<'EOF' ... EOF)"` form Claude uses for multi-line commit messages. `block-chained` does nothing when the session is in `bypassPermissions` or auto mode.
 
 ---
 

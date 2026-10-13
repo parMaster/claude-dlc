@@ -4,6 +4,22 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## strict-bash 1.2.0 - 2026-10-13
+
+New hook `block-inline-edit`, moved here from `global-rules`. It denies file
+edits through an inline python/node/ruby script or `sed -i` / `perl -i`, and
+points Claude to the Edit tool, so the change shows as a readable diff. It runs
+in every permission mode, auto mode included. `perl -i` on `docs/plans/` is
+still allowed for ticking plan checkboxes. The plugin description now covers
+both hooks.
+
+## global-rules 2.0.0 - 2026-10-13
+
+Breaking: the `block-inline-edit` hook moved to `strict-bash`, so teammates
+can get it without the personal rules in this plugin. Install `strict-bash`
+to keep it. Update both plugins together. Otherwise the hook is missing, or it
+runs twice for a while, which is harmless.
+
 ## global-rules 1.11.2 - 2026-10-12
 
 `block-root-find` now also denies a `find` rooted at a home dir: `~`,

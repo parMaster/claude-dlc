@@ -1,7 +1,7 @@
 {
   "name": "strict-bash",
-  "description": "One command per Bash call — denies chained commands so each one can match an allow rule; for machines where auto mode is off",
-  "version": "1.1.1",
+  "description": "Keeps Claude's Bash calls small and readable — one command per call so allow rules match, and file edits through the Edit tool instead of inline scripts or sed -i",
+  "version": "1.2.0",
   "author": {
     "name": "parmaster"
   },

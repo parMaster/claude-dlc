@@ -42,7 +42,7 @@
     {
       "name": "strict-bash",
       "source": "./plugins/strict-bash",
-      "description": "One command per Bash call — denies chained commands so each one can match an allow rule; for machines where auto mode is off"
+      "description": "Keeps Claude's Bash calls small and readable — one command per call so allow rules match, and file edits through the Edit tool instead of inline scripts or sed -i"
     },
     {
       "name": "no-worktrees",
