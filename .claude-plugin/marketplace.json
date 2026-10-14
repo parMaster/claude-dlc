@@ -42,7 +42,7 @@
     {
       "name": "strict-bash",
       "source": "./plugins/strict-bash",
-      "description": "Keeps Claude's Bash calls small and readable — one command per call so allow rules match, and file edits through the Edit tool instead of inline scripts or sed -i"
+      "description": "Keeps Claude's Bash calls small and readable — one command per call and quoted paths so allow rules match, and file edits through the Edit tool instead of inline scripts or sed -i"
     },
     {
       "name": "no-worktrees",

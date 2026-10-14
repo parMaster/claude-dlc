@@ -204,9 +204,10 @@ The rules cover plan-first workflow, git hygiene, tests and lint before commit, 
 
 ### [strict-bash](plugins/strict-bash)
 
-Keeps Claude's Bash calls small and readable. It has two hooks:
+Keeps Claude's Bash calls small and readable. It does three things:
 
 - **One command per call.** With auto mode off, every Bash call that isn't on the allowlist asks for permission. Claude often glues several commands into one call, and no allow rule can match that. `block-chained` makes Claude send one command per call, so your allow rules match. It does nothing in auto mode.
+- **Quoted paths.** `block-escaped-space` makes Claude put the path in double quotes to avoid asking permissions to run backslash-escaped space, like `Application\ Support`.
 - **Edits as diffs.** Claude sometimes edits files through a python heredoc or `sed -i`. To approve that, you have to decode a script to find the one line it changes. `block-inline-edit` sends Claude to the Edit tool instead, so you see a diff. It runs in every mode, auto mode too, so the transcript shows readable diffs.
 
 ```
@@ -219,7 +220,8 @@ Run `claude --init-only` once after install. The setup hook adds `head`, `tail`,
 |------|--------|
 | [`block-chained`](plugins/strict-bash/scripts/block-chained.sh) | Denies a Bash call that chains commands: `&&`, `\|\|`, `;`, a background `&`, a newline between commands, `$(...)`, backticks, `<(...)`, loops and `if`/`case` blocks, `( ... )` / `{ ... }` groups. The denial tells Claude to run each command as its own call. |
 | [`block-inline-edit`](plugins/strict-bash/scripts/block-inline-edit.sh) | Denies file edits through an inline python/node/ruby script or `sed -i` / `perl -i`, and points to the Edit tool instead. `perl -i` on `docs/plans/` is allowed (checkbox ticking). |
-| [`session-start`](plugins/strict-bash/scripts/session-start.sh) | Tells Claude the one-command-per-call rule when a session starts, resumes or is compacted, so it doesn't learn it from a denial, and to write paths out literally: a command with `$VAR` in it, like `$TMPDIR/x.log`, always prompts. Also sets `NO_COLOR=1` for Bash commands only (your terminal and Claude's own UI keep their colors), so Claude doesn't pipe output through `sed` to strip color codes. `sed` stays off the allowlist because it can write files. |
+| [`block-escaped-space`](plugins/strict-bash/scripts/block-escaped-space.sh) | Denies a Bash call with a backslash-escaped space or tab outside quotes, and tells Claude to double-quote the path. Backslashes inside quotes pass. |
+| [`session-start`](plugins/strict-bash/scripts/session-start.sh) | Tells Claude the one-command-per-call rule when a session starts, resumes or is compacted, so it doesn't learn it from a denial, and to write paths out literally: a command with `$VAR` in it, like `$TMPDIR/x.log`, always prompts. It also says to double-quote a path with spaces. Also sets `NO_COLOR=1` for Bash commands only (your terminal and Claude's own UI keep their colors), so Claude doesn't pipe output through `sed` to strip color codes. `sed` stays off the allowlist because it can write files. |
 
 Pipes stay allowed. Claude Code checks each side of a pipe against your allow rules, so `make test 2>&1 | tail -5` runs without a prompt once `make test` is allowed. Operators inside quotes or heredoc bodies are just text and pass. So does the `"$(cat <<'EOF' ... EOF)"` form Claude uses for multi-line commit messages. `block-chained` does nothing when the session is in `bypassPermissions` or auto mode.
 

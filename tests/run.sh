@@ -1070,6 +1070,46 @@ result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "go test ./... | grep -v '^{'")
 assert_eq "allows unrelated commands" "" "$result"
 
 # ---------------------------------------------------------------------------
+# strict-bash/block-escaped-space.sh
+# ---------------------------------------------------------------------------
+
+BLOCK_ESCAPED_SPACE_SCRIPT="${REPO_ROOT}/plugins/strict-bash/scripts/block-escaped-space.sh"
+
+echo "strict-bash/block-escaped-space.sh"
+
+escaped() { run_hook "$BLOCK_ESCAPED_SPACE_SCRIPT" "$1"; }
+escaped_in_mode() {
+  jq -n --arg m "$1" --arg c "$2" '{permission_mode:$m, tool_input:{command:$c}}' | bash "$BLOCK_ESCAPED_SPACE_SCRIPT"
+}
+
+result=$(escaped 'agtermctl tree --json --socket /Users/x/Library/Application\ Support/agterm/agterm.sock 2>/dev/null | grep -n "wiki-"')
+assert_contains "denies a backslash-escaped space in a path" "$DENY" "$result"
+assert_contains "deny reason says to use double quotes" "double quotes" "$result"
+
+assert_contains "denies a backslash-escaped tab" "$DENY" "$(escaped $'ls a\\\tb')"
+assert_contains "denies an escaped space after a quoted word" "$DENY" "$(escaped 'cp "x" my\ file')"
+
+for cmd in \
+  'agtermctl tree --socket "/Users/x/Library/Application Support/agterm/agterm.sock"' \
+  "ls '/Users/x/Library/Application Support'" \
+  "printf 'a\\ b'" \
+  'echo "a\ b"' \
+  'echo "say \"hi\" a\ b"' \
+  'grep -n "a\|b" f.txt' \
+  "printf 'x\\n'" \
+  'echo a\\ b' \
+  'echo a\\' \
+  'ls'; do
+  assert_eq "allows: $cmd" "" "$(escaped "$cmd")"
+done
+
+assert_contains "denies after an escaped quote outside quotes" "$DENY" "$(escaped 'echo \" a\ b')"
+
+assert_eq "silent in bypassPermissions mode" "" "$(escaped_in_mode bypassPermissions 'ls a\ b')"
+assert_eq "silent in auto mode" "" "$(escaped_in_mode auto 'ls a\ b')"
+assert_contains "active in default mode" "$DENY" "$(escaped_in_mode default 'ls a\ b')"
+
+# ---------------------------------------------------------------------------
 # global-rules/style-reminder.sh
 # ---------------------------------------------------------------------------
 
@@ -1105,6 +1145,7 @@ echo 'export FOO=bar' > "$ENV_FILE"
 result=$(echo '{"hook_event_name":"SessionStart","source":"startup"}' | CLAUDE_ENV_FILE="$ENV_FILE" bash "$SESSION_START_SCRIPT")
 assert_contains "reminds Claude to run one command per call" "its own Bash call" "$result"
 assert_contains "reminds Claude to write paths literally" 'instead of using variables like $TMPDIR' "$result"
+assert_contains "reminds Claude to quote paths with spaces" "Put a path with spaces in double quotes" "$result"
 assert_eq "appends NO_COLOR and keeps existing env lines" $'export FOO=bar\nexport NO_COLOR=1' "$(cat "$ENV_FILE")"
 rm -f "$ENV_FILE"
 

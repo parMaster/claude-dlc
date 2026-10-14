@@ -4,6 +4,16 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## strict-bash 1.3.0 - 2026-10-14
+
+New hook `block-escaped-space`. Claude Code asks for permission on any Bash
+command with a backslash-escaped space, like `Application\ Support`, even when
+an allow rule matches it. The hook denies such a call and tells Claude to put
+the path in double quotes, so the retry runs without a prompt. Backslashes
+inside quotes pass. Like `block-chained`, it does nothing in
+`bypassPermissions` or auto mode. The session-start reminder also says to
+double-quote paths with spaces.
+
 ## brainstorm 1.1.0 - 2026-10-14
 
 - `converge` — new manual skill, the reverse of `brainstorm`. The agent states
