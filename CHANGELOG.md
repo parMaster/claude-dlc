@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## brainstorm 1.1.0 - 2026-10-14
+
+- `converge` — new manual skill, the reverse of `brainstorm`. The agent states
+  the task in one sentence, then answers each user question in one sentence
+  and stops. It offers no menus and does no work until the user says go.
+
 ## planning 3.4.0 - 2026-10-14
 
 Backlog dashboard:

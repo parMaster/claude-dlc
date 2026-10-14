@@ -97,7 +97,7 @@ Without the `agterm` plugin, `oversight` prints the iteration prompt for you to 
 
 ### [brainstorm](plugins/brainstorm)
 
-Collaborative design dialogue before implementation.
+Dialogue skills: one opens up an idea, the other narrows down an explanation.
 
 ```
 /plugin install brainstorm@parmaster-claude-dlc
@@ -106,6 +106,7 @@ Collaborative design dialogue before implementation.
 | Skill | What it does |
 |-------|--------------|
 | [`brainstorm`](plugins/brainstorm/skills/brainstorm/SKILL.md) | Turns ideas into designs through one-at-a-time questions and incremental validation. |
+| [`converge`](plugins/brainstorm/skills/converge/SKILL.md) | The reverse of `brainstorm`: run it when an explanation gets too long to follow. The agent says what the task is in one sentence. Then you ask questions, and it answers each in one sentence. It does no work until you say go. |
 
 ---
 

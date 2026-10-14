@@ -17,7 +17,7 @@
     {
       "name": "brainstorm",
       "source": "./plugins/brainstorm",
-      "description": "Collaborative design dialogue — turn ideas into designs through incremental questions and approach exploration"
+      "description": "Dialogue skills — brainstorm turns ideas into designs through incremental questions; converge breaks a long explanation into one-sentence answers"
     },
     {
       "name": "style",
