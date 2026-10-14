@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 3.4.0 - 2026-10-14
+
+Backlog dashboard:
+
+- `f` focuses the search box, like `/`. It does nothing while you type in it.
+- Search matches the file name as the row shows it. Before, `<slug>.md`
+  found nothing, because the search held the slug without `.md`.
+
 ## planning 3.3.0 - 2026-10-13
 
 Backlog dashboard rows:

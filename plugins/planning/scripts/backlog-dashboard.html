@@ -91,7 +91,7 @@
 <header id="header"></header>
 <div class="tiles" id="tiles"></div>
 <div class="controls">
-  <input id="search" type="search" placeholder="Search title, slug, where, body ( / ) · q quits" autocomplete="off">
+  <input id="search" type="search" placeholder="Search title, slug, where, body ( / or f ) · q quits" autocomplete="off">
   <select id="sort" aria-label="Sort">
     <option value="newest">newest first</option>
     <option value="oldest">oldest first</option>
@@ -211,7 +211,8 @@ __BACKLOG_DATA__
   function stamp(s) { return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(2) : s; }
   items.forEach(function (it) {
     it.age = days(it.added);
-    it.haystack = [it.title, it.slug, it.where, it.ticket, it.body].join('\n').toLowerCase();
+    // The row shows the file name, so a search for it has to match the ".md" too.
+    it.haystack = [it.title, it.slug + '.md', it.where, it.ticket, it.body].join('\n').toLowerCase();
   });
 
   var filters = {
@@ -348,11 +349,13 @@ __BACKLOG_DATA__
   }
   document.addEventListener('keydown', function (e) {
     var typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
+    var plain = !typing && !e.metaKey && !e.ctrlKey && !e.altKey;
     if (e.key === '/' && document.activeElement !== search) { e.preventDefault(); search.focus(); }
+    else if (e.key === 'f' && plain) { e.preventDefault(); search.focus(); }
     else if (e.key === 'Escape' && document.activeElement === search) {
       search.value = ''; state.query = ''; search.blur(); renderRows();
     }
-    else if (e.key === 'q' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); quit(); }
+    else if (e.key === 'q' && plain) { e.preventDefault(); quit(); }
   });
 
   renderHeader();
