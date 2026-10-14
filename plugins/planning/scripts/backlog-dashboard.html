@@ -51,6 +51,7 @@
   }
   .chip.on { color: var(--accent); border-color: var(--accent); }
   .row { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; }
+  .row.cur { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
   .head { display: flex; gap: 12px; padding: 10px 12px; cursor: pointer; align-items: flex-start; }
   .badge {
     flex: none; width: 46px; text-align: center; border-radius: 4px; padding: 1px 0; margin-top: 4px;
@@ -91,7 +92,7 @@
 <header id="header"></header>
 <div class="tiles" id="tiles"></div>
 <div class="controls">
-  <input id="search" type="search" placeholder="Search title, slug, where, body ( / or f ) · q quits" autocomplete="off">
+  <input id="search" type="search" placeholder="Search title, slug, where, body ( / or f ) · ↑↓ move · Enter opens · q quits" autocomplete="off">
   <select id="sort" aria-label="Sort">
     <option value="newest">newest first</option>
     <option value="oldest">oldest first</option>
@@ -113,6 +114,9 @@ __BACKLOG_DATA__
   var now = Date.now();
   var state = { filter: 'all', area: null, query: '', sort: 'newest' };
   var open = {};
+  // The cursor is a slug, not an index, so it stays on the same item across filter and sort.
+  var cursor = null;
+  var rowEls = [];
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -284,6 +288,7 @@ __BACKLOG_DATA__
   function renderRows() {
     var box = document.getElementById('rows');
     box.textContent = '';
+    rowEls = [];
     var q = state.query.trim().toLowerCase();
     var shown = items.filter(filters[state.filter]).filter(function (it) {
       return (!state.area || it.area === state.area) && (!q || it.haystack.indexOf(q) !== -1);
@@ -324,14 +329,35 @@ __BACKLOG_DATA__
       head.appendChild(main);
       var body = markdown(it.body);
       body.hidden = !open[it.slug];
-      head.addEventListener('click', function () {
+      row.toggle = function () {
         open[it.slug] = !open[it.slug];
         body.hidden = !open[it.slug];
+      };
+      row.slug = it.slug;
+      head.addEventListener('click', function () {
+        row.toggle();
+        setCursor(rowEls.indexOf(row), false);
       });
       row.appendChild(head);
       row.appendChild(body);
       box.appendChild(row);
+      rowEls.push(row);
     });
+    var at = rowEls.map(function (r) { return r.slug; }).indexOf(cursor);
+    if (cursor !== null) setCursor(at === -1 ? 0 : at, false);
+  }
+
+  function setCursor(i, scroll) {
+    if (!rowEls.length) return;
+    i = Math.max(0, Math.min(rowEls.length - 1, i));
+    rowEls.forEach(function (r, j) { r.classList.toggle('cur', j === i); });
+    cursor = rowEls[i].slug;
+    if (scroll) rowEls[i].scrollIntoView({ block: 'nearest' });
+  }
+  function moveCursor(step) {
+    var at = rowEls.map(function (r) { return r.slug; }).indexOf(cursor);
+    // The first key press only shows the cursor, on the top item.
+    setCursor(at === -1 ? 0 : at + step, true);
   }
 
   function render() { renderTiles(); renderChips(); renderRows(); }
@@ -348,9 +374,25 @@ __BACKLOG_DATA__
     else window.close();
   }
   document.addEventListener('keydown', function (e) {
-    var typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
+    var active = document.activeElement;
+    var typing = /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName);
     var plain = !typing && !e.metaKey && !e.ctrlKey && !e.altKey;
-    if (e.key === '/' && document.activeElement !== search) { e.preventDefault(); search.focus(); }
+    var arrow = e.key === 'ArrowDown' || e.key === 'ArrowUp';
+    // Arrows leave the search box for the list; a select keeps its own arrows.
+    if (arrow && active.tagName !== 'SELECT' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      e.preventDefault();
+      // A tile or chip clicked earlier keeps focus, and Enter would click it again.
+      if (active !== document.body) active.blur();
+      moveCursor(e.key === 'ArrowDown' ? 1 : -1);
+    }
+    else if (e.key === 'Enter' && active === search) {
+      e.preventDefault(); search.blur(); if (cursor === null) moveCursor(0);
+    }
+    else if (e.key === 'Enter' && plain && active.tagName !== 'BUTTON') {
+      var row = rowEls.filter(function (r) { return r.slug === cursor; })[0];
+      if (row) { e.preventDefault(); row.toggle(); row.scrollIntoView({ block: 'nearest' }); }
+    }
+    else if (e.key === '/' && active !== search) { e.preventDefault(); search.focus(); }
     else if (e.key === 'f' && plain) { e.preventDefault(); search.focus(); }
     else if (e.key === 'Escape' && document.activeElement === search) {
       search.value = ''; state.query = ''; search.blur(); renderRows();

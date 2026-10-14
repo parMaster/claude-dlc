@@ -10,6 +10,14 @@ Entries sorted newest first.
   the task in one sentence, then answers each user question in one sentence
   and stops. It offers no menus and does no work until the user says go.
 
+## planning 3.5.0 - 2026-10-14
+
+Backlog dashboard:
+
+- `↑`/`↓` move a cursor through the items, and `Enter` opens or closes the
+  item under it, so the page works without a mouse. From the search box,
+  `↓` or `Enter` jumps into the list. A click moves the cursor too.
+
 ## planning 3.4.0 - 2026-10-14
 
 Backlog dashboard:
