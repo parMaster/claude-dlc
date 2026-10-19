@@ -109,7 +109,7 @@ assert_not_contains "no separator without segments" "│" "$result"
 
 result=$(render '{"cwd":"/tmp","model":{"display_name":"Opus 5.5"},"rate_limits":{"five_hour":{"used_percentage":33},"seven_day":{"used_percentage":53}}}')
 assert_contains "separates segments with a pipe" "│" "$result"
-assert_contains "labels the usage windows" "5h 33% · 7d 53%" "$result"
+assert_contains "shows weekly usage in parentheses" "33% (53%)" "$result"
 
 result=$(render '{"cwd":"/tmp","model":{"display_name":"Opus 5.5 (1M context)"}}')
 assert_contains "keeps the model name" "Opus 5.5" "$result"

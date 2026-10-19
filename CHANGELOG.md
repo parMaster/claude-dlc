@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## statusline 1.2.1 - 2026-10-19
+
+The usage pair drops its labels and shows the weekly rate in parentheses. The
+model name loses its leading `│` and sits after a plain gap:
+`Opus 5.5 │ ctx 5% │ cache 5m │ 33% (53%) ↺3:50pm`.
+
 ## statusline 1.2.0 - 2026-10-19
 
 A dim `│` now separates the segments after git, so they no longer blur
