@@ -4,6 +4,11 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## statusline 1.1.1 - 2026-10-19
+
+The model name drops the ` (1M context)` suffix, so `Opus 5.5 (1M context)`
+shows as `Opus 5.5`. The `ctx:` segment already reports the context window.
+
 ## statusline 1.1.0 - 2026-10-19
 
 The status line shows how many minutes are left before the prompt cache goes

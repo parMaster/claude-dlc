@@ -106,6 +106,10 @@ assert_contains "shows cold after the cache expires" "cache:cold" "$result"
 result=$(render '{"cwd":"/tmp"}')
 assert_not_contains "hides cache segment without prompt_cache" "cache:" "$result"
 
+result=$(render '{"cwd":"/tmp","model":{"display_name":"Opus 5.5 (1M context)"}}')
+assert_contains "keeps the model name" "Opus 5.5" "$result"
+assert_not_contains "drops the context size suffix" "(1M context)" "$result"
+
 # ---------------------------------------------------------------------------
 # global-rules/setup.sh
 # ---------------------------------------------------------------------------

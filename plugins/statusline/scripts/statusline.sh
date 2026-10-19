@@ -4,7 +4,8 @@
 input=$(cat)
 
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd')
-model=$(echo "$input" | jq -r '.model.display_name // ""')
+# Drop the " (1M context)" suffix; ctx:% already covers the context window
+model=$(echo "$input" | jq -r '.model.display_name // "" | sub(" \\([^)]* context\\)$"; "")')
 used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 session_pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 week_pct=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
