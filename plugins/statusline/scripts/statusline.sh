@@ -41,8 +41,8 @@ fi
 sep() { printf ' \033[2m│\033[0m '; }
 
 if [ -n "$model" ]; then
-  sep
-  printf '\033[2m%s\033[0m' "$model"
+#  sep
+  printf '   \033[2m%s\033[0m' "$model"
 fi
 
 if [ -n "$used_pct" ]; then
@@ -77,9 +77,9 @@ if [ -n "$session_pct" ] && [ -n "$week_pct" ]; then
   fi
   sep
   if [ -n "$reset_time" ]; then
-    printf '\033[2m5h %.0f%% · 7d %.0f%% ↺%s\033[0m' "$session_pct" "$week_pct" "$reset_time"
+    printf '\033[2m%.0f%% (%.0f%%) ↺%s\033[0m' "$session_pct" "$week_pct" "$reset_time"
   else
-    printf '\033[2m5h %.0f%% · 7d %.0f%%\033[0m' "$session_pct" "$week_pct"
+    printf '\033[2m%.0f%% (%.0f%%)\033[0m' "$session_pct" "$week_pct"
   fi
 fi
 
