@@ -98,13 +98,18 @@ render() { echo "$1" | bash "$STATUSLINE_RENDER"; }
 
 now=$(date +%s)
 result=$(render "{\"cwd\":\"/tmp\",\"prompt_cache\":{\"ttl\":\"1h\",\"expires_at\":$((now + 1070))}}")
-assert_contains "shows minutes left on a warm cache" "cache:18m" "$result"
+assert_contains "shows minutes left on a warm cache" "cache 18m" "$result"
 
 result=$(render "{\"cwd\":\"/tmp\",\"prompt_cache\":{\"ttl\":\"1h\",\"expires_at\":$((now - 10))}}")
-assert_contains "shows cold after the cache expires" "cache:cold" "$result"
+assert_contains "shows cold after the cache expires" "cache cold" "$result"
 
 result=$(render '{"cwd":"/tmp"}')
-assert_not_contains "hides cache segment without prompt_cache" "cache:" "$result"
+assert_not_contains "hides cache segment without prompt_cache" "cache" "$result"
+assert_not_contains "no separator without segments" "│" "$result"
+
+result=$(render '{"cwd":"/tmp","model":{"display_name":"Opus 5.5"},"rate_limits":{"five_hour":{"used_percentage":33},"seven_day":{"used_percentage":53}}}')
+assert_contains "separates segments with a pipe" "│" "$result"
+assert_contains "labels the usage windows" "5h 33% · 7d 53%" "$result"
 
 result=$(render '{"cwd":"/tmp","model":{"display_name":"Opus 5.5 (1M context)"}}')
 assert_contains "keeps the model name" "Opus 5.5" "$result"

@@ -4,7 +4,7 @@
 input=$(cat)
 
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd')
-# Drop the " (1M context)" suffix; ctx:% already covers the context window
+# Drop the " (1M context)" suffix; the ctx segment already covers the context window
 model=$(echo "$input" | jq -r '.model.display_name // "" | sub(" \\([^)]* context\\)$"; "")')
 used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 session_pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
@@ -37,8 +37,12 @@ if [ -n "$git_branch" ]; then
   fi
 fi
 
+# Dim pipe before each segment after git, so the dim segments don't blur together
+sep() { printf ' \033[2m│\033[0m '; }
+
 if [ -n "$model" ]; then
-  printf ' \033[2m%s\033[0m' "$model"
+  sep
+  printf '\033[2m%s\033[0m' "$model"
 fi
 
 if [ -n "$used_pct" ]; then
@@ -46,21 +50,23 @@ if [ -n "$used_pct" ]; then
   if awk -v p="$used_pct" 'BEGIN { exit !(p > 30) }'; then
     ctx_color='\033[0;35m'
   fi
-  printf " ${ctx_color}ctx:%.0f%%\033[0m" "$used_pct"
+  sep
+  printf "${ctx_color}ctx %.0f%%\033[0m" "$used_pct"
 fi
 
 # Minutes until the prompt cache goes cold; refreshInterval keeps it ticking while idle
 if [ -n "$cache_expires" ]; then
   cache_left=$((cache_expires - $(date +%s)))
+  sep
   if [ "$cache_left" -le 0 ]; then
-    printf ' \033[2mcache:cold\033[0m'
+    printf '\033[2mcache cold\033[0m'
   else
     cache_min=$(((cache_left + 59) / 60))
     cache_color='\033[2m'
     if [ "$cache_min" -le 5 ]; then
       cache_color='\033[0;33m'
     fi
-    printf " ${cache_color}cache:%dm\033[0m" "$cache_min"
+    printf "${cache_color}cache %dm\033[0m" "$cache_min"
   fi
 fi
 
@@ -69,10 +75,11 @@ if [ -n "$session_pct" ] && [ -n "$week_pct" ]; then
   if [ -n "$reset_at" ]; then
     reset_time=$(date -r "$reset_at" "+%l:%M%p" 2>/dev/null | tr -d ' ' | tr '[:upper:]' '[:lower:]')
   fi
+  sep
   if [ -n "$reset_time" ]; then
-    printf ' \033[2m(usage: %.0f%%/%.0f%% ↺%s)\033[0m' "$session_pct" "$week_pct" "$reset_time"
+    printf '\033[2m5h %.0f%% · 7d %.0f%% ↺%s\033[0m' "$session_pct" "$week_pct" "$reset_time"
   else
-    printf ' \033[2m(usage: %.0f%%/%.0f%%)\033[0m' "$session_pct" "$week_pct"
+    printf '\033[2m5h %.0f%% · 7d %.0f%%\033[0m' "$session_pct" "$week_pct"
   fi
 fi
 
