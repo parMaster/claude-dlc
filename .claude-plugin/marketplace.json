@@ -7,7 +7,7 @@
     {
       "name": "statusline",
       "source": "./plugins/statusline",
-      "description": "Custom status line — dir, git branch/dirty state, model, context %, usage rates (robbyrussell-style)"
+      "description": "Custom status line — dir, git branch/dirty state, model, context %, prompt cache minutes left, usage rates (robbyrussell-style)"
     },
     {
       "name": "planning",

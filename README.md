@@ -57,9 +57,9 @@ Custom status line (robbyrussell-style).
 /plugin install statusline@parmaster-claude-dlc
 ```
 
-Shows: current dir, git branch + dirty state (`✗`), model name, context %, 5h/7d usage rates with reset time.
+Shows: current dir, git branch + dirty state (`✗`), model name, context %, minutes left on the prompt cache (`cache:18m`, yellow at 5m or less, `cache:cold` once expired), 5h/7d usage rates with reset time.
 
-After install, run `claude --init-only` once to trigger the setup hook — it writes `statusLine` into `~/.claude/settings.json`. Then relaunch Claude normally.
+After install, run `claude --init-only` once to trigger the setup hook — it writes `statusLine` into `~/.claude/settings.json`, with `refreshInterval: 60` so the cache countdown keeps ticking in an idle session. Then relaunch Claude normally.
 
 #### Codex
 

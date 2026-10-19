@@ -9,6 +9,7 @@ used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 session_pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 week_pct=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 reset_at=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
+cache_expires=$(echo "$input" | jq -r '.prompt_cache.expires_at // empty | floor')
 
 # Basename of current dir (like %c in robbyrussell)
 dir=$(basename "$cwd")
@@ -45,6 +46,21 @@ if [ -n "$used_pct" ]; then
     ctx_color='\033[0;35m'
   fi
   printf " ${ctx_color}ctx:%.0f%%\033[0m" "$used_pct"
+fi
+
+# Minutes until the prompt cache goes cold; refreshInterval keeps it ticking while idle
+if [ -n "$cache_expires" ]; then
+  cache_left=$((cache_expires - $(date +%s)))
+  if [ "$cache_left" -le 0 ]; then
+    printf ' \033[2mcache:cold\033[0m'
+  else
+    cache_min=$(((cache_left + 59) / 60))
+    cache_color='\033[2m'
+    if [ "$cache_min" -le 5 ]; then
+      cache_color='\033[0;33m'
+    fi
+    printf " ${cache_color}cache:%dm\033[0m" "$cache_min"
+  fi
 fi
 
 if [ -n "$session_pct" ] && [ -n "$week_pct" ]; then

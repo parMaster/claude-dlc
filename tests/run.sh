@@ -49,6 +49,16 @@ echo '{}' > "${TEST_HOME}/.claude/settings.json"
 run_setup "$STATUSLINE_SCRIPT" "$STATUSLINE_ROOT"
 result=$(jq -r '.statusLine.command // ""' "${TEST_HOME}/.claude/settings.json")
 assert_contains "writes statusLine when settings.json exists" "statusline.sh" "$result"
+result=$(jq -r '.statusLine.refreshInterval // ""' "${TEST_HOME}/.claude/settings.json")
+assert_eq "writes refreshInterval 60" "60" "$result"
+rm -rf "$TEST_HOME"
+
+TEST_HOME="$(mktemp -d)"
+mkdir -p "${TEST_HOME}/.claude"
+jq --arg cmd "bash ${STABLE_STATUSLINE}" '.statusLine = {"type":"command","command":$cmd,"refreshInterval":30}' <<< '{}' > "${TEST_HOME}/.claude/settings.json"
+run_setup "$STATUSLINE_SCRIPT" "$STATUSLINE_ROOT"
+result=$(jq -r '.statusLine.refreshInterval' "${TEST_HOME}/.claude/settings.json")
+assert_eq "keeps user's own refreshInterval" "30" "$result"
 rm -rf "$TEST_HOME"
 
 TEST_HOME="$(mktemp -d)"
@@ -57,7 +67,9 @@ EXPECTED_CMD="bash ${STABLE_STATUSLINE}"
 jq --arg cmd "$EXPECTED_CMD" '.statusLine = {"type":"command","command":$cmd}' <<< '{}' > "${TEST_HOME}/.claude/settings.json"
 run_setup "$STATUSLINE_SCRIPT" "$STATUSLINE_ROOT"
 result=$(jq -r '.statusLine.command' "${TEST_HOME}/.claude/settings.json")
-assert_eq "skips if statusLine already correct (idempotent)" "$EXPECTED_CMD" "$result"
+assert_eq "keeps command when statusLine already correct" "$EXPECTED_CMD" "$result"
+result=$(jq -r '.statusLine.refreshInterval // ""' "${TEST_HOME}/.claude/settings.json")
+assert_eq "adds refreshInterval to an existing plugin statusLine" "60" "$result"
 rm -rf "$TEST_HOME"
 
 TEST_HOME="$(mktemp -d)"
@@ -73,6 +85,26 @@ mkdir -p "${TEST_HOME}/.claude"
 run_setup "$STATUSLINE_SCRIPT" "$STATUSLINE_ROOT"
 assert_not_contains "skips if settings.json missing" "statusLine" "$(ls "${TEST_HOME}/.claude/")"
 rm -rf "$TEST_HOME"
+
+# ---------------------------------------------------------------------------
+# statusline/statusline.sh
+# ---------------------------------------------------------------------------
+
+STATUSLINE_RENDER="${REPO_ROOT}/plugins/statusline/scripts/statusline.sh"
+
+echo "statusline/statusline.sh"
+
+render() { echo "$1" | bash "$STATUSLINE_RENDER"; }
+
+now=$(date +%s)
+result=$(render "{\"cwd\":\"/tmp\",\"prompt_cache\":{\"ttl\":\"1h\",\"expires_at\":$((now + 1070))}}")
+assert_contains "shows minutes left on a warm cache" "cache:18m" "$result"
+
+result=$(render "{\"cwd\":\"/tmp\",\"prompt_cache\":{\"ttl\":\"1h\",\"expires_at\":$((now - 10))}}")
+assert_contains "shows cold after the cache expires" "cache:cold" "$result"
+
+result=$(render '{"cwd":"/tmp"}')
+assert_not_contains "hides cache segment without prompt_cache" "cache:" "$result"
 
 # ---------------------------------------------------------------------------
 # global-rules/setup.sh

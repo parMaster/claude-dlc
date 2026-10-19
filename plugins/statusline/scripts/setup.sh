@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# On plugin install/update: write statusLine to ~/.claude/settings.json
+# On plugin install/update: write statusLine (command + refreshInterval) to ~/.claude/settings.json
 # Uses the stable marketplace path so version bumps don't break the config.
 
 SETTINGS="${HOME}/.claude/settings.json"
@@ -16,9 +16,10 @@ if [ ! -f "$SETTINGS" ]; then
 fi
 
 CURRENT=$(jq -r '.statusLine.command // ""' "$SETTINGS" 2>/dev/null)
+INTERVAL=$(jq -r '.statusLine.refreshInterval // ""' "$SETTINGS" 2>/dev/null)
 
-# Skip if already pointing to this stable path
-if [ "$CURRENT" = "bash $STABLE_SCRIPT" ]; then
+# Skip if already pointing to this stable path with a refresh timer set
+if [ "$CURRENT" = "bash $STABLE_SCRIPT" ] && [ -n "$INTERVAL" ]; then
   exit 0
 fi
 
@@ -27,9 +28,10 @@ if [ -n "$CURRENT" ] && [[ "$CURRENT" != *"/plugins/"* ]]; then
   exit 0
 fi
 
+# The timer keeps the cache countdown live in an idle session; a user's own value wins
 tmpfile=$(mktemp)
 if jq --arg cmd "bash $STABLE_SCRIPT" \
-  '.statusLine = {"type": "command", "command": $cmd}' \
+  '.statusLine = ((.statusLine // {}) + {"type": "command", "command": $cmd}) | .statusLine.refreshInterval //= 60' \
   "$SETTINGS" > "$tmpfile" 2>/dev/null && [ -s "$tmpfile" ]; then
   mv "$tmpfile" "$SETTINGS"
 else

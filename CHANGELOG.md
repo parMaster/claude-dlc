@@ -4,6 +4,15 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## statusline 1.1.0 - 2026-10-19
+
+The status line shows how many minutes are left before the prompt cache goes
+cold, as `cache:18m`. It turns yellow at 5 minutes or less and reads
+`cache:cold` once the cache expires. The value comes from
+`prompt_cache.expires_at`, so it needs Claude Code v2.1.251 or later. The setup
+hook now also writes `refreshInterval: 60`, so the countdown keeps ticking in an
+idle session. It keeps an interval the user already set.
+
 ## strict-bash 1.3.0 - 2026-10-14
 
 New hook `block-escaped-space`. Claude Code asks for permission on any Bash
