@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Hand off an implementation plan to a fresh agterm session running `codex`,
-# in the caller's own workspace — the Codex CLI counterpart to
+# opened as a companion of the caller's session — the Codex CLI counterpart to
 # agterm-handoff.sh. Shares the same canned plan-hand-off prompt (built by
 # handoff-prompt.sh) so the wording can't drift between the two runtimes;
 # only the launched binary and its flags differ.
@@ -44,4 +44,4 @@ fi
 # temp/cache dirs outside the repo, so implementation hand-offs use
 # danger-full-access instead. on-request (rather than never) still lets
 # Codex pause and ask when it judges an action risky.
-bash "$SCRIPT_DIR/codex-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE" "" "$CODEX_FLAGS"
+bash "$SCRIPT_DIR/codex-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE" "$CODEX_FLAGS"

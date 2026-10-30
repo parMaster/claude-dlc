@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Hand off an implementation plan to a fresh agterm session running `claude`,
-# in the caller's own workspace. Called by handoff/SKILL.md. Thin wrapper
-# around the generic agterm-spawn.sh: builds the
-# canned plan-hand-off prompt into a temp file and hands off in the current
-# workspace (no workspace grouping — matches this script's prior behavior).
+# opened as a companion of the caller's session. Called by handoff/SKILL.md.
+# Thin wrapper around the generic agterm-spawn.sh: builds the canned
+# plan-hand-off prompt into a temp file and hands it off.
 #
 # Usage: agterm-handoff.sh <plan-file> [model] [parent-name]
 #   [model]                model alias (e.g. "opus", "sonnet", "haiku") to run
@@ -86,4 +85,4 @@ if [ -n "$MODEL" ]; then
   CLAUDE_FLAGS="$CLAUDE_FLAGS --model $MODEL"
 fi
 
-bash "$SCRIPT_DIR/agterm-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE" "" "$CLAUDE_FLAGS"
+bash "$SCRIPT_DIR/agterm-spawn.sh" "$PROJECT_ROOT" "$SESSION_NAME" "$PROMPT_FILE" "$CLAUDE_FLAGS"

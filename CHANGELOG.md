@@ -4,6 +4,14 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 1.4.0 - 2026-10-30
+
+`spawn-session` and `handoff` open the new session as an agterm companion of
+the calling session (`agtermctl session new --parent`), indented under it in
+the sidebar. Slices of a larger job no longer get their own named workspace;
+they group under their parent instead. The spawn scripts drop the
+workspace-name argument, so the flags argument moves to slot 4.
+
 ## planning 3.5.1 - 2026-10-30
 
 `pr` drops the brackets around the type in PR titles:

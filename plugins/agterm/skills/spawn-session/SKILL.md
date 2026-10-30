@@ -25,12 +25,11 @@ $ARGUMENTS
   involved, how to verify it's done. The new session cannot see this
   conversation.
 
-## Step 2: Name and workspace
+## Step 2: Name
 
 - Session name: short sidebar label, e.g. `Spawn: <slug>`.
-- One of several slices of a larger job: pick one short workspace name and
-  reuse it verbatim for every slice, which groups them in the sidebar.
-  Otherwise omit it — the session opens in the current workspace.
+- The session opens as a companion of this one, indented under it in the
+  sidebar, so slices of a larger job group there with no extra step.
 - Slices sharing a stateful resource (database, lock, port): spawn one at a
   time, not back to back.
 
@@ -102,7 +101,7 @@ if head -n1 "$PROMPT_FILE" | grep -qiE '^(spawn|start|kick off|delegate|hand (th
   echo "First line reads as a hand-off description, not a direct task. Rewrite line 1 of $PROMPT_FILE as an imperative (e.g. 'Plan the fix for...') and rerun." >&2
   exit 1
 fi
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/SPAWN_SCRIPT" "$PWD" "SESSION_NAME" "$PROMPT_FILE" [WORKSPACE_NAME] [MODEL_FLAGS]
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/SPAWN_SCRIPT" "$PWD" "SESSION_NAME" "$PROMPT_FILE" [MODEL_FLAGS]
 ```
 
 If this check fails: don't rewrite the whole prompt. `Edit` just line 1 of the
@@ -111,23 +110,22 @@ still-on-disk `$PROMPT_FILE` into a direct imperative, then rerun the same
 expensive body underneath is untouched.
 
 `SPAWN_SCRIPT` is `agterm-spawn.sh` for the Claude runtime, `codex-spawn.sh`
-for the Codex runtime. Arguments are positional, so a skipped workspace still
-needs its slot:
+for the Codex runtime:
 
 ```bash
-# Claude, grouped, model chosen
-... "$PWD" "Spawn: parser" "$PROMPT_FILE" "Refactor" "--model opus"
-# Codex, ungrouped, model chosen
-... "$PWD" "Spawn: parser" "$PROMPT_FILE" "" "--model gpt-5.1-codex"
-# Claude, ungrouped, Inherit
+# Claude, model chosen
+... "$PWD" "Spawn: parser" "$PROMPT_FILE" "--model opus"
+# Codex, model chosen
+... "$PWD" "Spawn: parser" "$PROMPT_FILE" "--model gpt-5.1-codex"
+# Claude, Inherit
 ... "$PWD" "Spawn: parser" "$PROMPT_FILE"
 ```
 
 ## Step 6: Report the outcome
 
 Exit 0: the last stdout line is the new session's display name. Report the
-hand-off with that name, the runtime (Claude/Codex), the workspace if
-grouped, the model unless Inherit, and that the user can switch to it.
+hand-off with that name, the runtime (Claude/Codex), the model unless
+Inherit, and that it sits under this session for the user to switch to.
 Non-zero: report the failure, quoting stderr; if it's the "not available"
 message, ask whether they want a background subagent instead of silently
 falling back to one.

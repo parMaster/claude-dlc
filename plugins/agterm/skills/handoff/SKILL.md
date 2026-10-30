@@ -99,5 +99,5 @@ exit, report its stderr and stop.
 On success, the script's last stdout line is the new session's display name
 (e.g. `Implement: foo`) — tell the user: implementation has been handed off
 to a new agterm session with that name, running the chosen runtime (Claude or
-Codex), in this same workspace (noting the chosen model, unless Inherit), and
-they can switch to it to watch or drive it directly. Stop completely.
+Codex), as a companion under this session (noting the chosen model, unless
+Inherit), and they can switch to it to watch or drive it directly. Stop completely.

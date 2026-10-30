@@ -150,7 +150,7 @@ Helpers for [agterm](https://github.com/umputun/agterm): open things in an overl
 | [`handoff`](plugins/agterm/skills/handoff/SKILL.md) | Sends a plan from `docs/plans/` to a fresh agterm session on Claude or Codex. Explicit-only: `/agterm:handoff [plan-file]`. |
 | [`spawn-session`](plugins/agterm/skills/spawn-session/SKILL.md) | Sends an arbitrary task to a fresh agterm session on Claude or Codex. Also triggers from natural language ("spawn a new session for this"). |
 
-Claude hand-off sessions start in auto mode, or accept-edits when an org setting turns auto mode off. Hand-off sessions are flagged (`agtermctl session flag on`) so in-flight work shows up in agterm's flagged view.
+Both skills open the new session as an agterm companion of the calling session (`agtermctl session new --parent`), so it sits indented under its parent in the sidebar. Claude hand-off sessions start in auto mode, or accept-edits when an org setting turns auto mode off. Hand-off sessions are flagged (`agtermctl session flag on`) so in-flight work shows up in agterm's flagged view.
 
 A Claude session started by `handoff` or `spawn-session` knows which session started it: its prompt ends with a plain "Spawned from Claude session <name>." line (the name comes from `ListAgents`). The line carries no instruction, so the new session messages the parent only when you tell it to. Codex sessions don't get the footer.
 

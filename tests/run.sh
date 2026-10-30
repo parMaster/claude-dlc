@@ -416,21 +416,21 @@ echo "agterm/agterm-session-new.sh"
 
 LOG="$(mktemp)"
 result=$(
-  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" \
   PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SESSION_NEW_SCRIPT" "/tmp/some/dir" "My Session"
 )
 assert_eq "prints the session id on success" "fake-session-id" "$result"
-assert_contains "creates the session in the current workspace when no workspace-name given" " --workspace ws-1" "$(cat "$LOG")"
-assert_not_contains "does not pass --workspace-name when not grouping" " --workspace-name" "$(cat "$LOG")"
+assert_contains "creates a companion of the caller's session" "session new --parent sess-1 --cwd /tmp/some/dir" "$(cat "$LOG")"
+assert_not_contains "passes no workspace flags" " --workspace" "$(cat "$LOG")"
 assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
 rm -f "$LOG"
 
 LOG="$(mktemp)"
 result=$(
-  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
-  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SESSION_NEW_SCRIPT" "/tmp/some/dir" "My Session" "my-workspace"
+  env -u AGTERM_SESSION_ID AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SESSION_NEW_SCRIPT" "/tmp/some/dir" "My Session"
 )
-assert_contains "groups under a named workspace when given" " --workspace-name my-workspace --create-workspace" "$(cat "$LOG")"
+assert_contains "falls back to the active session as parent without AGTERM_SESSION_ID" "session new --parent active" "$(cat "$LOG")"
 rm -f "$LOG"
 
 result=$(AGTERM_ENABLED="" bash "$SESSION_NEW_SCRIPT" "/tmp" "name" 2>&1; echo "exit:$?")
@@ -439,7 +439,7 @@ assert_contains "refuses to run when AGTERM_ENABLED is unset (message)" "not ava
 
 LOG="$(mktemp)"
 result=$(
-  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" AGTERMCTL_SESSION_NEW_JSON='{"result":{}}' \
+  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" AGTERMCTL_SESSION_NEW_JSON='{"result":{}}' \
   PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SESSION_NEW_SCRIPT" "/tmp/some/dir" "My Session" 2>&1; echo "exit:$?"
 )
 assert_contains "refuses to run when session new returns no id (exit code)" "exit:1" "$result"
@@ -460,12 +460,12 @@ echo "do the thing" > "$SPAWN_PROMPT_FILE"
 LOG="$(mktemp)"
 TYPED="$(mktemp)"
 result=$(
-  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" \
   PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$SPAWN_PROMPT_FILE"
 )
 assert_eq "prints the session name on success" "My Session" "$result"
-assert_contains "creates the session in the current workspace when no workspace-name given" " --workspace ws-1" "$(cat "$LOG")"
-assert_not_contains "does not pass --workspace-name when not grouping" " --workspace-name" "$(cat "$LOG")"
+assert_contains "creates a companion of the caller's session" "session new --parent sess-1" "$(cat "$LOG")"
+assert_not_contains "passes no workspace flags" " --workspace" "$(cat "$LOG")"
 assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
 TYPED_CMD="$(cat "$TYPED")"
 assert_contains "types a claude launch command reading the prompt file" "claude \"\$(cat ${SPAWN_PROMPT_FILE}" "$TYPED_CMD"
@@ -475,17 +475,8 @@ rm -f "$LOG" "$TYPED"
 LOG="$(mktemp)"
 TYPED="$(mktemp)"
 result=$(
-  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
-  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$SPAWN_PROMPT_FILE" "my-workspace"
-)
-assert_contains "groups under a named workspace when given" " --workspace-name my-workspace --create-workspace" "$(cat "$LOG")"
-rm -f "$LOG" "$TYPED"
-
-LOG="$(mktemp)"
-TYPED="$(mktemp)"
-result=$(
-  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
-  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$SPAWN_PROMPT_FILE" "" "--permission-mode acceptEdits"
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$SPAWN_PROMPT_FILE" "--permission-mode acceptEdits"
 )
 assert_contains "inserts claude-flags into the launch command when given" 'claude --permission-mode acceptEdits "$(cat ' "$(cat "$TYPED")"
 rm -f "$LOG" "$TYPED"
@@ -500,7 +491,7 @@ assert_contains "refuses to run when the prompt file doesn't exist (message)" "p
 
 LOG="$(mktemp)"
 result=$(
-  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" AGTERMCTL_SESSION_NEW_JSON='{"result":{}}' \
+  AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" AGTERMCTL_SESSION_NEW_JSON='{"result":{}}' \
   PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$SPAWN_PROMPT_FILE" 2>&1; echo "exit:$?"
 )
 assert_contains "refuses to run when session new returns no id (exit code)" "exit:1" "$result"
@@ -523,11 +514,11 @@ echo "do the thing" > "$CODEX_SPAWN_PROMPT_FILE"
 LOG="$(mktemp)"
 TYPED="$(mktemp)"
 result=$(
-  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" \
   PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$CODEX_SPAWN_PROMPT_FILE"
 )
 assert_eq "prints the session name on success" "My Session" "$result"
-assert_contains "creates the session in the current workspace when no workspace-name given" " --workspace ws-1" "$(cat "$LOG")"
+assert_contains "creates a companion of the caller's session" "session new --parent sess-1" "$(cat "$LOG")"
 assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
 TYPED_CMD="$(cat "$TYPED")"
 assert_contains "types a codex launch command reading the prompt file" "codex \"\$(cat ${CODEX_SPAWN_PROMPT_FILE}" "$TYPED_CMD"
@@ -537,17 +528,8 @@ rm -f "$LOG" "$TYPED"
 LOG="$(mktemp)"
 TYPED="$(mktemp)"
 result=$(
-  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
-  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$CODEX_SPAWN_PROMPT_FILE" "my-workspace"
-)
-assert_contains "groups under a named workspace when given" " --workspace-name my-workspace --create-workspace" "$(cat "$LOG")"
-rm -f "$LOG" "$TYPED"
-
-LOG="$(mktemp)"
-TYPED="$(mktemp)"
-result=$(
-  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
-  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$CODEX_SPAWN_PROMPT_FILE" "" "--sandbox workspace-write --ask-for-approval never"
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" \
+  PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_SPAWN_SCRIPT" "/tmp/some/dir" "My Session" "$CODEX_SPAWN_PROMPT_FILE" "--sandbox workspace-write --ask-for-approval never"
 )
 assert_contains "inserts codex-flags into the launch command when given" 'codex --sandbox workspace-write --ask-for-approval never "$(cat ' "$(cat "$TYPED")"
 rm -f "$LOG" "$TYPED"
@@ -583,13 +565,13 @@ LOG="$(mktemp)"
 TYPED="$(mktemp)"
 result=$(
   cd "$TEST_REPO" && \
-  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" \
   HOME="$HANDOFF_HOME" CLAUDE_CONFIG_DIR="" CLAUDE_MANAGED_SETTINGS_DIR="$HANDOFF_MANAGED" \
   PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$HANDOFF_SCRIPT" "$PLAN_FILE"
 )
 assert_eq "prints the new session's display name on success" "Implement: example" "$result"
 assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
-assert_contains "creates the session before flagging" "session new" "$(cat "$LOG")"
+assert_contains "creates a companion of the caller's session" "session new --parent sess-1" "$(cat "$LOG")"
 TYPED_CMD="$(cat "$TYPED")"
 assert_contains "types a claude launch command in auto mode reading a prompt file" 'claude --permission-mode auto "$(cat ' "$TYPED_CMD"
 PROMPT_PATH="${TYPED_CMD#*cat }"
@@ -607,7 +589,7 @@ LOG="$(mktemp)"
 TYPED="$(mktemp)"
 (
   cd "$TEST_REPO" && \
-  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" \
   HOME="$HANDOFF_HOME" CLAUDE_CONFIG_DIR="" CLAUDE_MANAGED_SETTINGS_DIR="$HANDOFF_MANAGED" \
   PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$HANDOFF_SCRIPT" "$PLAN_FILE" "" "claude-dlc-8d" >/dev/null
 )
@@ -631,7 +613,7 @@ handoff_typed_with() {
   log="$(mktemp)"; typed="$(mktemp)"
   (
     cd "$TEST_REPO" && \
-    AGTERMCTL_LOG="$log" AGTERMCTL_TYPED="$typed" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+    AGTERMCTL_LOG="$log" AGTERMCTL_TYPED="$typed" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" \
     HOME="$HANDOFF_HOME" CLAUDE_CONFIG_DIR="" CLAUDE_MANAGED_SETTINGS_DIR="$HANDOFF_MANAGED" \
     PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$HANDOFF_SCRIPT" "$PLAN_FILE" "opus" >/dev/null
   )
@@ -670,12 +652,12 @@ LOG="$(mktemp)"
 TYPED="$(mktemp)"
 result=$(
   cd "$CODEX_TEST_REPO" && \
-  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" \
   PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_HANDOFF_SCRIPT" "$CODEX_PLAN_FILE"
 )
 assert_eq "prints the new session's display name on success" "Implement: example" "$result"
 assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
-assert_contains "creates the session before flagging" "session new" "$(cat "$LOG")"
+assert_contains "creates a companion of the caller's session" "session new --parent sess-1" "$(cat "$LOG")"
 TYPED_CMD="$(cat "$TYPED")"
 assert_contains "types a codex launch command with the accept-edits-equivalent flags" 'codex --sandbox danger-full-access --ask-for-approval on-request "$(cat ' "$TYPED_CMD"
 PROMPT_PATH="${TYPED_CMD#*cat }"
@@ -691,7 +673,7 @@ LOG="$(mktemp)"
 TYPED="$(mktemp)"
 result=$(
   cd "$CODEX_TEST_REPO" && \
-  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_WORKSPACE_ID="ws-1" \
+  AGTERMCTL_LOG="$LOG" AGTERMCTL_TYPED="$TYPED" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" \
   PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_HANDOFF_SCRIPT" "$CODEX_PLAN_FILE" "gpt-5.1-codex"
 )
 assert_contains "appends --model when a model is given" 'codex --sandbox danger-full-access --ask-for-approval on-request --model gpt-5.1-codex "$(cat ' "$(cat "$TYPED")"
