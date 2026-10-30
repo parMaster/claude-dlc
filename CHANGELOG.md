@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 1.4.1 - 2026-10-30
+
+`spawn-session` no longer needs a chained Bash call, which `strict-bash`
+blocks. It writes the prompt file with Write, then runs the spawn script as
+one plain command. The check that refuses a first line like "Spawn a new
+session to..." moved into `agterm-spawn.sh` and `codex-spawn.sh`.
+
 ## agterm 1.4.0 - 2026-10-30
 
 `spawn-session` and `handoff` open the new session as an agterm companion of

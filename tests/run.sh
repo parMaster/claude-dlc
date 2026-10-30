@@ -489,6 +489,15 @@ result=$(AGTERM_ENABLED="1" PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIP
 assert_contains "refuses to run when the prompt file doesn't exist (exit code)" "exit:1" "$result"
 assert_contains "refuses to run when the prompt file doesn't exist (message)" "prompt file not found" "$result"
 
+HANDOFF_LINE_PROMPT="$(mktemp)"
+printf 'Spawn a new session to fix the parser\nbody\n' > "$HANDOFF_LINE_PROMPT"
+LOG="$(mktemp)"
+result=$(AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$SPAWN_SCRIPT" "/tmp" "name" "$HANDOFF_LINE_PROMPT" 2>&1; echo "exit:$?")
+assert_contains "refuses a first line that describes a hand-off (exit code)" "exit:1" "$result"
+assert_contains "refuses a first line that describes a hand-off (message)" "first line reads as a hand-off description" "$result"
+assert_not_contains "creates no session for a hand-off first line" "session new" "$(cat "$LOG")"
+rm -f "$LOG" "$HANDOFF_LINE_PROMPT"
+
 LOG="$(mktemp)"
 result=$(
   AGTERMCTL_LOG="$LOG" AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" AGTERMCTL_SESSION_NEW_JSON='{"result":{}}' \
@@ -541,6 +550,13 @@ assert_contains "refuses to run when AGTERM_ENABLED is unset (message)" "not ava
 result=$(AGTERM_ENABLED="1" PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_SPAWN_SCRIPT" "/tmp" "name" "/nonexistent/prompt-file" 2>&1; echo "exit:$?")
 assert_contains "refuses to run when the prompt file doesn't exist (exit code)" "exit:1" "$result"
 assert_contains "refuses to run when the prompt file doesn't exist (message)" "prompt file not found" "$result"
+
+HANDOFF_LINE_PROMPT="$(mktemp)"
+printf 'Delegate this to a new agent\nbody\n' > "$HANDOFF_LINE_PROMPT"
+result=$(AGTERM_ENABLED="1" AGTERM_SESSION_ID="sess-1" PATH="${AGTERM_FAKE_BIN}:${PATH}" bash "$CODEX_SPAWN_SCRIPT" "/tmp" "name" "$HANDOFF_LINE_PROMPT" 2>&1; echo "exit:$?")
+assert_contains "refuses a first line that describes a hand-off (exit code)" "exit:1" "$result"
+assert_contains "refuses a first line that describes a hand-off (message)" "first line reads as a hand-off description" "$result"
+rm -f "$HANDOFF_LINE_PROMPT"
 
 rm -f "$CODEX_SPAWN_PROMPT_FILE"
 

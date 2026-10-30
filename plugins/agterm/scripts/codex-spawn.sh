@@ -41,6 +41,13 @@ if [ ! -f "$PROMPT_FILE" ]; then
   exit 1
 fi
 
+# A first line like "Spawn a new session to..." makes the new session spawn
+# yet another session instead of doing the task.
+if head -n1 "$PROMPT_FILE" | grep -qiE '^(spawn|start|kick off|delegate|hand (this|it) off)\b.*\b(new )?(session|agent)\b'; then
+  echo "codex-spawn: first line reads as a hand-off description, not a direct task. Rewrite line 1 of $PROMPT_FILE as an imperative (e.g. 'Plan the fix for...') and rerun." >&2
+  exit 1
+fi
+
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 SID=$(bash "$SCRIPT_DIR/agterm-session-new.sh" "$CWD" "$SESSION_NAME")
 

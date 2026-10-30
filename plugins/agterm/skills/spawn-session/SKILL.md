@@ -2,7 +2,7 @@
 name: spawn-session
 description: Hand off an arbitrary task to a freshly spawned, independent agterm session running its own `claude` or `codex` process — not a background subagent. Activates on "spawn a new session for this", "hand this off to a new session", "start a separate session for this job", "delegate this to a new terminal session", "run this in a separate/parallel session", "spin up a session for this slice", or when the user is slicing a larger job into pieces to hand off one at a time.
 argument-hint: "[task description]"
-allowed-tools: Bash, AskUserQuestion, ListAgents
+allowed-tools: Bash, Write, Edit, AskUserQuestion, ListAgents
 ---
 
 # Spawn a Task in a Separate Session
@@ -69,7 +69,7 @@ should the new Codex session use?", header "Model", single-select, options:
 **Inherit**. Never guess or substitute a model name of your own — use exactly
 what the user typed.
 
-## Step 5: Write the prompt and spawn — in one command
+## Step 5: Write the prompt, then spawn
 
 **Claude runtime only:** call `ListAgents` first. Its first line reads
 "This session is <name> [<ref>]"; `PARENT_NAME` is the bare `<name>`, without
@@ -84,41 +84,36 @@ isn't available or gives no name — spawn anyway.
 Spawned from Claude session PARENT_NAME.
 ```
 
-One chained Bash call: a step gets a fresh shell, so `$PROMPT_FILE` is gone by
-the next call (and one call means one approval prompt, one focus steal). The
-heredoc must be **quoted** (`<<'PROMPT_EOF'`) so the prompt text isn't shell-
-expanded. Don't delete the temp file — agtermctl is fire-and-forget, so the
-new session may not have read it yet. Don't pre-check agterm availability; the
-script does that and exits non-zero with a reason.
+Two calls, no shell chaining, so each one can match an allow rule:
+
+1. **Write** the task prompt from Step 1, plus the footer when there is one,
+   to a new file. Use your scratchpad directory if the system prompt lists
+   one, otherwise `/tmp`. Name it `agterm-spawn-<slug>.md`. Don't delete it
+   afterwards — agtermctl is fire-and-forget, so the new session may not have
+   read it yet.
+2. **Bash**, one plain command with every path written out literally (no
+   `$PWD` or other variables):
 
 ```bash
-PROMPT_FILE=$(mktemp "${TMPDIR:-/tmp}/agterm-spawn.XXXXXX")
-cat > "$PROMPT_FILE" <<'PROMPT_EOF'
-<task prompt from Step 1>
-<footer, Claude runtime with a PARENT_NAME only>
-PROMPT_EOF
-if head -n1 "$PROMPT_FILE" | grep -qiE '^(spawn|start|kick off|delegate|hand (this|it) off)\b.*\b(new )?(session|agent)\b'; then
-  echo "First line reads as a hand-off description, not a direct task. Rewrite line 1 of $PROMPT_FILE as an imperative (e.g. 'Plan the fix for...') and rerun." >&2
-  exit 1
-fi
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/SPAWN_SCRIPT" "$PWD" "SESSION_NAME" "$PROMPT_FILE" [MODEL_FLAGS]
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/SPAWN_SCRIPT" "<current working directory>" "SESSION_NAME" "<prompt file path>" [MODEL_FLAGS]
 ```
 
-If this check fails: don't rewrite the whole prompt. `Edit` just line 1 of the
-still-on-disk `$PROMPT_FILE` into a direct imperative, then rerun the same
-`bash "${CLAUDE_PLUGIN_ROOT}/scripts/SPAWN_SCRIPT" ...` command — the
-expensive body underneath is untouched.
+Don't pre-check agterm availability; the script does that and exits non-zero
+with a reason. The script also refuses a prompt whose first line reads as a
+hand-off description ("Spawn a new session to..."). If it does: don't rewrite
+the whole prompt. `Edit` just line 1 of the file into a direct imperative,
+then rerun the same command.
 
 `SPAWN_SCRIPT` is `agterm-spawn.sh` for the Claude runtime, `codex-spawn.sh`
 for the Codex runtime:
 
 ```bash
 # Claude, model chosen
-... "$PWD" "Spawn: parser" "$PROMPT_FILE" "--model opus"
+... "/path/to/repo" "Spawn: parser" "/tmp/agterm-spawn-parser.md" "--model opus"
 # Codex, model chosen
-... "$PWD" "Spawn: parser" "$PROMPT_FILE" "--model gpt-5.1-codex"
+... "/path/to/repo" "Spawn: parser" "/tmp/agterm-spawn-parser.md" "--model gpt-5.1-codex"
 # Claude, Inherit
-... "$PWD" "Spawn: parser" "$PROMPT_FILE"
+... "/path/to/repo" "Spawn: parser" "/tmp/agterm-spawn-parser.md"
 ```
 
 ## Step 6: Report the outcome
