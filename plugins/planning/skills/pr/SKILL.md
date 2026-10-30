@@ -109,10 +109,10 @@ Suggest the title from the plan's **Goal** line (strip the "Goal:" prefix). Let 
 
 ## Step 5: Compose the PR title
 
-Format: `[type]: TICKET-ID - ticket title`
+Format: `type: TICKET-ID - ticket title`
 
-- With ticket: `[feat]: PROJ-1234 - Add user authentication`
-- Without ticket: `[feat]: Add user authentication`
+- With ticket: `feat: PROJ-1234 - Add user authentication`
+- Without ticket: `feat: Add user authentication`
 
 ## Step 6: Generate PR description (new PR only)
 
@@ -146,7 +146,7 @@ Rules:
 **If no PR exists** — create it using the title from Step 5 and description from Step 6:
 
 ```bash
-gh pr create --draft --title "[type]: TICKET-ID - title" --body "$(cat <<'EOF'
+gh pr create --draft --title "type: TICKET-ID - title" --body "$(cat <<'EOF'
 [generated description]
 EOF
 )"

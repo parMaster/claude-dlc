@@ -4,6 +4,11 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 3.5.1 - 2026-10-30
+
+`pr` drops the brackets around the type in PR titles:
+`feat: PROJ-1234 - Add user authentication` instead of `[feat]: ...`.
+
 ## statusline 1.2.1 - 2026-10-19
 
 The usage pair drops its labels and shows the weekly rate in parentheses. The
