@@ -162,6 +162,19 @@ run_setup "$GLOBALRULES_SCRIPT" "$GLOBALRULES_ROOT"
 assert_eq "keeps an existing attribution setting" "true" "$(jq -c '.attribution' "${TEST_HOME}/.claude/settings.json")"
 rm -rf "$TEST_HOME"
 
+TEST_HOME="$(mktemp -d)"
+mkdir -p "${TEST_HOME}/.claude"
+run_setup "$GLOBALRULES_SCRIPT" "$GLOBALRULES_ROOT"
+assert_eq "disables terminal notifications" "notifications_disabled" "$(jq -r '.preferredNotifChannel' "${TEST_HOME}/.claude/settings.json")"
+rm -rf "$TEST_HOME"
+
+TEST_HOME="$(mktemp -d)"
+mkdir -p "${TEST_HOME}/.claude"
+echo '{"preferredNotifChannel": "ghostty"}' > "${TEST_HOME}/.claude/settings.json"
+run_setup "$GLOBALRULES_SCRIPT" "$GLOBALRULES_ROOT"
+assert_eq "keeps an existing notification channel" "ghostty" "$(jq -r '.preferredNotifChannel' "${TEST_HOME}/.claude/settings.json")"
+rm -rf "$TEST_HOME"
+
 # ---------------------------------------------------------------------------
 # global-rules/block-root-find.sh
 # ---------------------------------------------------------------------------

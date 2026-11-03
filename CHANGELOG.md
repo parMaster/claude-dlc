@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 2.1.0 - 2026-11-03
+
+The setup hook sets `preferredNotifChannel` to `notifications_disabled`
+unless you've already chosen a channel. Claude's 60s idle "waiting for input"
+ping showed up as an unread badge on sessions where nothing had happened.
+
 ## agterm 2.1.0 - 2026-11-03
 
 New `git-info` hook, adapted from agterm's `claude-git-info` cookbook recipe.

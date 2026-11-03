@@ -6,6 +6,7 @@
 # 4. ensure bashOutputMaxChars is set in ~/.claude/settings.json
 # 5. ensure spinnerVerbs is set in ~/.claude/settings.json
 # 6. ensure attribution (commit/PR trailers) is off in ~/.claude/settings.json
+# 7. ensure preferredNotifChannel is set in ~/.claude/settings.json
 # Never overwrites existing content — only adds what's missing, idempotently.
 
 GLOBAL_CLAUDE="${HOME}/.claude/CLAUDE.md"
@@ -103,6 +104,19 @@ CURRENT_ATTRIBUTION=$(jq -r 'if has("attribution") then "set" else "" end' "$SET
 if [ -z "$CURRENT_ATTRIBUTION" ]; then
   tmpfile=$(mktemp)
   if jq '.attribution = {"commit": "", "pr": ""}' "$SETTINGS" > "$tmpfile" 2>/dev/null && [ -s "$tmpfile" ]; then
+    mv "$tmpfile" "$SETTINGS"
+  else
+    rm -f "$tmpfile"
+  fi
+fi
+
+# Silence Claude's own terminal notifications. The 60s idle "waiting for input"
+# ping lands as an unread badge on sessions where nothing happened. Only set if
+# the user hasn't already chosen a channel — never clobber an existing setting.
+CURRENT_NOTIF=$(jq -r '.preferredNotifChannel // ""' "$SETTINGS" 2>/dev/null)
+if [ -z "$CURRENT_NOTIF" ]; then
+  tmpfile=$(mktemp)
+  if jq '.preferredNotifChannel = "notifications_disabled"' "$SETTINGS" > "$tmpfile" 2>/dev/null && [ -s "$tmpfile" ]; then
     mv "$tmpfile" "$SETTINGS"
   else
     rm -f "$tmpfile"
