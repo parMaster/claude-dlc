@@ -4,6 +4,13 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 3.6.0 - 2026-11-03
+
+`review-plan` no longer asks which findings to apply. Nearly every answer was
+"apply the ones that hold up", typed as free text. The skill now checks each
+finding against the code, applies the ones that hold, and lists the rejected
+ones with a reason so you can overrule a skip.
+
 ## global-rules 2.1.0 - 2026-11-03
 
 The setup hook sets `preferredNotifChannel` to `notifications_disabled`

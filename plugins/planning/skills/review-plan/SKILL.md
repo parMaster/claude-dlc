@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep, Bash, Agent, AskUserQuestion, Edit
 
 # Plan Review
 
-One review pass by a read-only `plan-review` agent. The main session shows the findings and applies the ones the user wants. No repeat passes: the plan is short, and anything code-level gets caught during implementation by tests, the compiler and the linter.
+One review pass by a read-only `plan-review` agent. The main session shows the findings and applies the ones that hold up. No repeat passes: the plan is short, and anything code-level gets caught during implementation by tests, the compiler and the linter.
 
 ## Step 0: Find the plan file
 
@@ -46,24 +46,13 @@ The moment the agent returns, print its full report verbatim as your own message
 
 **Verdict READY with nothing listed**: tell the user the plan is ready and stop.
 
-**Otherwise** ask with AskUserQuestion:
+**Otherwise** triage every finding, Should fix and Consider alike, without asking first. The plan is in git and the user reviews it before implementing, so a wrong edit is cheap to undo.
 
-```json
-{
-  "questions": [{
-    "question": "Apply the review findings to the plan?",
-    "header": "Findings",
-    "options": [
-      {"label": "Apply 'Should fix'", "description": "Edit the plan for the Should-fix items only"},
-      {"label": "Apply all", "description": "Also apply the Consider items"},
-      {"label": "Done", "description": "Leave the plan as is — I'll handle it"}
-    ],
-    "multiSelect": false
-  }]
-}
-```
+1. If a finding says something about the code, check the source. Drop it if the code doesn't back it.
+2. Apply the findings that hold up. Edit the plan at its own level — change Intent, Decisions, Traps or DoD lines; don't answer a finding by adding code or file-by-file steps.
+3. Report a short list: each applied finding with what changed, and each rejected finding with a one-line reason. The rejected list lets the user overrule a skip in one message.
 
-When applying, edit the plan at its own level — change Intent, Decisions, Traps or DoD lines; don't answer a finding by adding code or file-by-file steps. If a finding says something about the code, check the source before writing it into the plan. Then report in one line what changed and stop. No second review pass.
+Then stop. No second review pass.
 
 A finding that's real but outside the plan's scope — a pre-existing defect the plan doesn't cause or need fixed — isn't a plan edit. Offer to file it with `/backlog` instead.
 
