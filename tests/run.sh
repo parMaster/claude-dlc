@@ -911,7 +911,7 @@ assert_contains "ahead shows blue ↑N" '**TASK\-123** ^[↑2](color: "blue") --
 
 echo x >> "$GI_REPO/one"
 echo y > "$GI_REPO/untracked"
-assert_contains "changed and untracked files show orange ● N" '**TASK\-123** ^[● 2](color: "orange") ^[↑2]' "$(run_git_info Stop)"
+assert_contains "changed and untracked files show no count" '**TASK\-123** ^[↑2](color: "blue") --target' "$(run_git_info Stop)"
 
 gi_git checkout -- one
 rm "$GI_REPO/untracked"

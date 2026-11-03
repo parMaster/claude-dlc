@@ -1,5 +1,5 @@
 #!/bin/bash
-# Claude Code hook that shows the branch's ticket key and git counts on the agterm session's sidebar
+# Claude Code hook that shows the branch's ticket key and commits ahead/behind on the agterm session's sidebar
 # info line. Synchronous on purpose: a detached refresh could land after SessionEnd's clear.
 # Prints nothing, since SessionStart hook stdout becomes model context.
 set -u
@@ -32,18 +32,17 @@ fi
 # --no-optional-locks keeps status off index.lock, so a commit Claude runs at the same moment never
 # fails on it. Outside a repository the line is cleared, so a project switch drops the old repo.
 status=$(git -C "$cwd" --no-optional-locks status --porcelain=v2 --branch \
-  --untracked-files=all 2>/dev/null) || {
+  --untracked-files=no 2>/dev/null) || {
   info --clear
   exit 0
 }
 
-read -r head oid ahead behind changed <<EOF
+read -r head oid ahead behind <<EOF
 $(printf '%s\n' "$status" | awk '
   /^# branch\.oid /  { oid = substr($3, 1, 7) }
   /^# branch\.head / { head = $3 }
   /^# branch\.ab /   { a = substr($3, 2); b = substr($4, 2) }
-  /^[12u?] /         { n++ }
-  END { printf "%s %s %d %d %d\n", head, oid, a, b, n }')
+  END { printf "%s %s %d %d\n", head, oid, a, b }')
 EOF
 
 if [ "$head" = "(detached)" ]; then
@@ -60,7 +59,6 @@ fi
 name=$(printf '%s' "$name" | sed 's/[][\\`*_{}()<>#+!|~^&.-]/\\&/g')
 
 line="**$name**"
-[ "$changed" -gt 0 ] && line="$line ^[● $changed](color: \"orange\")"
 [ "$ahead" -gt 0 ] && line="$line ^[↑$ahead](color: \"blue\")"
 [ "$behind" -gt 0 ] && line="$line ^[↓$behind](color: \"purple\")"
 

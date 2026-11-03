@@ -160,10 +160,9 @@ A Claude session started by `handoff` or `spawn-session` knows which session sta
 
 A PreToolUse hook ([`approve-overlay`](plugins/agterm/scripts/approve-overlay.sh)) approves the `webrev` and `overlay` skills' own script calls, so they work in auto mode with no permission rule in settings. The hook approves only a single plain call of the plugin's `webrev.py` with `review`, `wait` or `result`, or of its `overlay.sh` with `html` or `url`, and stays silent for anything else. `overlay.sh` only ever runs `agtermctl session overlay open` against `$AGTERM_SESSION_ID`, and fails with a clear message outside agterm or when an overlay is already open. It can't run arbitrary programs; use agterm's own `agterm` skill for that.
 
-A second hook ([`git-info`](plugins/agterm/scripts/git-info.sh)) keeps a line under the session's sidebar row while Claude runs. It updates when Claude starts, after each edit or shell command, and when a turn ends:
+A second hook ([`git-info`](plugins/agterm/scripts/git-info.sh)) keeps a line under the session's sidebar row while Claude runs. It updates when Claude starts, after each shell command, and when a turn ends:
 
 - `TASK-123`: the ticket key from the branch (`feat/TASK-123-add-something`). Without one, the branch name cut to 10 characters, or the commit on a detached HEAD.
-- `● 3` (orange): changed and untracked files.
 - `↑2` (blue) and `↓4` (purple): commits ahead of and behind the upstream, as of the last fetch.
 
 A count shows only when it is above zero. The line goes away when Claude exits or works outside git. **Settings ▸ Interface ▸ Session info** hides it. Needs agterm 0.40.0+ and `jq`. Adapted from agterm's [claude-git-info](https://github.com/umputun/agterm/tree/master/cookbook/claude-git-info) recipe (MIT, Umputun).
