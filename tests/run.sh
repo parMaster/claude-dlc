@@ -854,6 +854,92 @@ else
   echo "$result"
 fi
 
+# ---------------------------------------------------------------------------
+# agterm/git-info.sh
+# ---------------------------------------------------------------------------
+
+GIT_INFO_SCRIPT="${REPO_ROOT}/plugins/agterm/scripts/git-info.sh"
+
+echo "agterm/git-info.sh"
+
+GI_DIR="$(mktemp -d)"
+GI_REPO="$GI_DIR/repo"
+GI_LOG="$GI_DIR/agtermctl.log"
+gi_git() { git -C "$GI_REPO" -c user.name=t -c user.email=t@t -c commit.gpgsign=false "$@" >/dev/null 2>&1; }
+gi_commit() { echo "$1" > "$GI_REPO/$1"; gi_git add -A; gi_git commit -qm "$1"; }
+
+# runs the hook with a fresh log and prints what it sent to agtermctl
+run_git_info() {
+  local event="$1" cwd="${2:-$GI_REPO}"
+  : > "$GI_LOG"
+  jq -n --arg e "$event" --arg c "$cwd" '{hook_event_name: $e, cwd: $c}' |
+    AGTERM_SESSION_ID=s1 AGTERM_SOCKET=/tmp/gi.sock CLAUDE_CODE_ENTRYPOINT=cli \
+    AGTERMCTL="${AGTERM_FAKE_BIN}/agtermctl" AGTERMCTL_LOG="$GI_LOG" bash "$GIT_INFO_SCRIPT"
+  cat "$GI_LOG"
+}
+
+git init -q --bare "$GI_DIR/remote.git"
+git init -q -b feat/TASK-123-add-something "$GI_REPO"
+gi_commit one
+gi_git remote add origin "$GI_DIR/remote.git"
+gi_git push -u origin feat/TASK-123-add-something
+
+assert_eq "ticket branch in sync shows the bold key" \
+  "session info --markdown --hide-after 86400 **TASK\-123** --target s1 --socket /tmp/gi.sock" \
+  "$(run_git_info SessionStart)"
+
+gi_commit two
+gi_commit three
+assert_contains "ahead shows blue ↑N" '**TASK\-123** ^[↑2](color: "blue") --target' "$(run_git_info PostToolUse)"
+
+echo x >> "$GI_REPO/one"
+echo y > "$GI_REPO/untracked"
+assert_contains "changed and untracked files show orange ● N" '**TASK\-123** ^[● 2](color: "orange") ^[↑2]' "$(run_git_info Stop)"
+
+gi_git checkout -- one
+rm "$GI_REPO/untracked"
+gi_git push
+gi_git reset --hard HEAD~1
+assert_contains "behind shows purple ↓N alone" '**TASK\-123** ^[↓1](color: "purple") --target' "$(run_git_info Stop)"
+
+gi_git checkout -q -b fix/TASK-1234-fix-everything
+assert_contains "the ticket comes from anywhere in the branch" '**TASK\-1234** --target' "$(run_git_info Stop)"
+
+gi_git checkout -q -b spike-new-sidebar-idea
+assert_contains "a branch without a ticket is cut to 10 characters" '**spike\-new\-…** --target' "$(run_git_info Stop)"
+
+gi_git checkout -q -b task-99
+assert_contains "a lowercase key is not a ticket; a short name shows in full" '**task\-99** --target' "$(run_git_info Stop)"
+
+gi_git checkout -q -b abcdefghi_xyz
+assert_contains "the name is escaped after the cut" '**abcdefghi\_…** --target' "$(run_git_info Stop)"
+
+gi_git checkout -q --detach
+gi_oid=$(git -C "$GI_REPO" rev-parse --short=7 HEAD)
+assert_contains "a detached HEAD shows its short commit" "**${gi_oid}** --target" "$(run_git_info Stop)"
+
+assert_eq "outside git clears the line" "session info --clear --target s1 --socket /tmp/gi.sock" "$(run_git_info Stop "$GI_DIR")"
+assert_eq "SessionEnd clears the line" "session info --clear --target s1 --socket /tmp/gi.sock" "$(run_git_info SessionEnd)"
+
+: > "$GI_LOG"
+result=$(jq -n --arg c "$GI_REPO" '{hook_event_name: "Stop", cwd: $c}' |
+  AGTERM_SESSION_ID="" AGTERMCTL="${AGTERM_FAKE_BIN}/agtermctl" AGTERMCTL_LOG="$GI_LOG" bash "$GIT_INFO_SCRIPT")
+assert_eq "outside agterm prints nothing" "" "$result"
+assert_eq "outside agterm sends nothing" "" "$(cat "$GI_LOG")"
+
+result=$(jq -n --arg c "$GI_REPO" '{hook_event_name: "Stop", cwd: $c}' |
+  AGTERM_SESSION_ID=s1 CLAUDE_CODE_ENTRYPOINT=sdk-cli AGTERMCTL="${AGTERM_FAKE_BIN}/agtermctl" AGTERMCTL_LOG="$GI_LOG" bash "$GIT_INFO_SCRIPT")
+assert_eq "a headless claude sends nothing" "" "$(cat "$GI_LOG")"
+
+if result=$(jq -n --arg c "$GI_REPO" '{hook_event_name: "Stop", cwd: $c}' |
+  AGTERM_SESSION_ID=s1 CLAUDE_CODE_ENTRYPOINT=cli AGTERMCTL=/nonexistent/agtermctl bash "$GIT_INFO_SCRIPT" 2>&1); then
+  assert_eq "a failing agtermctl prints nothing" "" "$result"
+else
+  fail "a failing agtermctl exits 0"
+fi
+
+rm -rf "$GI_DIR"
+
 rm -rf "$AGTERM_FAKE_BIN" "$TEST_REPO"
 
 # ---------------------------------------------------------------------------

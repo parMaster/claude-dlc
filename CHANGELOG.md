@@ -4,6 +4,16 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 2.1.0 - 2026-11-03
+
+New `git-info` hook, adapted from agterm's `claude-git-info` cookbook recipe.
+It sets the line under the session's sidebar row on SessionStart, after each
+edit or shell command, and on Stop, and clears it on SessionEnd. The line
+shows the ticket key from the branch name (or the branch cut to 10
+characters), then changed files, commits ahead and commits behind. Changes
+from upstream: the ticket key, the shorter name, and no clean, local-only or
+emoji markers. Needs agterm 0.40.0+.
+
 ## global-rules 2.0.1 - 2026-11-03
 
 Drops the rule that sent rich questions to huddle inside agterm. The
