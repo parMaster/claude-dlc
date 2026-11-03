@@ -868,13 +868,17 @@ GI_LOG="$GI_DIR/agtermctl.log"
 gi_git() { git -C "$GI_REPO" -c user.name=t -c user.email=t@t -c commit.gpgsign=false "$@" >/dev/null 2>&1; }
 gi_commit() { echo "$1" > "$GI_REPO/$1"; gi_git add -A; gi_git commit -qm "$1"; }
 
+# a here-string, not a pipe: the hook can exit before reading stdin, and a writer into the closed
+# pipe would fail the suite under pipefail.
+gi_input() { jq -n --arg e "$1" --arg c "$2" '{hook_event_name: $e, cwd: $c}'; }
+
 # runs the hook with a fresh log and prints what it sent to agtermctl
 run_git_info() {
   local event="$1" cwd="${2:-$GI_REPO}"
   : > "$GI_LOG"
-  jq -n --arg e "$event" --arg c "$cwd" '{hook_event_name: $e, cwd: $c}' |
-    AGTERM_SESSION_ID=s1 AGTERM_SOCKET=/tmp/gi.sock CLAUDE_CODE_ENTRYPOINT=cli \
-    AGTERMCTL="${AGTERM_FAKE_BIN}/agtermctl" AGTERMCTL_LOG="$GI_LOG" bash "$GIT_INFO_SCRIPT"
+  AGTERM_SESSION_ID=s1 AGTERM_SOCKET=/tmp/gi.sock CLAUDE_CODE_ENTRYPOINT=cli \
+    AGTERMCTL="${AGTERM_FAKE_BIN}/agtermctl" AGTERMCTL_LOG="$GI_LOG" \
+    bash "$GIT_INFO_SCRIPT" <<< "$(gi_input "$event" "$cwd")"
   cat "$GI_LOG"
 }
 
@@ -922,17 +926,17 @@ assert_eq "outside git clears the line" "session info --clear --target s1 --sock
 assert_eq "SessionEnd clears the line" "session info --clear --target s1 --socket /tmp/gi.sock" "$(run_git_info SessionEnd)"
 
 : > "$GI_LOG"
-result=$(jq -n --arg c "$GI_REPO" '{hook_event_name: "Stop", cwd: $c}' |
-  AGTERM_SESSION_ID="" AGTERMCTL="${AGTERM_FAKE_BIN}/agtermctl" AGTERMCTL_LOG="$GI_LOG" bash "$GIT_INFO_SCRIPT")
+result=$(AGTERM_SESSION_ID="" AGTERMCTL="${AGTERM_FAKE_BIN}/agtermctl" AGTERMCTL_LOG="$GI_LOG" \
+  bash "$GIT_INFO_SCRIPT" <<< "$(gi_input Stop "$GI_REPO")")
 assert_eq "outside agterm prints nothing" "" "$result"
 assert_eq "outside agterm sends nothing" "" "$(cat "$GI_LOG")"
 
-result=$(jq -n --arg c "$GI_REPO" '{hook_event_name: "Stop", cwd: $c}' |
-  AGTERM_SESSION_ID=s1 CLAUDE_CODE_ENTRYPOINT=sdk-cli AGTERMCTL="${AGTERM_FAKE_BIN}/agtermctl" AGTERMCTL_LOG="$GI_LOG" bash "$GIT_INFO_SCRIPT")
+result=$(AGTERM_SESSION_ID=s1 CLAUDE_CODE_ENTRYPOINT=sdk-cli AGTERMCTL="${AGTERM_FAKE_BIN}/agtermctl" AGTERMCTL_LOG="$GI_LOG" \
+  bash "$GIT_INFO_SCRIPT" <<< "$(gi_input Stop "$GI_REPO")")
 assert_eq "a headless claude sends nothing" "" "$(cat "$GI_LOG")"
 
-if result=$(jq -n --arg c "$GI_REPO" '{hook_event_name: "Stop", cwd: $c}' |
-  AGTERM_SESSION_ID=s1 CLAUDE_CODE_ENTRYPOINT=cli AGTERMCTL=/nonexistent/agtermctl bash "$GIT_INFO_SCRIPT" 2>&1); then
+if result=$(AGTERM_SESSION_ID=s1 CLAUDE_CODE_ENTRYPOINT=cli AGTERMCTL=/nonexistent/agtermctl \
+  bash "$GIT_INFO_SCRIPT" 2>&1 <<< "$(gi_input Stop "$GI_REPO")"); then
   assert_eq "a failing agtermctl prints nothing" "" "$result"
 else
   fail "a failing agtermctl exits 0"
