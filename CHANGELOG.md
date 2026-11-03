@@ -4,6 +4,11 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 2.0.1 - 2026-11-03
+
+Drops the rule that sent rich questions to huddle inside agterm. The
+plan-first rule no longer names revdiff as the way to review a plan.
+
 ## agterm 2.0.0 - 2026-11-03
 
 New `webrev` skill, adapted from agterm's `annotate-document` cookbook

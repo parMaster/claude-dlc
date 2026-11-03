@@ -1,7 +1,7 @@
 {
   "name": "global-rules",
   "description": "Shared global CLAUDE.md rules — plan-first workflow, commit hygiene, git hygiene, CLI best practices",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": {
     "name": "parmaster"
   },

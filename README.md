@@ -201,7 +201,7 @@ Run `claude --init-only` once after install. The setup hook is additive and idem
 - replaces the spinner's whimsical verbs ("Kerfuffling…") with `Thinking` / `Processing` / `Working`
 - sets `attribution` to `{"commit": "", "pr": ""}` so Claude Code doesn't add a Co-Authored-By trailer or PR attribution line
 
-The rules cover plan-first workflow, git hygiene, tests and lint before commit, short and readable replies (with rules borrowed from ASD-STE100, Simplified Technical English), asking rich questions through [huddle](https://github.com/skkap/claude-skills/tree/master/plugins/huddle) when it's installed, and memory and Atlassian MCP discipline.
+The rules cover plan-first workflow, git hygiene, tests and lint before commit, short and readable replies (with rules borrowed from ASD-STE100, Simplified Technical English), and memory and Atlassian MCP discipline.
 
 | Hook | Effect |
 |------|--------|

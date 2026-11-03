@@ -1,10 +1,9 @@
 ## Workflow: Plan-First Development
 - For non-trivial changes, ALWAYS produce a plan document FIRST before writing implementation code — create it with the `planning:plan` skill (writes `docs/plans/<date>-<name>.md`), even when the conversation reaches planning organically without an explicit "write a plan" request. Do NOT substitute the built-in plan mode (EnterPlanMode) for this; it only prints the plan into the conversation and does not save the `docs/plans/` document that `review-plan` and `pr` depend on.
 - Save plans under the project's plans/ directory following existing naming conventions
-- Wait for user review (often via revdiff annotations) before implementing
+- Wait for user review before implementing
 - After implementation is completed, before the last commit, move the plan to a completed/ subfolder
 - **Re-invoke skills, don't replay them from memory** — on a repeat use of a skill already loaded earlier in this conversation, call it again via the Skill tool. Never hand-write its steps from the transcript.
-- **Rich decisions go to huddle** — inside agterm (`AGTERM_ENABLED=1`) with the `huddle` skill installed, ask any question whose options need real explaining (trade-offs, pros/cons, diagrams, numbers) through huddle instead of AskUserQuestion, so the user can weigh them without first reading up on each one. Quick yes/no or one-word picks stay in AskUserQuestion.
 
 ## Git Hygiene
 - **Stale branch** — before starting to plan or implement, and again right before the final commit, check whether the current branch is behind its remote tracking branch (`git fetch` then `git status`). If it's behind, resync immediately — `git pull --rebase` (or plain `git pull` if there are no local commits yet) — instead of discovering it later when `git push` is rejected as non-fast-forward. Resolve any conflicts the resync surfaces as part of finishing the work, not as a follow-up.
