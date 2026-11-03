@@ -4,6 +4,33 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 2.0.0 - 2026-11-03
+
+New `webrev` skill, adapted from agterm's `annotate-document` cookbook
+recipe. It opens a markdown or text file as a page over the session. You
+attach notes to blocks, code lines or the whole file, and Claude applies them
+and reopens the page. "Open the plan" with no file opens the newest plan.
+Changes from upstream:
+
+- `review` writes its backup file itself, so a review is one approved call
+  with no `mktemp` step.
+- New `wait <page-id>` attaches to a page that is still open, so a review can
+  outlast Claude Code's 10-minute call limit.
+- The document text is 16px, weight 500, line-height 1.4, and a step softer
+  than the theme foreground. The page uses the terminal background instead of
+  the darker sidebar tint.
+- `WEBREV_BACKGROUND` and `WEBREV_FOREGROUND` replace the theme's page
+  colors.
+
+Breaking: `overlay` no longer opens markdown in glow; it keeps `html` and
+`url`. The `approve-overlay` hook now approves `webrev.py review|wait|result`
+and stops approving `overlay.sh md`.
+
+## planning 3.5.2 - 2026-11-03
+
+`plan` and `review-plan` list `/agterm:webrev` among the next steps, next to
+`revdiff:revdiff`.
+
 ## agterm 1.4.1 - 2026-10-30
 
 `spawn-session` no longer needs a chained Bash call, which `strict-bash`

@@ -710,12 +710,12 @@ echo "agterm/overlay.sh"
 
 OVERLAY_REPO="$(mktemp -d)"
 OVERLAY_REPO="$(cd "$OVERLAY_REPO" && pwd -P)"
-mkdir -p "$OVERLAY_REPO/docs/plans/completed" "$OVERLAY_REPO/sub" "$OVERLAY_REPO/it's dir"
-echo "# done" > "$OVERLAY_REPO/docs/plans/completed/old.md"
+mkdir -p "$OVERLAY_REPO/docs/plans" "$OVERLAY_REPO/sub" "$OVERLAY_REPO/it's dir"
+echo "# plan" > "$OVERLAY_REPO/docs/plans/plan.md"
 echo "<p>hi</p>" > "$OVERLAY_REPO/sub/page.html"
-echo "# q" > "$OVERLAY_REPO/it's dir/a b.md"
+echo "<p>q</p>" > "$OVERLAY_REPO/it's dir/a b.html"
 
-# run_overlay <cwd> <args...>; AGTERMCTL_RESULT_JSON and OVERLAY_SID (session id, default sess-1) pass through from the caller.
+# run_overlay <cwd> <args...>; OVERLAY_SID (session id, default sess-1) passes through from the caller.
 run_overlay() {
   local dir="$1"; shift
   (cd "$dir" && AGTERMCTL_LOG="$LOG" AGTERM_SESSION_ID="${OVERLAY_SID-sess-1}" \
@@ -723,28 +723,16 @@ run_overlay() {
 }
 
 LOG="$(mktemp)"
-result=$(run_overlay "$OVERLAY_REPO" md)
-assert_contains "md with no arg falls back to docs/plans/completed/" "opened $OVERLAY_REPO/docs/plans/completed/old.md" "$result"
-assert_contains "md opens glow -p through a login shell" "overlay open zsh -lc 'glow -p \"\$1\"' glow $OVERLAY_REPO/docs/plans/completed/old.md" "$(cat "$LOG")"
-assert_contains "md targets the caller's session" " --target sess-1" "$(head -1 "$LOG")"
-assert_contains "md sets --cwd to the file's directory" " --cwd $OVERLAY_REPO/docs/plans/completed" "$(head -1 "$LOG")"
-: > "$LOG"
+for args in "md" "md docs/plans/plan.md"; do
+  # shellcheck disable=SC2086
+  result=$(run_overlay "$OVERLAY_REPO" $args)
+  assert_contains "markdown kind is gone: $args" "usage: overlay.sh html <file> [--js] | url <url> [--js]" "$result"
+  assert_contains "markdown kind exits 1: $args" "exit:1" "$result"
+  assert_eq "markdown kind never calls agtermctl: $args" "" "$(cat "$LOG")"
+done
 
-echo "# old" > "$OVERLAY_REPO/docs/plans/older.md"
-touch -t 202001010000 "$OVERLAY_REPO/docs/plans/older.md"
-echo "# new" > "$OVERLAY_REPO/docs/plans/newer.md"
-result=$(run_overlay "$OVERLAY_REPO" md)
-assert_contains "md with no arg picks the newest active plan by mtime" "opened $OVERLAY_REPO/docs/plans/newer.md" "$result"
-: > "$LOG"
-
-result=$(run_overlay "$OVERLAY_REPO/sub" md "../it's dir/a b.md")
-assert_contains "md resolves a relative path with a quote and a space" "opened $OVERLAY_REPO/it's dir/a b.md" "$result"
-assert_contains "md escapes the path for the shell" "glow it\\'s\\ dir/a\\ b.md" "$(sed "s|$OVERLAY_REPO/||" "$LOG")"
-: > "$LOG"
-
-result=$(AGTERMCTL_RESULT_JSON='{"result":{"exitCode":127},"ok":true}' run_overlay "$OVERLAY_REPO" md docs/plans/newer.md)
-assert_contains "reports glow exiting right after opening" "glow exited with status 127" "$result"
-assert_contains "glow failure exits 1" "exit:1" "$result"
+result=$(run_overlay "$OVERLAY_REPO/sub" html "../it's dir/a b.html")
+assert_contains "html resolves a relative path with a quote and a space" "opened $OVERLAY_REPO/it's dir/a b.html" "$result"
 : > "$LOG"
 
 result=$(run_overlay "$OVERLAY_REPO/sub" html page.html)
@@ -778,18 +766,14 @@ result=$(run_overlay "$OVERLAY_REPO" url localhost:5173)
 assert_contains "url rejects a non-http(s)/file url" "not an http(s):// or file:// URL" "$result"
 assert_eq "rejected url never calls agtermctl" "" "$(cat "$LOG")"
 
-result=$(run_overlay "$OVERLAY_REPO" md missing.md)
-assert_contains "missing file fails" "no such file: missing.md" "$result"
+result=$(run_overlay "$OVERLAY_REPO" html missing.html)
+assert_contains "missing file fails" "no such file: missing.html" "$result"
 assert_eq "missing file never calls agtermctl" "" "$(cat "$LOG")"
 
-result=$(OVERLAY_SID="" run_overlay "$OVERLAY_REPO" md)
+result=$(OVERLAY_SID="" run_overlay "$OVERLAY_REPO/sub" html page.html)
 assert_contains "refuses outside agterm" "not inside an agterm session" "$result"
 assert_contains "outside agterm exits 1" "exit:1" "$result"
 assert_eq "outside agterm never calls agtermctl" "" "$(cat "$LOG")"
-
-rm -rf "$OVERLAY_REPO/docs/plans"/*.md "$OVERLAY_REPO/docs/plans/completed"/*.md
-result=$(run_overlay "$OVERLAY_REPO" md)
-assert_contains "no plans at all fails" "no plans found" "$result"
 
 result=$(run_overlay "$OVERLAY_REPO" run htop)
 assert_contains "unknown kind (run) is refused" "usage: overlay.sh" "$result"
@@ -808,37 +792,67 @@ echo "agterm/approve-overlay.sh"
 
 approve() { CLAUDE_PLUGIN_ROOT="$AGTERM_PLUGIN_ROOT" run_hook "$APPROVE_OVERLAY_SCRIPT" "$1"; }
 
+WEBREV="$AGTERM_PLUGIN_ROOT/scripts/webrev.py"
 for cmd in \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md" \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \"docs/plans/x.md\"" \
   "bash $AGTERM_PLUGIN_ROOT/scripts/overlay.sh html page.html" \
   "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html \"/tmp/backlog-dashboard-repo-123/index.html\" --js" \
   'bash "${CLAUDE_PLUGIN_ROOT}/scripts/overlay.sh" url "http://localhost:5173/" --js' \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \"\""; do
+  "python3 \"$WEBREV\" review" \
+  "python3 \"$WEBREV\" review docs/plans/x.md" \
+  "python3 $WEBREV review \"docs/plans/a b.md\" --output /tmp/webrev-1/result" \
+  "python3 \"$WEBREV\" review /tmp/webrev-draft-1/draft.txt --fit --title \"commit message: fix(x): y\"" \
+  'python3 "${CLAUDE_PLUGIN_ROOT}/scripts/webrev.py" review docs/plans/x.md' \
+  "python3 \"$WEBREV\" wait 15A281B4-D6A7-443C-8F87-C32F34CEB605" \
+  "python3 \"$WEBREV\" result 15A281B4-D6A7-443C-8F87-C32F34CEB605"; do
   assert_contains "allows: $cmd" '"permissionDecision": "allow"' "$(approve "$cmd")"
 done
 
 for cmd in \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md; rm -rf ~" \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md a.md && curl x" \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md a.md || true" \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md a.md | sh" \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \"\$(whoami).md\"" \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \`whoami\`" \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md a.md > /tmp/x" \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \$HOME/a.md" \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md a.md
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" md \"docs/plans/x.md\"" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html a.html; rm -rf ~" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html a.html && curl x" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html a.html || true" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html a.html | sh" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html \"\$(whoami).html\"" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html \`whoami\`" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html a.html > /tmp/x" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html \$HOME/a.html" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html a.html
 rm -rf ~" \
   "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" run htop" \
-  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" mdx a.md" \
-  "bash /tmp/evil/scripts/overlay.sh md a.md" \
+  "bash \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" htmlx a.html" \
+  "bash /tmp/evil/scripts/overlay.sh html a.html" \
+  "python3 \"$WEBREV\" review a.md; rm -rf ~" \
+  "python3 \"$WEBREV\" review a.md && curl x" \
+  "python3 \"$WEBREV\" review a.md --output \$TMPDIR/result" \
+  "python3 \"$WEBREV\" review \"\$(whoami).md\"" \
+  "python3 \"$WEBREV\" render a.md /tmp/out.html" \
+  "python3 \"$WEBREV\" reviewx a.md" \
+  "python3 \"$WEBREV\"" \
+  "python3 /tmp/evil/scripts/webrev.py review a.md" \
+  "bash \"$WEBREV\" review a.md" \
+  "python3 \"$AGTERM_PLUGIN_ROOT/scripts/overlay.sh\" html a.html" \
   "agtermctl session overlay open htop --target x" \
   "ls -la"; do
   assert_eq "no decision: $cmd" "" "$(approve "$cmd")"
 done
 
 assert_eq "no decision without CLAUDE_PLUGIN_ROOT" "" \
-  "$(CLAUDE_PLUGIN_ROOT="" run_hook "$APPROVE_OVERLAY_SCRIPT" "bash /scripts/overlay.sh md")"
+  "$(CLAUDE_PLUGIN_ROOT="" run_hook "$APPROVE_OVERLAY_SCRIPT" "bash /scripts/overlay.sh html a.html")"
+
+# ---------------------------------------------------------------------------
+# agterm/webrev.py
+# ---------------------------------------------------------------------------
+
+echo "agterm/webrev.py"
+
+if result=$(python3 "$REPO_ROOT/tests/test_webrev.py" 2>&1); then
+  pass "webrev.py unit tests"
+else
+  fail "webrev.py unit tests"
+  echo "$result"
+fi
 
 rm -rf "$AGTERM_FAKE_BIN" "$TEST_REPO"
 

@@ -31,6 +31,7 @@ flowchart TD
     BS(["brainstorm"])
     PL(["planning:plan"])
     RP(["planning:review-plan"])
+    WR(["agterm:webrev"])
     RD(["revdiff:revdiff"])
     IM["implement"]
     DPR(["planning:pr"])
@@ -38,9 +39,11 @@ flowchart TD
     OV -.->|optional, multi-plan epics| PL
     BS -.->|optional warmup| PL
     PL -.->|optional| RP
+    PL -.->|optional, annotate in agterm| WR
     PL -.->|optional| RD
     PL --> IM
     RP --> IM
+    WR --> IM
     RD --> IM
     IM -.->|manual, when you want one| DPR
 ```
@@ -138,7 +141,7 @@ Writing style for technical communication.
 
 ### [agterm](plugins/agterm)
 
-Helpers for [agterm](https://github.com/umputun/agterm): open things in an overlay (a panel floating over the current session that closes on `q` (glow), Cmd-W or its close button), and hand a plan or a task off to a fresh session.
+Helpers for [agterm](https://github.com/umputun/agterm): review a plan or document on a page you can annotate, open HTML files and URLs in an overlay (a panel floating over the current session that closes on Cmd-W or its close button), and hand a plan or a task off to a fresh session.
 
 ```
 /plugin install agterm@parmaster-claude-dlc
@@ -146,19 +149,20 @@ Helpers for [agterm](https://github.com/umputun/agterm): open things in an overl
 
 | Skill | What it does |
 |-------|--------------|
-| [`overlay`](plugins/agterm/skills/overlay/SKILL.md) | Opens a markdown file in `glow`, a local HTML file, or a URL. "Open the latest plan in glow" picks the newest file in `docs/plans/`, then `docs/plans/completed/`. Also triggers on "open <file> in an overlay", "show <file.html> in agterm", "open <url> in an overlay", or `/agterm:overlay [file\|url]`. HTML files and URLs open with JavaScript off unless `--js` is added. |
+| [`webrev`](plugins/agterm/skills/webrev/SKILL.md) | Opens a markdown or text file as a rendered page over the session. Click a paragraph, table row or code line to attach a note, or add a note for the whole file, then press Submit (`q`). Claude gets the notes with their source lines, answers the questions, applies the rest, and reopens the page until you submit with no notes. "Open the plan" with no file picks the newest file in `docs/plans/`, then `docs/plans/completed/`. Also reviews a draft PR body, comment or commit message before it goes out. A review can outlast Claude Code's 10-minute call limit: Claude reattaches to the open page with `webrev.py wait`. The page follows the agterm theme; to use your own colors, set `WEBREV_BACKGROUND` and `WEBREV_FOREGROUND` (`#rrggbb`) in the `env` block of `~/.claude/settings.json`. Needs agterm 0.38.1+ and `python3` 3.10+. Adapted from agterm's [annotate-document](https://github.com/umputun/agterm/tree/master/cookbook/annotate-document) recipe (MIT, Umputun). |
+| [`overlay`](plugins/agterm/skills/overlay/SKILL.md) | Opens a local HTML file or a URL. Triggers on "open <file.html> in an overlay", "show <file.html> in agterm", "open <url> in an overlay", or `/agterm:overlay [file\|url]`. HTML files and URLs open with JavaScript off unless `--js` is added. |
 | [`handoff`](plugins/agterm/skills/handoff/SKILL.md) | Sends a plan from `docs/plans/` to a fresh agterm session on Claude or Codex. Explicit-only: `/agterm:handoff [plan-file]`. |
 | [`spawn-session`](plugins/agterm/skills/spawn-session/SKILL.md) | Sends an arbitrary task to a fresh agterm session on Claude or Codex. Also triggers from natural language ("spawn a new session for this"). |
 
-Both skills open the new session as an agterm companion of the calling session (`agtermctl session new --parent`), so it sits indented under its parent in the sidebar. Claude hand-off sessions start in auto mode, or accept-edits when an org setting turns auto mode off. Hand-off sessions are flagged (`agtermctl session flag on`) so in-flight work shows up in agterm's flagged view.
+`handoff` and `spawn-session` open the new session as an agterm companion of the calling session (`agtermctl session new --parent`), so it sits indented under its parent in the sidebar. Claude hand-off sessions start in auto mode, or accept-edits when an org setting turns auto mode off. Hand-off sessions are flagged (`agtermctl session flag on`) so in-flight work shows up in agterm's flagged view.
 
 A Claude session started by `handoff` or `spawn-session` knows which session started it: its prompt ends with a plain "Spawned from Claude session <name>." line (the name comes from `ListAgents`). The line carries no instruction, so the new session messages the parent only when you tell it to. Codex sessions don't get the footer.
 
-A PreToolUse hook ([`approve-overlay`](plugins/agterm/scripts/approve-overlay.sh)) approves the `overlay` skill's own script calls, so it works in auto mode with no permission rule in settings. The hook approves only a single plain call of the plugin's `overlay.sh` with `md`, `html` or `url`, and stays silent for anything else. The script only ever runs `agtermctl session overlay open|result` against `$AGTERM_SESSION_ID`, and fails with a clear message outside agterm or when an overlay is already open. It can't run arbitrary programs; use agterm's own `agterm` skill for that.
+A PreToolUse hook ([`approve-overlay`](plugins/agterm/scripts/approve-overlay.sh)) approves the `webrev` and `overlay` skills' own script calls, so they work in auto mode with no permission rule in settings. The hook approves only a single plain call of the plugin's `webrev.py` with `review`, `wait` or `result`, or of its `overlay.sh` with `html` or `url`, and stays silent for anything else. `overlay.sh` only ever runs `agtermctl session overlay open` against `$AGTERM_SESSION_ID`, and fails with a clear message outside agterm or when an overlay is already open. It can't run arbitrary programs; use agterm's own `agterm` skill for that.
 
 #### Optional agterm key commands
 
-Two custom commands for agterm's `~/.config/agterm/keymap.conf` that open an overlay straight from a key, without going through Claude. Paste the ones you want, change the chords to taste, then run `agtermctl keymap reload`. Each is a single line.
+Three custom commands for agterm's `~/.config/agterm/keymap.conf` that open an overlay straight from a key, without going through Claude. Paste the ones you want, change the chords to taste, then run `agtermctl keymap reload`. Each is a single line.
 
 **Backlog Dashboard** builds the `planning` plugin's backlog dashboard for the session's repo and opens it. It needs the `planning` plugin from this marketplace, `git` and `jq`. In a folder with no backlog it shows the reason as a short message.
 
@@ -170,6 +174,12 @@ command "Backlog Dashboard" cmd+shift+b cd "$AGT_SESSION_PWD" && f=$(bash ~/.cla
 
 ```
 command "Glow Selection" cmd+shift+g f=$AGT_SELECTION; [ -n "$f" ] || f=$(pbpaste); f=$(printf %s "$f" | head -1 | sed 's/^[[:space:]`]*//; s/[[:space:]`]*$//' | cut -c1-200); cd "$AGT_SESSION_PWD" && [ -f "$f" ] && { agtermctl session overlay open "zsh -lc 'glow -p \"\$1\"' glow $(printf %q "$f")" --cwd "$AGT_SESSION_PWD" --size-percent 90 --target "$AGT_SESSION_ID" --socket "$AGT_SOCKET"; exit; }; agtermctl session hud "Glow Selection: no such file: $f" --hide-after 4 --target "$AGT_SESSION_ID" --socket "$AGT_SOCKET"
+```
+
+**Webrev Selection** opens the selected file path in the `webrev` page, without Claude. With nothing selected it uses the clipboard. No agent reads the notes, so when you submit any, they go to the clipboard to paste into a session. It needs the `agterm` plugin from this marketplace. The `PATH` puts Homebrew first because agterm's GUI `PATH` finds macOS's `/usr/bin/python3` (3.9) first, and webrev needs 3.10+. Claude Code's `env` doesn't reach key commands, so to use your own page colors, add `WEBREV_BACKGROUND=#rrggbb WEBREV_FOREGROUND=#rrggbb` in front of `python3`.
+
+```
+command "Webrev Selection" cmd+shift+w f=$AGT_SELECTION; [ -n "$f" ] || f=$(pbpaste); f=$(printf %s "$f" | head -1 | sed 's/^[[:space:]`(]*//; s/[[:space:]`.,;:!?)]*$//' | cut -c1-200); case $f in "~/"*) f=$HOME/${f#"~/"};; esac; cd "$AGT_SESSION_PWD" && [ -f "$f" ] && { n=$(AGTERM_SESSION_ID="$AGT_SESSION_ID" AGTERM_SOCKET="$AGT_SOCKET" PATH="/opt/homebrew/bin:/usr/local/bin:$PATH" python3 ~/.claude/plugins/marketplaces/parmaster-claude-dlc/plugins/agterm/scripts/webrev.py review "$f" 2>/dev/null); rc=$?; [ $rc = 1 ] && agtermctl session hud "Webrev failed; run webrev.py review in a shell to see why" --hide-after 6 --target "$AGT_SESSION_ID" --socket "$AGT_SOCKET"; [ $rc = 0 ] && [ -n "$n" ] && printf %s "$n" | pbcopy && agtermctl session hud "Webrev: notes copied to the clipboard" --hide-after 4 --target "$AGT_SESSION_ID" --socket "$AGT_SOCKET"; exit; }; agtermctl session hud "Webrev Selection: no such file: $f" --hide-after 4 --target "$AGT_SESSION_ID" --socket "$AGT_SOCKET"
 ```
 
 ---

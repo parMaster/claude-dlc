@@ -67,4 +67,4 @@ When applying, edit the plan at its own level — change Intent, Decisions, Trap
 
 A finding that's real but outside the plan's scope — a pre-existing defect the plan doesn't cause or need fixed — isn't a plan edit. Offer to file it with `/backlog` instead.
 
-Don't start implementation from here — the user calls `/agterm:handoff`, `revdiff:revdiff`, or starts implementing when ready.
+Don't start implementation from here — the user calls `/agterm:handoff`, `/agterm:webrev`, `revdiff:revdiff`, or starts implementing when ready.

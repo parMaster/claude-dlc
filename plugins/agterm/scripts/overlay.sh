@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Open a markdown file (glow), an HTML file or a URL in an agterm overlay over
-# the caller's own session. Only ever runs `agtermctl session overlay open|result`
-# against $AGTERM_SESSION_ID — approve-overlay.sh auto-approves calls to this
-# script on the strength of that.
+# Open an HTML file or a URL in an agterm overlay over the caller's own
+# session. Only ever runs `agtermctl session overlay open` against
+# $AGTERM_SESSION_ID — approve-overlay.sh auto-approves calls to this script on
+# the strength of that. Markdown goes to webrev.py instead.
 #
-# Usage: overlay.sh md [file]     # no file = newest plan in docs/plans/, then docs/plans/completed/
-#        overlay.sh html <file> [--js]
+# Usage: overlay.sh html <file> [--js]
 #        overlay.sh url <url> [--js]
 
 set -euo pipefail
@@ -23,16 +22,6 @@ abs_file() {
   (cd "$(dirname "$1")" && printf '%s/%s' "$(pwd)" "$(basename "$1")")
 }
 
-latest_plan() {
-  local dir newest
-  for dir in docs/plans docs/plans/completed; do
-    # ls -t sorts by mtime; plan names never contain newlines.
-    newest=$(ls -t "$dir"/*.md 2>/dev/null | head -1 || true)
-    if [ -n "$newest" ]; then printf '%s' "$newest"; return; fi
-  done
-  die "no plans found in docs/plans/ or docs/plans/completed/"
-}
-
 open_overlay() {
   local err
   if ! err=$(agtermctl session overlay open "$@" --target "$AGTERM_SESSION_ID" 2>&1 >/dev/null); then
@@ -46,24 +35,6 @@ open_overlay() {
 }
 
 case "$kind" in
-  md)
-    if [ -z "$arg" ]; then arg=$(latest_plan) || exit 1; fi
-    file=$(abs_file "$arg") || exit 1
-    # agterm shell-parses the command line; handing the path to zsh as $1 keeps
-    # it to one level of quoting, so spaces and quotes in the path survive.
-    printf -v quoted '%q' "$file"
-    open_overlay "zsh -lc 'glow -p \"\$1\"' glow $quoted" --cwd "$(dirname "$file")" --size-percent 90
-    # A glow that can't start (not on PATH, bad file) closes the overlay at
-    # once, which looks like nothing happened; surface its exit code instead.
-    sleep 1
-    if status=$(agtermctl session overlay result --json --target "$AGTERM_SESSION_ID" 2>/dev/null); then
-      code=$(printf '%s' "$status" | jq -r '.result.exitCode // empty')
-      if [ -n "$code" ] && [ "$code" != 0 ]; then
-        die "glow exited with status $code right after opening $file"
-      fi
-    fi
-    echo "opened $file"
-    ;;
   html)
     [ -n "$arg" ] || die "usage: overlay.sh html <file> [--js]"
     file=$(abs_file "$arg") || exit 1
@@ -83,6 +54,6 @@ case "$kind" in
     echo "opened $arg"
     ;;
   *)
-    die "usage: overlay.sh md [file] | html <file> [--js] | url <url> [--js]"
+    die "usage: overlay.sh html <file> [--js] | url <url> [--js]"
     ;;
 esac
