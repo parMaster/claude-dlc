@@ -21,12 +21,12 @@ assert_eq() {
 
 assert_contains() {
   local desc="$1" needle="$2" haystack="$3"
-  if echo "$haystack" | grep -qF "$needle"; then pass "$desc"; else fail "$desc (expected to contain: '$needle')"; fi
+  if echo "$haystack" | grep -qF -- "$needle"; then pass "$desc"; else fail "$desc (expected to contain: '$needle')"; fi
 }
 
 assert_not_contains() {
   local desc="$1" needle="$2" haystack="$3"
-  if echo "$haystack" | grep -qF "$needle"; then fail "$desc (expected NOT to contain: '$needle')"; else pass "$desc"; fi
+  if echo "$haystack" | grep -qF -- "$needle"; then fail "$desc (expected NOT to contain: '$needle')"; else pass "$desc"; fi
 }
 
 run_setup() {
@@ -435,6 +435,7 @@ result=$(
 assert_eq "prints the session id on success" "fake-session-id" "$result"
 assert_contains "creates a companion of the caller's session" "session new --parent sess-1 --cwd /tmp/some/dir" "$(cat "$LOG")"
 assert_not_contains "passes no workspace flags" " --workspace" "$(cat "$LOG")"
+assert_contains "tints the new session's icon purple" "session tint purple --on icon --target fake-session-id" "$(cat "$LOG")"
 assert_contains "flags the new session" "session flag on --target fake-session-id" "$(cat "$LOG")"
 rm -f "$LOG"
 

@@ -38,4 +38,8 @@ fi
 # failure must not abort a hand-off that otherwise succeeded.
 agtermctl session flag on --target "$SID" >/dev/null 2>&1 || true
 
+# Purple marks a hand-off without clashing with a status glyph's grey, green
+# or orange. Best-effort too: an agterm without tints still gets the session.
+agtermctl session tint purple --on icon --target "$SID" >/dev/null 2>&1 || true
+
 echo "$SID"

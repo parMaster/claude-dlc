@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 2.1.2 - 2026-11-05
+
+Sessions opened by `handoff` and `spawn-session` get a purple icon in the
+sidebar, so a hand-off stands out from sessions you opened yourself. Purple
+doesn't clash with any status glyph color.
+
 ## planning 3.6.0 - 2026-11-03
 
 `review-plan` no longer asks which findings to apply. Nearly every answer was
