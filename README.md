@@ -162,7 +162,7 @@ A PreToolUse hook ([`approve-overlay`](plugins/agterm/scripts/approve-overlay.sh
 
 A second hook ([`git-info`](plugins/agterm/scripts/git-info.sh)) keeps a line under the session's sidebar row while Claude runs. It updates when Claude starts, after each shell command, and when a turn ends:
 
-- `TASK-123`: the ticket key from the branch (`feat/TASK-123-add-something`). Without one, the branch name cut to 10 characters, or the commit on a detached HEAD.
+- `TASK-123`: the ticket key from the branch (`feat/TASK-123-add-something`). Without one, the branch name cut to 20 characters, or the commit on a detached HEAD.
 - `↑2` (blue) and `↓4` (purple): commits ahead of and behind the upstream, as of the last fetch.
 
 A count shows only when it is above zero. The line goes away when Claude exits or works outside git. **Settings ▸ Interface ▸ Session info** hides it. Needs agterm 0.40.0+ and `jq`. Adapted from agterm's [claude-git-info](https://github.com/umputun/agterm/tree/master/cookbook/claude-git-info) recipe (MIT, Umputun).

@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 2.1.3 - 2026-11-07
+
+The sidebar line now cuts a branch name without a ticket at 20 characters
+instead of 10. Ten cut most names before they said anything, and 20 still
+fits the sidebar.
+
 ## global-rules 2.1.1 - 2026-11-07
 
 Trimmed the shared CLAUDE.md. These rules were dropped because the model

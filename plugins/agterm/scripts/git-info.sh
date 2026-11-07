@@ -51,7 +51,7 @@ else
   name=$(printf '%s' "$head" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1)
   if [ -z "$name" ]; then
     name=$head
-    [ "${#name}" -le 10 ] || name="${name:0:10}…"
+    [ "${#name}" -le 20 ] || name="${name:0:20}…"
   fi
 fi
 # cut before escaping, so the cut never splits a backslash from its character. Git allows backticks,

@@ -923,14 +923,14 @@ assert_contains "behind shows purple ↓N alone" '**TASK\-123** ^[↓1](color: "
 gi_git checkout -q -b fix/TASK-1234-fix-everything
 assert_contains "the ticket comes from anywhere in the branch" '**TASK\-1234** --target' "$(run_git_info Stop)"
 
-gi_git checkout -q -b spike-new-sidebar-idea
-assert_contains "a branch without a ticket is cut to 10 characters" '**spike\-new\-…** --target' "$(run_git_info Stop)"
+gi_git checkout -q -b spike-new-sidebar-idea-two
+assert_contains "a branch without a ticket is cut to 20 characters" '**spike\-new\-sidebar\-id…** --target' "$(run_git_info Stop)"
 
 gi_git checkout -q -b task-99
 assert_contains "a lowercase key is not a ticket; a short name shows in full" '**task\-99** --target' "$(run_git_info Stop)"
 
-gi_git checkout -q -b abcdefghi_xyz
-assert_contains "the name is escaped after the cut" '**abcdefghi\_…** --target' "$(run_git_info Stop)"
+gi_git checkout -q -b abcdefghijklmnopqrs_xyz
+assert_contains "the name is escaped after the cut" '**abcdefghijklmnopqrs\_…** --target' "$(run_git_info Stop)"
 
 gi_git checkout -q --detach
 gi_oid=$(git -C "$GI_REPO" rev-parse --short=7 HEAD)
