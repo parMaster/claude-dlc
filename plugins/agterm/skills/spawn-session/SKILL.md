@@ -27,7 +27,8 @@ $ARGUMENTS
 
 ## Step 2: Name
 
-- Session name: short sidebar label, e.g. `Spawn: <slug>`.
+- Session name: short sidebar label, e.g. `parser`. No `Spawn:` prefix —
+  the companion indent and the spawn flag already mark it.
 - The session opens as a companion of this one, indented under it in the
   sidebar, so slices of a larger job group there with no extra step.
 - Slices sharing a stateful resource (database, lock, port): spawn one at a
@@ -109,11 +110,11 @@ for the Codex runtime:
 
 ```bash
 # Claude, model chosen
-... "/path/to/repo" "Spawn: parser" "/tmp/agterm-spawn-parser.md" "--model opus"
+... "/path/to/repo" "parser" "/tmp/agterm-spawn-parser.md" "--model opus"
 # Codex, model chosen
-... "/path/to/repo" "Spawn: parser" "/tmp/agterm-spawn-parser.md" "--model gpt-5.1-codex"
+... "/path/to/repo" "parser" "/tmp/agterm-spawn-parser.md" "--model gpt-5.1-codex"
 # Claude, Inherit
-... "/path/to/repo" "Spawn: parser" "/tmp/agterm-spawn-parser.md"
+... "/path/to/repo" "parser" "/tmp/agterm-spawn-parser.md"
 ```
 
 ## Step 6: Report the outcome

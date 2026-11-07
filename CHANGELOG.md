@@ -4,6 +4,11 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 2.1.4 - 2026-11-07
+
+`spawn-session` no longer prefixes the session name with `Spawn:`. The
+companion indent and the spawn flag already mark a spawned session.
+
 ## global-rules 2.2.0 - 2026-11-07
 
 The setup hook turns off claude.ai-synced skills that never get used in the
