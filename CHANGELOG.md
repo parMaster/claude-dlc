@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 2.2.0 - 2026-11-07
+
+The setup hook turns off claude.ai-synced skills that never get used in the
+CLI. It writes `"off"` entries to `skillOverrides`:
+
+- `docs`, `docx`, `pdf`, `pptx`, `xlsx`
+- `google-workspace`, `import-memory`, `morning`
+- `built-in-browser`, `computer-use`, `deep-research`
+
+Toggles made in `/skills` only reach the project's `settings.local.json`,
+so they never carried over to other projects or machines. The skills stay on
+in the claude.ai app, and `skill-creator` is left alone. Setup adds only
+skills that have no entry, so one you set back to `"on"` stays on.
+
 ## agterm 2.1.3 - 2026-11-07
 
 The sidebar line now cuts a branch name without a ticket at 20 characters

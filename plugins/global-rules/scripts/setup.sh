@@ -7,6 +7,7 @@
 # 5. ensure spinnerVerbs is set in ~/.claude/settings.json
 # 6. ensure attribution (commit/PR trailers) is off in ~/.claude/settings.json
 # 7. ensure preferredNotifChannel is set in ~/.claude/settings.json
+# 8. ensure unused claude.ai-synced skills are off via skillOverrides
 # Never overwrites existing content — only adds what's missing, idempotently.
 
 GLOBAL_CLAUDE="${HOME}/.claude/CLAUDE.md"
@@ -121,4 +122,18 @@ if [ -z "$CURRENT_NOTIF" ]; then
   else
     rm -f "$tmpfile"
   fi
+fi
+
+# Hide claude.ai-synced skills that never get used in the CLI. Each one costs
+# context on every session. The claude.ai toggle would also remove them from the
+# web app, so this stays local. Adds only skills with no entry, so a hand-set
+# "on" survives.
+OFF_SKILLS='["built-in-browser","computer-use","deep-research","docs","docx","google-workspace","import-memory","morning","pdf","pptx","xlsx"]'
+tmpfile=$(mktemp)
+if jq --argjson names "$OFF_SKILLS" \
+  '.skillOverrides = (reduce $names[] as $n (.skillOverrides // {}; if has($n) then . else .[$n] = "off" end))' \
+  "$SETTINGS" > "$tmpfile" 2>/dev/null && [ -s "$tmpfile" ]; then
+  mv "$tmpfile" "$SETTINGS"
+else
+  rm -f "$tmpfile"
 fi

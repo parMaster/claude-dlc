@@ -208,6 +208,7 @@ Run `claude --init-only` once after install. The setup hook is additive and idem
 - replaces the spinner's whimsical verbs ("Kerfuffling…") with `Thinking` / `Processing` / `Working`
 - sets `attribution` to `{"commit": "", "pr": ""}` so Claude Code doesn't add a Co-Authored-By trailer or PR attribution line
 - sets `preferredNotifChannel: "notifications_disabled"` so the 60s idle "waiting for input" ping doesn't mark a quiet session as unread
+- turns off unused claude.ai-synced skills in `skillOverrides` (`docs`, `docx`, `pdf`, `pptx`, `xlsx`, `google-workspace`, `import-memory`, `morning`, `built-in-browser`, `computer-use`, `deep-research`). They stay on in the claude.ai app, and a skill you set back to `"on"` stays on
 
 The rules cover plan-first workflow, git hygiene, tests and lint before commit, short and readable replies (with rules borrowed from ASD-STE100, Simplified Technical English), and memory and Atlassian MCP discipline.
 

@@ -175,6 +175,22 @@ run_setup "$GLOBALRULES_SCRIPT" "$GLOBALRULES_ROOT"
 assert_eq "keeps an existing notification channel" "ghostty" "$(jq -r '.preferredNotifChannel' "${TEST_HOME}/.claude/settings.json")"
 rm -rf "$TEST_HOME"
 
+TEST_HOME="$(mktemp -d)"
+mkdir -p "${TEST_HOME}/.claude"
+run_setup "$GLOBALRULES_SCRIPT" "$GLOBALRULES_ROOT"
+assert_eq "turns off an unused synced skill" "off" "$(jq -r '.skillOverrides.docx' "${TEST_HOME}/.claude/settings.json")"
+assert_eq "leaves skill-creator alone" "null" "$(jq -r '.skillOverrides["skill-creator"]' "${TEST_HOME}/.claude/settings.json")"
+rm -rf "$TEST_HOME"
+
+TEST_HOME="$(mktemp -d)"
+mkdir -p "${TEST_HOME}/.claude"
+echo '{"skillOverrides": {"pdf": "on", "deploy": "off"}}' > "${TEST_HOME}/.claude/settings.json"
+run_setup "$GLOBALRULES_SCRIPT" "$GLOBALRULES_ROOT"
+assert_eq "keeps a skill the user turned back on" "on" "$(jq -r '.skillOverrides.pdf' "${TEST_HOME}/.claude/settings.json")"
+assert_eq "keeps the user's other overrides" "off" "$(jq -r '.skillOverrides.deploy' "${TEST_HOME}/.claude/settings.json")"
+assert_eq "adds the missing overrides next to them" "off" "$(jq -r '.skillOverrides.xlsx' "${TEST_HOME}/.claude/settings.json")"
+rm -rf "$TEST_HOME"
+
 # ---------------------------------------------------------------------------
 # global-rules/block-root-find.sh
 # ---------------------------------------------------------------------------
