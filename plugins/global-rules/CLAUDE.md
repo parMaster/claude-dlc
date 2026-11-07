@@ -1,33 +1,20 @@
 ## Workflow: Plan-First Development
 - For non-trivial changes, ALWAYS produce a plan document FIRST before writing implementation code — create it with the `planning:plan` skill (writes `docs/plans/<date>-<name>.md`), even when the conversation reaches planning organically without an explicit "write a plan" request. Do NOT substitute the built-in plan mode (EnterPlanMode) for this; it only prints the plan into the conversation and does not save the `docs/plans/` document that `review-plan` and `pr` depend on.
-- Save plans under the project's plans/ directory following existing naming conventions
 - Wait for user review before implementing
 - After implementation is completed, before the last commit, move the plan to a completed/ subfolder
-- **Re-invoke skills, don't replay them from memory** — on a repeat use of a skill already loaded earlier in this conversation, call it again via the Skill tool. Never hand-write its steps from the transcript.
 
 ## Git Hygiene
 - **Stale branch** — before starting to plan or implement, and again right before the final commit, check whether the current branch is behind its remote tracking branch (`git fetch` then `git status`). If it's behind, resync immediately — `git pull --rebase` (or plain `git pull` if there are no local commits yet) — instead of discovering it later when `git push` is rejected as non-fast-forward. Resolve any conflicts the resync surfaces as part of finishing the work, not as a follow-up.
 
 ## Verification Before Commit
-- NEVER commit until all tests pass locally — run the project's test suite (`make test`, the CI test step, or `go test ./...`)
-- NEVER commit until the linter passes — run the appropriate linter for the project (e.g. `golangci-lint run ./...` for Go, `eslint .` for JS/TS) and fix any failures before committing
+- NEVER commit until the project's tests (`make test`, the CI test step, or `go test ./...`) and linter (`golangci-lint run ./...`, `eslint .`) pass locally.
 - **Reproduce, then fix** — when a test fails, see it fail before you fix it. A CI log of the failure already counts. After the fix, one passing run proves it. Don't stash or revert a finished fix to watch the test fail again.
-- NEVER auto-commit when the user is mid-review or has indicated they'll commit manually
-- For config/setting name changes, verify all references (grep) and update plan docs, memory, AND application code
-- For multi-file refactors, verify no duplicate declarations across files in the same package before claiming done
 
 ## Code Comments
-- A comment states the "why" a reader needs at that spot, in 1–2 lines. Never restate what the code plainly does.
 - Never point elsewhere — no ticket, plan, spec, slice or PR reference. Inline the one clause of context the reader needs instead. The `block-comment-refs` hook denies the grep-able cases.
 
-## Honesty About Uncertainty
-- Do NOT claim 'no regressions' without actually running the relevant test suites
-- Do NOT invent helper functions, verify they exist via grep/Read first
-- When asked about a library's capabilities (e.g., slog support in controller-runtime), check the actual source rather than asserting from memory
-
 ## Atlassian MCP Hygiene
-- **Delegate the goal, once, to `atlassian-caller`** — every Atlassian MCP call (Jira or Confluence) goes through the `atlassian-caller` subagent (Agent tool, `subagent_type: global-rules:atlassian-caller` — plugin agents register under their plugin's name), even a lone `getJiraIssue`. Ask for an end result ("confirm the issue is Done, transitioning it if it isn't": read status, walk the transitions, verify) and use only its report. One `atlassian-caller` spawn per goal, never one per call — it has no Agent tool in its own toolset, so it cannot re-delegate even if it tries.
-- **Scope the fields** — pass an explicit `fields` array (`["status"]`, `["description"]`) and `responseContentFormat: "markdown"`. The default set drags in `assignee`, `reporter` and `project` as nested objects full of avatar URLs; use `["*all"]` only when asked for full fidelity.
+- Route every Atlassian MCP call (Jira or Confluence) through one `global-rules:atlassian-caller` spawn per goal, even a lone `getJiraIssue`. Ask for the end result ("confirm the issue is Done, transitioning it if it isn't") and use only its report.
 
 ## Go codebases
 
@@ -36,10 +23,8 @@
 **Dependency source lookup** — to read a dependency's actual source (verifying behavior, checking a function body, etc.), check `./vendor/<module-path>` in the current repo FIRST. Only fall back to `go env GOMODCACHE` if the repo has no `vendor/` dir or the package isn't vendored there — these repos are vendored essentially 100% of the time.
 
 ## Auto-Memory Discipline
-- Don't treat "user gave feedback/correction" alone as a trigger to propose a memory save. Only consider saving something when it (1) isn't already recorded elsewhere — code, CLAUDE.md, git history — and (2) would matter in a future session on unrelated work. If it fails either check, say nothing about memory.
-- If it passes both checks, before writing to the auto-memory system (`~/.claude/projects/*/memory/`), propose the memory content and ask for confirmation first — do not write silently.
-- Exception: skip the checks and the confirmation ask only when the user unambiguously directs you to persist something to *your memory system* — "remember this for next time", "save that to memory", "add this to your notes." A colloquial "remember" about a task ("we should remember to update the ticket") is not this — that's a to-do, not an instruction to write to memory, and gets no special treatment.
-- This applies per memory write. Don't chain 2-3 unconfirmed saves in a row just because several things seemed memory-worthy in the same turn — ask about each, or batch them into one confirmation ask if closely related.
+- Consider a memory only when it (1) isn't already recorded elsewhere — code, CLAUDE.md, git history — and (2) would matter in a future session on unrelated work. Otherwise say nothing about memory.
+- Propose the content and ask before any write to `~/.claude/projects/*/memory/`, unless the user explicitly says to save it to memory.
 
 ## Response Brevity
 - **Answer first.** The first sentence is the answer or the decision. Reasons come after it, never before.
@@ -56,7 +41,3 @@
 - **No recap.** After you act, use at most one sentence on what changed. Don't restate the question or the plan before you act.
 - **Long content goes in the file.** Plans, code and reports stay in their file. Don't retell them in chat.
 - **Draw flows.** If a flow is easier to see than to read, draw a small text diagram.
-
-## CLI Best Practices
-- Don't put `sleep` in front of curl or other CLIs, i.e. `sleep 3 && curl -f ....`
-- Don't prepend `cd <path>` to a Bash command when the session is already rooted in that directory — the shell resets to the working dir each call, so it's redundant noise. Only `cd` (or use `make -C <dir>`) when the command must operate outside the session root.

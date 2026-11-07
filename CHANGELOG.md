@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## global-rules 2.1.1 - 2026-11-07
+
+Trimmed the shared CLAUDE.md. These rules were dropped because the model
+already follows them, the system prompt covers them, or the harness enforces
+them:
+
+- Honesty About Uncertainty
+- CLI Best Practices
+- the auto-commit, rename-grep and duplicate-declaration checks
+- the Atlassian field-scoping rule, which `atlassian-caller` already carries
+- the extra memory guards against over-triggering
+
+The remaining rules were shortened.
+
 ## agterm 2.1.2 - 2026-11-05
 
 Sessions opened by `handoff` and `spawn-session` get a purple icon in the
