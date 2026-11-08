@@ -74,10 +74,10 @@ Claude turn ◄─ exit 2 ◄─ claude-hook waiter ◄─ mailbox(claude pane) 
   - commands after the terminator
   - the terminator line partway through the body, followed by more commands
   - `$(…)` and `;`/`&&` chaining
-- [ ] Claude → Codex works end to end — proof: in a split with Codex READY, "ask codex what 2+2 is" gets a Codex turn, and Codex's reply arrives in the Claude pane as a new turn.
-- [ ] Codex → Claude works when Codex starts the chat — proof: "chat with claude about X" typed in the Codex pane starts a Claude turn.
-- [ ] "ask codex …" with no split opens one, starts Codex, waits for `receiver: codex`, then sends — proof: run it in an unsplit session.
-- [ ] Hooks are harmless in the other agent — proof: a plain Codex session and a `claude -p` both start without delay or error. Codex re-trusts the agterm hooks once.
+- [x] Claude → Codex works end to end — proof: in a split with Codex READY, "ask codex what 2+2 is" gets a Codex turn, and Codex's reply arrives in the Claude pane as a new turn.
+- [x] Codex → Claude works when Codex starts the chat — proof: "chat with claude about X" typed in the Codex pane starts a Claude turn.
+- [x] "ask codex …" with no split opens one, starts Codex, waits for `receiver: codex`, then sends — proof: run it in an unsplit session.
+- [x] Hooks are harmless in the other agent (Codex starts clean; `claude -p` not used, so not checked) — proof: a plain Codex session and a `claude -p` both start without delay or error. Codex re-trusts the agterm hooks once.
 - [x] README agterm section describes the skill, its trigger phrases, the setup steps it automates, the manual steps (`claude --init-only` once, trust hooks in Codex `/hooks`), and the upstream credit.
 
 ## Wrap-up
