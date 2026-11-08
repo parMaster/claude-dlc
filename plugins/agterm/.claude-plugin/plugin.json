@@ -1,7 +1,7 @@
 {
   "name": "agterm",
-  "description": "agterm helpers — review markdown and plans on an annotatable page (webrev), open HTML files and URLs in an overlay, and hand a plan or task off to a fresh Claude or Codex session, and show the branch's ticket and commits ahead/behind in the sidebar",
-  "version": "2.1.4",
+  "description": "agterm helpers — review markdown and plans on an annotatable page (webrev), open HTML files and URLs in an overlay, and hand a plan or task off to a fresh Claude or Codex session, chat with Codex in the other pane through agterm mailboxes, and show the branch's ticket and commits ahead/behind in the sidebar",
+  "version": "2.2.0",
   "author": {
     "name": "parmaster"
   },

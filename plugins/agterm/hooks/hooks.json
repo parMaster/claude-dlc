@@ -11,10 +11,27 @@
         ]
       }
     ],
+    "Setup": [
+      {
+        "matcher": "init",
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh" }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/git-info.sh", "timeout": 5 }
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/git-info.sh", "timeout": 5 },
+          { "type": "command", "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/mailbox-chat.py claude-hook", "asyncRewake": true, "rewakeSummary": "chat received", "timeout": 2000000 },
+          { "type": "command", "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/mailbox-chat.py codex-hook", "timeout": 10 }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/mailbox-chat.py claude-hook", "asyncRewake": true, "rewakeSummary": "chat received", "timeout": 2000000 }
         ]
       }
     ],
@@ -29,7 +46,8 @@
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/git-info.sh", "timeout": 5 }
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/git-info.sh", "timeout": 5 },
+          { "type": "command", "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/mailbox-chat.py claude-hook", "asyncRewake": true, "rewakeSummary": "chat received", "timeout": 2000000 }
         ]
       }
     ],

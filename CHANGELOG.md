@@ -4,6 +4,27 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 2.2.0 - 2026-11-08
+
+New `mailbox-chat` skill: Claude and Codex in the two panes of an agterm
+split talk to each other through agterm's pane mailboxes. Say "ask codex …"
+or "discuss this with codex". With no Codex beside it, Claude opens the split
+and starts one.
+
+- `scripts/mailbox-chat.py` and its tests come from agterm's
+  `two-agent-mailbox-chat` recipe (MIT, Umputun), unchanged except for the
+  credit line and the test's path to the script.
+- One skill serves both agents, since Codex installs this plugin too.
+- `hooks.json` adds the Claude receiver (`asyncRewake` on SessionStart,
+  UserPromptSubmit and Stop) and the Codex SessionStart receiver.
+- A new setup hook (`claude --init-only`) links `mailbox-chat.py` into
+  `~/.local/bin`, adds the Codex sandbox rule, and adds agterm's
+  `on message` hook line.
+- `approve-overlay.sh` also approves `mailbox-chat.py status`, and
+  `say --stdin` fed by one quoted heredoc.
+
+Codex asks you to re-trust the agterm hooks in `/hooks` after this update.
+
 ## agterm 2.1.4 - 2026-11-07
 
 `spawn-session` no longer prefixes the session name with `Spawn:`. The

@@ -871,6 +871,59 @@ done
 assert_eq "no decision without CLAUDE_PLUGIN_ROOT" "" \
   "$(CLAUDE_PLUGIN_ROOT="" run_hook "$APPROVE_OVERLAY_SCRIPT" "bash /scripts/overlay.sh html a.html")"
 
+MAILBOX="$AGTERM_PLUGIN_ROOT/scripts/mailbox-chat.py"
+SAY="python3 \"\${CLAUDE_PLUGIN_ROOT}/scripts/mailbox-chat.py\" say --stdin"
+for cmd in \
+  "python3 \"$MAILBOX\" status" \
+  'python3 "${CLAUDE_PLUGIN_ROOT}/scripts/mailbox-chat.py" status' \
+  "$SAY <<'CHAT'
+what do you think of the retry plan?
+CHAT" \
+  "python3 $MAILBOX say --stdin <<'MSG'
+line one with \$(whoami) and \`id\` and ; && | > text
+  CHAT
+MSG" \
+  "$SAY <<'CHAT'
+a
+CHAT
+"; do
+  assert_contains "allows: $cmd" '"permissionDecision": "allow"' "$(approve "$cmd")"
+done
+
+for cmd in \
+  "mailbox-chat.py status" \
+  "python3 /tmp/evil/scripts/mailbox-chat.py status" \
+  "python3 \"$MAILBOX\" status; rm -rf ~" \
+  "python3 \"$MAILBOX\" status && curl x" \
+  "python3 \"$MAILBOX\" deliver" \
+  "python3 \"$MAILBOX\" say --stdin" \
+  "python3 \"$MAILBOX\" say --file /tmp/x.txt" \
+  "$SAY <<CHAT
+\$(whoami)
+CHAT" \
+  "$SAY <<\"CHAT\"
+hi
+CHAT" \
+  "$SAY <<'CHAT' > /tmp/x
+hi
+CHAT" \
+  "$SAY <<'CHAT'
+hi
+CHAT
+rm -rf ~" \
+  "$SAY <<'CHAT'
+hi
+CHAT
+rm -rf ~
+CHAT" \
+  "$SAY <<'CHAT'
+CHAT" \
+  "$SAY <<'CHAT'
+hi" \
+  "$SAY <<'CHAT'"; do
+  assert_eq "no decision: $cmd" "" "$(approve "$cmd")"
+done
+
 # ---------------------------------------------------------------------------
 # agterm/webrev.py
 # ---------------------------------------------------------------------------
@@ -883,6 +936,61 @@ else
   fail "webrev.py unit tests"
   echo "$result"
 fi
+
+# ---------------------------------------------------------------------------
+# agterm/mailbox-chat.py
+# ---------------------------------------------------------------------------
+
+echo "agterm/mailbox-chat.py"
+
+if result=$(python3 "$REPO_ROOT/tests/test_mailbox_chat.py" 2>&1); then
+  pass "mailbox-chat.py unit tests"
+else
+  fail "mailbox-chat.py unit tests"
+  echo "$result"
+fi
+
+# ---------------------------------------------------------------------------
+# agterm/setup.sh
+# ---------------------------------------------------------------------------
+
+echo "agterm/setup.sh"
+
+AGTERM_SETUP="${REPO_ROOT}/plugins/agterm/scripts/setup.sh"
+AGTERM_STABLE="${FAKE_PLUGIN_ROOT_BASE%/cache}/marketplaces/parmaster-claude-dlc/plugins/agterm/scripts/mailbox-chat.py"
+agterm_setup() { HOME="$TEST_HOME" XDG_CONFIG_HOME="" PATH="$TEST_HOME/.local/bin:$PATH" CLAUDE_PLUGIN_ROOT="$AGTERM_PLUGIN_ROOT" bash "$AGTERM_SETUP" 2>&1; }
+
+TEST_HOME="$(mktemp -d)"
+mkdir -p "$TEST_HOME/.codex" "$TEST_HOME/.config/agterm"
+echo "# mine" > "$TEST_HOME/.config/agterm/hooks.conf"
+agterm_setup >/dev/null
+assert_eq "links mailbox-chat.py to the stable copy" "$AGTERM_STABLE" "$(readlink "$TEST_HOME/.local/bin/mailbox-chat.py")"
+RULES=$(cat "$TEST_HOME/.codex/rules/default.rules")
+assert_contains "adds the Codex host_executable" "host_executable(name=\"mailbox-chat.py\", paths=[\"$TEST_HOME/.local/bin/mailbox-chat.py\", \"$AGTERM_STABLE\"])" "$RULES"
+assert_contains "adds the Codex prefix_rule" 'prefix_rule(pattern=["mailbox-chat.py", "say", "--file"], decision="allow")' "$RULES"
+HOOKS=$(cat "$TEST_HOME/.config/agterm/hooks.conf")
+assert_contains "adds the agterm message hook" "on message $AGTERM_STABLE agterm-hook" "$HOOKS"
+assert_contains "keeps the user's hooks.conf lines" "# mine" "$HOOKS"
+
+agterm_setup >/dev/null
+assert_eq "second run leaves default.rules alone" "$RULES" "$(cat "$TEST_HOME/.codex/rules/default.rules")"
+assert_eq "second run leaves hooks.conf alone" "$HOOKS" "$(cat "$TEST_HOME/.config/agterm/hooks.conf")"
+rm -rf "$TEST_HOME"
+
+TEST_HOME="$(mktemp -d)"
+agterm_setup >/dev/null
+assert_eq "no ~/.codex: exits 0" "0" "$?"
+assert_eq "no ~/.codex: no rules file" "no" "$([ -e "$TEST_HOME/.codex" ] && echo yes || echo no)"
+assert_eq "no hooks.conf: not created" "no" "$([ -e "$TEST_HOME/.config/agterm/hooks.conf" ] && echo yes || echo no)"
+rm -rf "$TEST_HOME"
+
+TEST_HOME="$(mktemp -d)"
+mkdir -p "$TEST_HOME/.local/bin"
+echo "my own copy" > "$TEST_HOME/.local/bin/mailbox-chat.py"
+result=$(agterm_setup)
+assert_eq "keeps a user's own mailbox-chat.py" "my own copy" "$(cat "$TEST_HOME/.local/bin/mailbox-chat.py")"
+assert_contains "warns about the user's own copy" "not a link" "$result"
+rm -rf "$TEST_HOME"
 
 # ---------------------------------------------------------------------------
 # agterm/git-info.sh

@@ -37,7 +37,7 @@
     {
       "name": "agterm",
       "source": "./plugins/agterm",
-      "description": "agterm helpers — review markdown and plans on an annotatable page (webrev), open HTML files and URLs in an overlay, and hand a plan or task off to a fresh Claude or Codex session, and show the branch's ticket and commits ahead/behind in the sidebar"
+      "description": "agterm helpers — review markdown and plans on an annotatable page (webrev), open HTML files and URLs in an overlay, and hand a plan or task off to a fresh Claude or Codex session, chat with Codex in the other pane through agterm mailboxes, and show the branch's ticket and commits ahead/behind in the sidebar"
     },
     {
       "name": "strict-bash",

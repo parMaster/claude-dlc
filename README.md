@@ -141,7 +141,7 @@ Writing style for technical communication.
 
 ### [agterm](plugins/agterm)
 
-Helpers for [agterm](https://github.com/umputun/agterm): review a plan or document on a page you can annotate, open HTML files and URLs in an overlay (a panel floating over the current session that closes on Cmd-W or its close button), and hand a plan or a task off to a fresh session.
+Helpers for [agterm](https://github.com/umputun/agterm): review a plan or document on a page you can annotate, open HTML files and URLs in an overlay (a panel floating over the current session that closes on Cmd-W or its close button), hand a plan or a task off to a fresh session, and chat with Codex in the other pane.
 
 ```
 /plugin install agterm@parmaster-claude-dlc
@@ -153,6 +153,7 @@ Helpers for [agterm](https://github.com/umputun/agterm): review a plan or docume
 | [`overlay`](plugins/agterm/skills/overlay/SKILL.md) | Opens a local HTML file or a URL. Triggers on "open <file.html> in an overlay", "show <file.html> in agterm", "open <url> in an overlay", or `/agterm:overlay [file\|url]`. HTML files and URLs open with JavaScript off unless `--js` is added. |
 | [`handoff`](plugins/agterm/skills/handoff/SKILL.md) | Sends a plan from `docs/plans/` to a fresh agterm session on Claude or Codex. Explicit-only: `/agterm:handoff [plan-file]`. |
 | [`spawn-session`](plugins/agterm/skills/spawn-session/SKILL.md) | Sends an arbitrary task to a fresh agterm session on Claude or Codex. Also triggers from natural language ("spawn a new session for this"). |
+| [`mailbox-chat`](plugins/agterm/skills/mailbox-chat/SKILL.md) | A live back-and-forth with the agent in the other pane of the split, usually Codex, through agterm's pane mailboxes. Triggers on "ask codex …", "discuss this with codex", "get a second opinion from codex", "chat with claude" and similar. With no Codex beside it, Claude opens the split and starts one. See [Mailbox chat](#mailbox-chat) for the one-time setup. |
 
 `handoff` and `spawn-session` open the new session as an agterm companion of the calling session (`agtermctl session new --parent`), so it sits indented under its parent in the sidebar with a purple icon. Claude hand-off sessions start in auto mode, or accept-edits when an org setting turns auto mode off. Hand-off sessions are flagged (`agtermctl session flag on`) so in-flight work shows up in agterm's flagged view.
 
@@ -166,6 +167,32 @@ A second hook ([`git-info`](plugins/agterm/scripts/git-info.sh)) keeps a line un
 - `↑2` (blue) and `↓4` (purple): commits ahead of and behind the upstream, as of the last fetch.
 
 A count shows only when it is above zero. The line goes away when Claude exits or works outside git. **Settings ▸ Interface ▸ Session info** hides it. Needs agterm 0.40.0+ and `jq`. Adapted from agterm's [claude-git-info](https://github.com/umputun/agterm/tree/master/cookbook/claude-git-info) recipe (MIT, Umputun).
+
+#### Mailbox chat
+
+Each agent sends with `mailbox-chat.py say`. A hook on the other side turns the mail into a new turn, so nothing is typed into either prompt.
+
+```
+Claude pane ── say ──► agterm mailbox ──► on message hook ──► codex queue ──► Codex turn
+Claude turn ◄── asyncRewake hook ◄── agterm mailbox ◄── say ── Codex pane
+```
+
+The plugin works in both agents, because Codex installs plugins from this marketplace too (`[plugins."agterm@parmaster-claude-dlc"]` in `~/.codex/config.toml`). The skill holds the steps for both sides, and `hooks/hooks.json` carries both receivers. Each receiver does nothing in the other agent.
+
+One-time setup:
+
+1. Install `agterm` from this marketplace in Claude and in Codex.
+2. Run `claude --init-only` once. The setup hook ([`setup.sh`](plugins/agterm/scripts/setup.sh)) adds only what is missing:
+   - a `~/.local/bin/mailbox-chat.py` link to the marketplace copy, so Codex can call it by name (`~/.local/bin` must be on `PATH`)
+   - a rule in `~/.codex/rules/default.rules` that runs `mailbox-chat.py say --file` outside Codex's sandbox, which blocks agterm's socket
+   - an `on message … agterm-hook` line in agterm's `hooks.conf`, which hands mail to Codex, then `agtermctl hooks reload`
+3. In Codex, open `/hooks` and trust the agterm plugin hooks. Codex asks again whenever `hooks.json` changes.
+
+Claude starts Codex as `codex --no-daemon "Answer with the single word READY."`. The first prompt matters, because Codex can take mail only after its first prompt runs. If you start Codex yourself, use the same line.
+
+The PreToolUse hook also approves Claude's `mailbox-chat.py status`, and `say --stdin` fed by one quoted heredoc. It approves nothing else from that script.
+
+Limits: unread mail is lost when agterm quits or the pane closes. After `/clear` in Codex, give it a prompt before the chat goes on. Needs agterm 0.40.0+, Codex with `codex queue`, and `python3` 3.9+. Adapted from agterm's [two-agent-mailbox-chat](https://github.com/umputun/agterm/tree/master/cookbook/two-agent-mailbox-chat) recipe (MIT, Umputun).
 
 #### Optional agterm key commands
 
