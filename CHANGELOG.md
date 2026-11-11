@@ -4,6 +4,16 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## strict-bash 1.4.0 - 2026-11-11
+
+Temp files go to `tmp/` at the repo root instead of the session scratchpad,
+so Bash commands show `tmp/e2e.out` rather than a screen-wide path.
+
+- `session-start` tells Claude to use `tmp/<name>` and says this replaces the
+  scratchpad rule. It also creates `tmp/` when the session starts in a git repo.
+- New `block-scratchpad` hook denies a Bash call that names the scratchpad.
+- `setup.sh` appends `tmp/` to the global gitignore once.
+
 ## strict-bash 1.3.1 - 2026-11-11
 
 `block-inline-edit`: an inline edit script is blocked even when flags come

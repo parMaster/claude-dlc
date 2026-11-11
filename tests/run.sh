@@ -1452,6 +1452,55 @@ rm -f "$ENV_FILE"
 result=$(echo '{}' | env -u CLAUDE_ENV_FILE bash "$SESSION_START_SCRIPT"; echo "exit:$?")
 assert_contains "still reminds without CLAUDE_ENV_FILE" "its own Bash call" "$result"
 assert_contains "exits 0 without CLAUDE_ENV_FILE" "exit:0" "$result"
+assert_contains "tells Claude to write temp files to tmp/" "tmp/<name> at the repo root" "$result"
+assert_contains "says it replaces the scratchpad rule" "replaces the system prompt's instruction to use the session scratchpad" "$result"
+
+SS_REPO="$(mktemp -d)"
+git -C "$SS_REPO" init -q
+mkdir -p "$SS_REPO/sub/dir"
+echo '{}' | CLAUDE_PROJECT_DIR="$SS_REPO/sub/dir" env -u CLAUDE_ENV_FILE bash "$SESSION_START_SCRIPT" > /dev/null
+assert_eq "creates tmp/ at the repo root" "yes" "$([ -d "$SS_REPO/tmp" ] && echo yes || echo no)"
+assert_eq "creates no tmp/ in the subdir" "no" "$([ -d "$SS_REPO/sub/dir/tmp" ] && echo yes || echo no)"
+rm -rf "$SS_REPO"
+
+SS_PLAIN="$(mktemp -d)"
+echo '{}' | CLAUDE_PROJECT_DIR="$SS_PLAIN" env -u CLAUDE_ENV_FILE bash "$SESSION_START_SCRIPT" > /dev/null
+assert_eq "creates no tmp/ outside a git repo" "no" "$([ -d "$SS_PLAIN/tmp" ] && echo yes || echo no)"
+rm -rf "$SS_PLAIN"
+
+# ---------------------------------------------------------------------------
+# strict-bash/block-scratchpad.sh
+# ---------------------------------------------------------------------------
+
+BLOCK_SCRATCHPAD_SCRIPT="${REPO_ROOT}/plugins/strict-bash/scripts/block-scratchpad.sh"
+
+echo "strict-bash/block-scratchpad.sh"
+
+run_scratchpad() {
+  jq -n --arg m "$1" --arg c "$2" '{permission_mode:$m, tool_input:{command:$c}}' | bash "$BLOCK_SCRATCHPAD_SCRIPT"
+}
+
+SP_PRIVATE="/private/tmp/claude-501/-Users-me-go-src-repo/3b448246-2b3b-498c-beb6-69007b2035c2/scratchpad"
+SP_TMP="/tmp/claude-1000/-home-me-repo/3b448246-2b3b-498c-beb6-69007b2035c2/scratchpad"
+
+result=$(run_scratchpad default "make test > $SP_PRIVATE/e2e.out 2>&1")
+assert_contains "denies the /private/tmp scratchpad path" '"permissionDecision": "deny"' "$result"
+assert_contains "points at tmp/ in the repo" "tmp/<name> at the repo root" "$result"
+
+result=$(run_scratchpad default "cat $SP_TMP/e2e.out")
+assert_contains "denies the /tmp scratchpad path" '"permissionDecision": "deny"' "$result"
+
+result=$(run_scratchpad auto "make test > $SP_PRIVATE/e2e.out 2>&1")
+assert_contains "denies in auto mode too" '"permissionDecision": "deny"' "$result"
+
+result=$(run_scratchpad bypassPermissions "go test ./... > $SP_TMP/out.txt")
+assert_contains "denies in bypassPermissions mode too" '"permissionDecision": "deny"' "$result"
+
+result=$(run_scratchpad default "make test > tmp/e2e.out 2>&1")
+assert_eq "allows repo-local tmp/" "" "$result"
+
+result=$(run_scratchpad default "ls /tmp/x /private/tmp/claude-notes")
+assert_eq "allows other /tmp paths" "" "$result"
 
 # ---------------------------------------------------------------------------
 # strict-bash/setup.sh
@@ -1463,8 +1512,15 @@ STRICT_RULES='["Bash(head:*)","Bash(tail:*)","Bash(grep:*)","Bash(wc:*)","Bash(s
 
 echo "strict-bash/setup.sh"
 
+# setup.sh writes the global gitignore. Point every git config location at the
+# test home, so a test run never touches the real one.
+run_strict_setup() {
+  HOME="$TEST_HOME" XDG_CONFIG_HOME="$TEST_HOME/.config" GIT_CONFIG_GLOBAL="$TEST_HOME/.gitconfig" \
+    CLAUDE_PLUGIN_ROOT="$STRICT_ROOT" bash "$STRICT_SETUP_SCRIPT"
+}
+
 TEST_HOME="$(mktemp -d)"
-run_setup "$STRICT_SETUP_SCRIPT" "$STRICT_ROOT"
+run_strict_setup
 assert_eq "creates settings.json with the filter allowlist" "$STRICT_RULES" \
   "$(jq -c '.permissions.allow' "${TEST_HOME}/.claude/settings.json")"
 rm -rf "$TEST_HOME"
@@ -1472,8 +1528,8 @@ rm -rf "$TEST_HOME"
 TEST_HOME="$(mktemp -d)"
 mkdir -p "${TEST_HOME}/.claude"
 echo '{"model":"opus","permissions":{"allow":["Bash(make test)","Bash(grep:*)"],"deny":["ScheduleWakeup"]}}' > "${TEST_HOME}/.claude/settings.json"
-run_setup "$STRICT_SETUP_SCRIPT" "$STRICT_ROOT"
-run_setup "$STRICT_SETUP_SCRIPT" "$STRICT_ROOT"
+run_strict_setup
+run_strict_setup
 assert_eq "keeps existing entries first, adds only missing ones, no duplicates on rerun" \
   '["Bash(make test)","Bash(grep:*)","Bash(head:*)","Bash(tail:*)","Bash(wc:*)","Bash(sort:*)","Bash(uniq:*)","Bash(jq:*)"]' \
   "$(jq -c '.permissions.allow' "${TEST_HOME}/.claude/settings.json")"
@@ -1481,6 +1537,43 @@ assert_eq "leaves other settings alone" '["opus",["ScheduleWakeup"]]' \
   "$(jq -c '[.model, .permissions.deny]' "${TEST_HOME}/.claude/settings.json")"
 assert_not_contains "never allows commands that run their arguments" "xargs" \
   "$(jq -c '.permissions.allow' "${TEST_HOME}/.claude/settings.json")"
+assert_eq "adds tmp/ to the default global ignore once on rerun" "tmp/" \
+  "$(cat "${TEST_HOME}/.config/git/ignore")"
+rm -rf "$TEST_HOME"
+
+TEST_HOME="$(mktemp -d)"
+mkdir -p "${TEST_HOME}/.config/git"
+printf '.DS_Store\n*.log' > "${TEST_HOME}/.config/git/ignore"
+run_strict_setup
+assert_eq "keeps existing patterns and adds a missing final newline" $'.DS_Store\n*.log\ntmp/' \
+  "$(cat "${TEST_HOME}/.config/git/ignore")"
+rm -rf "$TEST_HOME"
+
+TEST_HOME="$(mktemp -d)"
+mkdir -p "${TEST_HOME}/.config/git"
+printf 'node_modules/\n/tmp\n' > "${TEST_HOME}/.config/git/ignore"
+run_strict_setup
+assert_eq "leaves the file alone when tmp is already ignored" $'node_modules/\n/tmp' \
+  "$(cat "${TEST_HOME}/.config/git/ignore")"
+rm -rf "$TEST_HOME"
+
+TEST_HOME="$(mktemp -d)"
+printf '[core]\n\texcludesFile = ~/.my-ignore\n' > "${TEST_HOME}/.gitconfig"
+printf '*.swp\n' > "${TEST_HOME}/.my-ignore"
+run_strict_setup
+assert_eq "honors core.excludesFile with a leading ~" $'*.swp\ntmp/' "$(cat "${TEST_HOME}/.my-ignore")"
+assert_eq "writes no default ignore file when core.excludesFile is set" "no" \
+  "$([ -e "${TEST_HOME}/.config/git/ignore" ] && echo yes || echo no)"
+rm -rf "$TEST_HOME"
+
+TEST_HOME="$(mktemp -d)"
+run_strict_setup
+SETUP_REPO="${TEST_HOME}/repo"
+git init -q "$SETUP_REPO"
+mkdir -p "$SETUP_REPO/tmp"
+touch "$SETUP_REPO/tmp/x"
+assert_eq "git ignores tmp/x in a fresh repo after setup" "tmp/x" \
+  "$(HOME="$TEST_HOME" XDG_CONFIG_HOME="$TEST_HOME/.config" GIT_CONFIG_GLOBAL="$TEST_HOME/.gitconfig" git -C "$SETUP_REPO" check-ignore tmp/x)"
 rm -rf "$TEST_HOME"
 
 # ---------------------------------------------------------------------------

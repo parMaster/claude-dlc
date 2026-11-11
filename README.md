@@ -250,24 +250,26 @@ The rules cover plan-first workflow, git hygiene, tests and lint before commit, 
 
 ### [strict-bash](plugins/strict-bash)
 
-Keeps Claude's Bash calls small and readable. It does three things:
+Keeps Claude's Bash calls small and readable. It does four things:
 
 - **One command per call.** With auto mode off, every Bash call that isn't on the allowlist asks for permission. Claude often glues several commands into one call, and no allow rule can match that. `block-chained` makes Claude send one command per call, so your allow rules match. It does nothing in auto mode.
 - **Quoted paths.** `block-escaped-space` makes Claude put the path in double quotes to avoid asking permissions to run backslash-escaped space, like `Application\ Support`.
 - **Edits as diffs.** Claude sometimes edits files through a python heredoc or `sed -i`. To approve that, you have to decode a script to find the one line it changes. `block-inline-edit` sends Claude to the Edit tool instead, so you see a diff. It runs in every mode, auto mode too, so the transcript shows readable diffs.
+- **Short temp paths.** Claude Code tells Claude to save temp output in a session scratchpad, like `/private/tmp/claude-501/-Users-me-repo/<session-id>/scratchpad/e2e.out`. That path is wider than the screen. `session-start` sends Claude to `tmp/` at the repo root instead, so you read `make test > tmp/e2e.out 2>&1`. `block-scratchpad` catches a drift back. Setup adds `tmp/` to your global gitignore.
 
 ```
 /plugin install strict-bash@parmaster-claude-dlc
 ```
 
-Run `claude --init-only` once after install. The setup hook adds `head`, `tail`, `grep`, `wc`, `sort`, `uniq` and `jq` to `permissions.allow` in `~/.claude/settings.json`. It only adds what's missing and never touches your other rules. It never adds `xargs`, `sh` or `bash`: anything piped into those can run any command.
+Run `claude --init-only` once after install. The setup hook adds `head`, `tail`, `grep`, `wc`, `sort`, `uniq` and `jq` to `permissions.allow` in `~/.claude/settings.json`. It only adds what's missing and never touches your other rules. It never adds `xargs`, `sh` or `bash`: anything piped into those can run any command. Setup also appends `tmp/` to your global gitignore: the file `core.excludesFile` names, else `~/.config/git/ignore`. It adds the line once and never rewrites the file.
 
 | Hook | Effect |
 |------|--------|
 | [`block-chained`](plugins/strict-bash/scripts/block-chained.sh) | Denies a Bash call that chains commands: `&&`, `\|\|`, `;`, a background `&`, a newline between commands, `$(...)`, backticks, `<(...)`, loops and `if`/`case` blocks, `( ... )` / `{ ... }` groups. The denial tells Claude to run each command as its own call. |
 | [`block-inline-edit`](plugins/strict-bash/scripts/block-inline-edit.sh) | Denies file edits through an inline python/node/ruby script or `sed -i` / `perl -i`, and points to the Edit tool instead. `perl -i` on `docs/plans/` is allowed (checkbox ticking). |
 | [`block-escaped-space`](plugins/strict-bash/scripts/block-escaped-space.sh) | Denies a Bash call with a backslash-escaped space or tab outside quotes, and tells Claude to double-quote the path. Backslashes inside quotes pass. |
-| [`session-start`](plugins/strict-bash/scripts/session-start.sh) | Tells Claude the one-command-per-call rule when a session starts, resumes or is compacted, so it doesn't learn it from a denial, and to write paths out literally: a command with `$VAR` in it, like `$TMPDIR/x.log`, always prompts. It also says to double-quote a path with spaces. Also sets `NO_COLOR=1` for Bash commands only (your terminal and Claude's own UI keep their colors), so Claude doesn't pipe output through `sed` to strip color codes. `sed` stays off the allowlist because it can write files. |
+| [`block-scratchpad`](plugins/strict-bash/scripts/block-scratchpad.sh) | Denies a Bash call that names the session scratchpad (`/tmp/claude-<uid>/...` or `/private/tmp/claude-<uid>/...`), and tells Claude to use `tmp/<name>` at the repo root. Runs in every mode. |
+| [`session-start`](plugins/strict-bash/scripts/session-start.sh) | Tells Claude the one-command-per-call rule when a session starts, resumes or is compacted, so it doesn't learn it from a denial, and to write paths out literally: a command with `$VAR` in it, like `$TMPDIR/x.log`, always prompts. It also says to double-quote a path with spaces. Also sets `NO_COLOR=1` for Bash commands only (your terminal and Claude's own UI keep their colors), so Claude doesn't pipe output through `sed` to strip color codes. `sed` stays off the allowlist because it can write files. It tells Claude to save temp files in `tmp/` at the repo root instead of the scratchpad, and creates that `tmp/` when the session starts inside a git repo. |
 
 Pipes stay allowed. Claude Code checks each side of a pipe against your allow rules, so `make test 2>&1 | tail -5` runs without a prompt once `make test` is allowed. Operators inside quotes or heredoc bodies are just text and pass. So does the `"$(cat <<'EOF' ... EOF)"` form Claude uses for multi-line commit messages. `block-chained` does nothing when the session is in `bypassPermissions` or auto mode.
 
