@@ -4,6 +4,27 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 3.7.0 - 2026-11-11
+
+`review-plan` can hand the review to Codex in the other agterm pane.
+
+- Step 1 asks Opus, Sonnet or Codex. Codex shows only inside agterm.
+- Codex gets the path to `agents/plan-review.md`, so it follows the same
+  checklist and Output format as the subagent. The send goes through
+  `/agterm:mailbox-chat`.
+- Step 3 treats every finding as a claim. It names the grounds to reject one:
+  the code doesn't back it, it asks for what the checklist says not to flag,
+  it is padding, or it reverses a user decision with no new fact. This applies
+  to both reviewers.
+- Claude reports rejected findings to the user only; it doesn't argue with
+  Codex.
+
+## agterm 2.3.0 - 2026-11-11
+
+`mailbox-chat`: a `[peer chat]` message that is a plan review Claude asked for
+goes through `/planning:review-plan` Step 3. Claude checks every finding
+before applying it, and doesn't answer the review with `say`.
+
 ## agterm 2.2.0 - 2026-11-08
 
 New `mailbox-chat` skill: Claude and Codex in the two panes of an agterm

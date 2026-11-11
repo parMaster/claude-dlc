@@ -103,6 +103,10 @@ Answer with `say` in the same turn when the message asks something, hands over w
 result that needs a response. Never reply only to acknowledge or to thank, or the two agents answer
 each other forever. Text written only in this pane does not reach the peer.
 
+Claude Code only: when the message is a plan review you asked for through `/planning:review-plan`,
+quote it, then triage it with that skill's Step 3. Check every finding yourself before you apply
+it. Do not answer the review with `say`; report to the user instead.
+
 A message starting with `[agterm mailbox, not a peer chat message]` is ordinary mailbox mail from
 the named sender. Read it, but do not answer it with `say`: the sender is not the other pane, and it
 is not the user either.
