@@ -248,6 +248,7 @@ tr.slot > td { border: 0 !important; padding: 0 !important; }
   <span id="error"></span>
   <span class="spacer"></span>
   <button type="button" id="count">Notes <span class="n">0</span><span class="key">m</span></button>
+  <button type="button" id="search-btn">Search<span class="key">/</span></button>
   <button type="button" id="toc-btn">Contents<span class="key">t</span></button>
   <button type="button" id="file-btn">File note<span class="key">f</span></button>
   <button type="button" id="cancel-btn">Cancel<span class="key">esc</span></button>
@@ -635,7 +636,98 @@ tr.slot > td { border: 0 !important; padding: 0 !important; }
   let tocShown = [];
   let tocSel = 0;
   let tocHome = 0;
+  // 'fuzzy' ranks a subsequence match; 'text' lists substring hits in document order, none for an empty query
+  let pickMode = 'fuzzy';
   tocBtn.hidden = headings.length === 0;
+  const searchBtn = document.getElementById('search-btn');
+  searchBtn.hidden = !blocks.some((el) => el.textContent.trim());
+
+  // a block's text with whitespace runs collapsed, plus the text node and offset behind each char, so a
+  // match found in the flat text can become a Range; block text never changes, so each is built once
+  const models = new Map();
+  const modelOf = (el) => {
+    let m = models.get(el);
+    if (m) return m;
+    const text = [];
+    const lower = [];
+    const map = [];
+    let space = true;
+    const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      const s = n.nodeValue;
+      for (let i = 0; i < s.length; i++) {
+        const ws = /\s/.test(s[i]);
+        if (ws && space) continue;
+        // a char whose lowercase is longer, like İ, keeps its case so offsets stay aligned
+        const lc = ws ? ' ' : s[i].toLowerCase();
+        text.push(ws ? ' ' : s[i]);
+        lower.push(lc.length === 1 ? lc : s[i]);
+        map.push([n, i]);
+        space = ws;
+      }
+    }
+    if (space && text.length) { text.pop(); lower.pop(); map.pop(); }
+    m = {text: text.join(''), lower: lower.join(''), map};
+    models.set(el, m);
+    return m;
+  };
+  const rangeOf = (m, at, len) => {
+    const r = document.createRange();
+    r.setStart(m.map[at][0], m.map[at][1]);
+    r.setEnd(m.map[at + len - 1][0], m.map[at + len - 1][1] + 1);
+    return r;
+  };
+  const queryOf = (typed) => typed.replace(/\s+/g, ' ').toLowerCase();
+
+  // highlights paint ranges without touching the DOM; ::highlight may not see page variables, so the
+  // colors are resolved here and written as plain values
+  const canPaint = !!(window.CSS && CSS.highlights && window.Highlight);
+  if (canPaint) {
+    const probe = document.createElement('span');
+    document.body.append(probe);
+    const tone = (pct) => {
+      probe.style.backgroundColor = 'color-mix(in srgb, var(--warn) ' + pct + '%, transparent)';
+      return getComputedStyle(probe).backgroundColor;
+    };
+    const st = document.createElement('style');
+    st.textContent = '::highlight(wr-hit) { background-color: ' + tone(30) + '; }\n'
+      + '::highlight(wr-cur) { background-color: ' + tone(70) + '; }';
+    document.head.append(st);
+    probe.remove();
+  }
+  // the active search: every match in document order and the one that is current
+  let search = null;
+  const showHit = () => {
+    const h = search.hits[search.i];
+    if (canPaint) CSS.highlights.set('wr-cur', new Highlight(h.range));
+    const r = h.range.getBoundingClientRect();
+    const top = topEdge();
+    if (r.top < top || r.bottom > window.innerHeight) window.scrollBy({top: r.top - (top + window.innerHeight) / 2, behavior: 'instant'});
+    setCur(h.el, false);
+    searchBtn.firstChild.textContent = 'Search ' + (search.i + 1) + '/' + search.hits.length;
+  };
+  const startSearch = (typed, el) => {
+    const q = queryOf(typed);
+    const hits = [];
+    for (const b of blocks) {
+      const m = modelOf(b);
+      for (let at = m.lower.indexOf(q); at >= 0; at = m.lower.indexOf(q, at + q.length)) hits.push({el: b, range: rangeOf(m, at, q.length)});
+    }
+    if (!hits.length) return;
+    search = {typed, hits, i: Math.max(0, hits.findIndex((h) => h.el === el))};
+    if (canPaint) CSS.highlights.set('wr-hit', new Highlight(...hits.map((h) => h.range)));
+    showHit();
+  };
+  const stepHit = (dir) => {
+    if (!search) return;
+    search.i = (search.i + dir + search.hits.length) % search.hits.length;
+    showHit();
+  };
+  const clearSearch = () => {
+    search = null;
+    if (canPaint) { CSS.highlights.delete('wr-hit'); CSS.highlights.delete('wr-cur'); }
+    searchBtn.firstChild.textContent = 'Search';
+  };
 
   // subsequence match, leftmost per letter; runs and word starts score higher, an earlier first hit breaks ties
   const fuzzy = (query, text) => {
@@ -675,7 +767,41 @@ tr.slot > td { border: 0 !important; padding: 0 !important; }
       t.append(b);
     }
   };
+  // a row shows a window of text around the first hit, so a hit deep in a long paragraph stays visible
+  const SNIP_BEFORE = 30;
+  const SNIP_LEN = 160;
+  const paintSnippet = (it, at, len) => {
+    const start = Math.max(0, at - SNIP_BEFORE);
+    const end = Math.min(it.text.length, Math.max(start + SNIP_LEN, at + len));
+    const t = it.el.querySelector('.t');
+    t.textContent = '';
+    const b = document.createElement('b');
+    b.className = 'hit';
+    b.textContent = it.text.slice(at, at + len);
+    t.append((start > 0 ? '…' : '') + it.text.slice(start, at), b, it.text.slice(at + len, end) + (end < it.text.length ? '…' : ''));
+  };
+  // the row preselected for a text search: the first hit at or after the current block
+  let textStart = 0;
+  const filterText = (query) => {
+    tocList.textContent = '';
+    tocShown = [];
+    textStart = 0;
+    if (!query.trim()) { tocList.innerHTML = '<div class="toc-empty">type to search</div>'; return; }
+    const q = queryOf(query);
+    const line = cur ? Number(cur.dataset.ls) : 0;
+    pickItems.forEach((it, i) => {
+      const at = it.lower.indexOf(q);
+      if (at < 0) return;
+      if (Number(it.label) < line) textStart = tocShown.length + 1;
+      tocShown.push(i);
+      paintSnippet(it, at, q.length);
+      tocList.append(it.el);
+    });
+    if (textStart >= tocShown.length) textStart = 0;
+    if (!tocShown.length) tocList.innerHTML = '<div class="toc-empty">No matches</div>';
+  };
   const filterPick = (query) => {
+    if (pickMode === 'text') { filterText(query); return; }
     const q = query.trim();
     const all = pickItems.map((it, i) => i);
     const matches = q ? all.map((i) => ({i, m: fuzzy(q, pickItems[i].text)})).filter((x) => x.m) : all.map((i) => ({i, m: {score: 0, pos: []}}));
@@ -694,10 +820,11 @@ tr.slot > td { border: 0 !important; padding: 0 !important; }
     pickItems.forEach((it, i) => it.el.classList.toggle('sel', i === tocShown[tocSel]));
     pickItems[tocShown[tocSel]].el.scrollIntoView({block: 'nearest'});
   };
-  const openPick = (items, home, placeholder) => {
+  const openPick = (items, home, placeholder, mode = 'fuzzy') => {
     if (editing || !items.length) return;
     disarmSubmit();
     disarmCancel();
+    pickMode = mode;
     pickItems = items.map(buildItem);
     tocHome = home;
     tocQuery.value = '';
@@ -760,6 +887,20 @@ tr.slot > td { border: 0 !important; padding: 0 !important; }
     }
     openPick(items, home, 'search notes');
   };
+  // picking a row starts the search at that block; an active search reopens with its query selected
+  const openSearch = () => {
+    const items = [];
+    for (const el of blocks) {
+      const m = modelOf(el);
+      if (m.text) items.push({label: el.dataset.ls, text: m.text, lower: m.lower, level: 1, go: () => startSearch(tocQuery.value, el)});
+    }
+    openPick(items, 0, 'search text', 'text');
+    if (!search || tocEl.hidden) return;
+    tocQuery.value = search.typed;
+    filterText(search.typed);
+    selectToc(textStart);
+    tocQuery.select();
+  };
   // the file note sits at position zero, and no current line counts as being on it
   const stepNote = (dir) => {
     const cycle = (notes.has('file') ? [null] : []).concat(lineNotes());
@@ -780,11 +921,13 @@ tr.slot > td { border: 0 !important; padding: 0 !important; }
   };
 
   tocBtn.addEventListener('click', openToc);
+  searchBtn.addEventListener('click', openSearch);
   countBtn.addEventListener('click', openNotes);
   tocEl.addEventListener('click', (ev) => { if (ev.target === tocEl) closeToc(); });
   tocQuery.addEventListener('input', () => {
     filterPick(tocQuery.value);
-    selectToc(tocQuery.value.trim() ? 0 : tocHome);
+    if (pickMode === 'text') selectToc(textStart);
+    else selectToc(tocQuery.value.trim() ? 0 : tocHome);
   });
   // letters type into the search box, so only navigation keys are taken; editing chords like cmd-a stay
   const tocKeys = (ev) => {
@@ -824,6 +967,10 @@ tr.slot > td { border: 0 !important; padding: 0 !important; }
     if ((ev.key === 'Enter' || ev.key === 'a') && cur) { ev.preventDefault(); openEditor(keyOf(cur)); }
     if (ev.key === 'f' || ev.key === 'A') { ev.preventDefault(); fileNote(); }
     if (ev.key === 't') { ev.preventDefault(); openToc(); }
+    if (ev.key === '/') { ev.preventDefault(); openSearch(); }
+    if (ev.key === ']' || ev.key === '[') { ev.preventDefault(); stepHit(ev.key === ']' ? 1 : -1); }
+    // the first esc only clears a search, so it can never close the review by surprise
+    if (ev.key === 'Escape' && search) { ev.preventDefault(); clearSearch(); return; }
     if (ev.key === 'm') { ev.preventDefault(); openNotes(); }
     if (ev.key === 'n') { ev.preventDefault(); stepNote(1); }
     if (ev.key === 'p') { ev.preventDefault(); stepNote(-1); }

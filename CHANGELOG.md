@@ -4,6 +4,20 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## agterm 2.4.0 - 2026-11-11
+
+The webrev page can search the document text. The overlay has no browser
+find, and `t` only filters headings.
+
+- `/` (or the Search button) opens the picker as a text search: every block
+  that contains the query, ignoring case, in document order.
+- Each row shows the line number and a snippet around the first match, with
+  the match in bold. The row at or after the current block is preselected.
+- Enter or a click jumps there and highlights every match in the page. `]`/`[`
+  step to the next and previous match, wrapping at the ends, and the Search
+  button shows the position, like "Search 3/17".
+- `Esc` first clears an active search; only the next `Esc` cancels the review.
+
 ## strict-bash 1.4.0 - 2026-11-11
 
 Temp files go to `tmp/` at the repo root instead of the session scratchpad,

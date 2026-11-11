@@ -113,7 +113,9 @@ annotated block keeps an amber `✎`. Click a block, code line or its `+` to ann
 to edit or delete it. `j`/`k` move, Page Up/Down and Home/End scroll and move with the view, `Enter` or `a`
 annotates the current block, `f` or `A` opens the file note, `t` (or Contents) opens a heading list for
 markdown with fuzzy search (arrows or Ctrl-n/p move, Enter jumps, Esc closes), `m` (or the Notes button)
-opens the same list for the notes, `n`/`p` jump to the next and previous note, `⌘↵` saves a note, `Esc`
+opens the same list for the notes, `/` (or Search) opens it as a text search that lists every block
+containing the typed text, ignoring case, with a snippet around the first match; Enter jumps there and
+highlights every match, `]`/`[` step to the next and previous one, and `Esc` clears the search, `n`/`p` jump to the next and previous note, `⌘↵` saves a note, `Esc`
 closes the editor. An open editor keeps its text and the keyboard until saved or closed: a click elsewhere
 and keys typed after selecting page text go back to it, while `⌘C` copies the selection. Outside an editor
 `⌘↵` submits at once when there are no saved notes; with notes it needs a second press within 3 seconds, so
