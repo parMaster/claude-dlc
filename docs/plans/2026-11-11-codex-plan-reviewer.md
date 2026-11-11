@@ -54,6 +54,7 @@ review-plan Step 1: Opus | Sonnet | Codex
 - [x] `mailbox-chat` Receiving sends a returning plan review to `review-plan` Step 3 — proof: read the text.
 - [x] planning bumped to 3.7.0, agterm to 2.3.0, `CHANGELOG.md` has both sections — proof: `git diff`.
 - [x] README rows for `review-plan` and `mailbox-chat` mention the Codex review — proof: read README.
+- [x] ➕ The message to Codex allows its `/tmp` mailbox file. In the first live test, "don't create files" made Codex refuse to send (planning 3.7.1).
 - [x] ➕ `review-plan` lists `Skill` in `allowed-tools`, so it can call `/agterm:mailbox-chat`.
 
 ## Wrap-up

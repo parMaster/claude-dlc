@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## planning 3.7.1 - 2026-11-11
+
+`review-plan`: the message to Codex limits "read-only" to the repo and allows
+the `/tmp` message file that `mailbox-chat` needs. Before, Codex read "don't
+create files" literally and refused to send its review.
+
 ## planning 3.7.0 - 2026-11-11
 
 `review-plan` can hand the review to Codex in the other agterm pane.

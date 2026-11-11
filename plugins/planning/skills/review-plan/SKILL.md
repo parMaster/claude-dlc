@@ -56,9 +56,12 @@ Send the request with `/agterm:mailbox-chat`. That skill owns the send command, 
 ```
 Please review the plan PLAN_FILE (absolute path).
 Follow the instructions in PLAN_REVIEW_MD exactly: what to check, what not to flag, and the Output format.
-Read-only: don't edit, create or delete files, and don't run builds or tests.
+Read-only for the repo: don't edit, create or delete files in it, and don't run builds or tests.
+The one exception is the /tmp message file mailbox-chat needs for your reply; write it as usual.
 Reply with the report in that Output format.
 ```
+
+The exception line matters. `plan-review.md` says never to create any file, but Codex can only send by writing its message file first. Without that line, Codex refuses to reply.
 
 Then end the turn. Don't wait or poll. The report arrives later as a `[peer chat]` message. Print it in full; if Codex sent a file path instead, read the file and print its contents. Then go to Step 3. Don't answer the report with a mailbox message.
 
