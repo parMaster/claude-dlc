@@ -4,6 +4,12 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## strict-bash 1.3.1 - 2026-11-11
+
+`block-inline-edit`: an inline edit script is blocked even when flags come
+before the script, as in `python3 -I - <<'EOF'` or `python3 -Ic "..."`. Before,
+any flag such as `-I` let the edit through.
+
 ## planning 3.7.1 - 2026-11-11
 
 `review-plan`: the message to Codex limits "read-only" to the repo and allows

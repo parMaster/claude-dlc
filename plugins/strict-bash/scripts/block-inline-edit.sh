@@ -15,7 +15,8 @@ COMMAND=$(jq -r '.tool_input.command // empty')
 
 B='(^|[[:space:];&|(`])'
 
-INTERP="${B}(python[0-9.]*|node|ruby)[[:space:]]+(-[[:space:]]|-$|-[ce][[:space:]]|<<)"
+# Flags such as -I or -u may come before the script source; -Ic counts as -c.
+INTERP="${B}(python[0-9.]*|node|ruby)([[:space:]]+-[A-Za-z]+)*[[:space:]]+(-[[:space:]]|-$|-[A-Za-z]*[ce][[:space:]]|<<)"
 WRITES="open\([^)]*['\"]([wax]|r\+)[bt+]*['\"]|write_text\(|write_bytes\(|writeFile(Sync)?\(|File\.write\("
 SED_I="${B}sed[[:space:]]+([^|;&]*[[:space:]])?(-[A-Za-z]*i|--in-place)"
 PERL_I="${B}perl[[:space:]]+([^|;&]*[[:space:]])?-[A-Za-z]*i"

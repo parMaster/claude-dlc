@@ -1312,6 +1312,22 @@ EOF
 go test ./...")
 assert_contains "blocks python heredoc that writes a file" '"permissionDecision": "deny"' "$result"
 
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 -I - <<'EOF'
+p='internal/config/config_test.go'
+s=open(p).read()
+s=s.replace('a','b')
+open(p,'w').write(s)
+EOF")
+assert_contains "blocks python -I heredoc that writes a file" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 -Ic \"open('x.go','w').write('y')\"")
+assert_contains "blocks python with combined -Ic flags" '"permissionDecision": "deny"' "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 -u -I <<'EOF'
+open('x.go','w').write('y')
+EOF")
+assert_contains "blocks python heredoc after several flags" '"permissionDecision": "deny"' "$result"
+
 result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 -c \"import pathlib; pathlib.Path('x.go').write_text('y')\"")
 assert_contains "blocks python -c with write_text" '"permissionDecision": "deny"' "$result"
 
@@ -1340,6 +1356,9 @@ result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 - <<'EOF'
 print(open('f.txt').read())
 EOF")
 assert_eq "allows python heredoc that only reads" "" "$result"
+
+result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "python3 -I -m pytest tests/ -k \"open(p, 'w')\"")
+assert_eq "allows python -m run with flags" "" "$result"
 
 result=$(run_hook "$BLOCK_INLINE_EDIT_SCRIPT" "sed -n '1,20p' main.go")
 assert_eq "allows sed without -i" "" "$result"
