@@ -25,7 +25,7 @@ deny() {
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
       permissionDecision: "deny",
-      permissionDecisionReason: ("Chained commands are blocked (found " + $op + "). Run each command as its own Bash call so it can match an allow rule. Pipes into filters like head, tail or grep are fine. Use Read, Grep or Glob to read and search files.")
+      permissionDecisionReason: ("Chained commands are blocked (found " + $op + "). Run each command as its own Bash call so it can match an allow rule. Pipes into filters like head, tail or grep are fine. Use Read to view a file. To search, run grep or find as its own Bash call.")
     }
   }'
   exit 0

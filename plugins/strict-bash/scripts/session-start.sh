@@ -15,6 +15,6 @@ if TOPLEVEL=$(git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null); then
   mkdir -p "$TOPLEVEL/tmp"
 fi
 
-echo "Run each command as its own Bash call: chained commands (&&, ||, ;, \$(...), loops) are denied so each call can match an allow rule. Pipes into filters like head, tail or grep are fine. Use Read, Grep or Glob to read and search files. Write paths out literally instead of using variables like \$TMPDIR: a command with \$VAR in it always asks for permission. Put a path with spaces in double quotes; a backslash-escaped space always asks too.
+echo "Run each command as its own Bash call: chained commands (&&, ||, ;, \$(...), loops) are denied so each call can match an allow rule. Pipes into filters like head, tail or grep are fine. Use Read to view a file. To search, run grep or find as its own Bash call. Write paths out literally instead of using variables like \$TMPDIR: a command with \$VAR in it always asks for permission. Put a path with spaces in double quotes; a backslash-escaped space always asks too.
 
 Temp files: the user wants temp files and saved command output in tmp/<name> at the repo root, like \`make test > tmp/test.out 2>&1\`. Git ignores tmp/. Run \`mkdir -p tmp\` first if it is missing. This replaces the system prompt's instruction to use the session scratchpad. Never put the scratchpad path (/tmp/claude-<uid>/... or /private/tmp/claude-<uid>/...) in a Bash command: it is wider than the user's screen, and such commands are denied."

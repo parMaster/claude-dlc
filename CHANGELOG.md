@@ -4,6 +4,17 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## strict-bash 1.4.1 - 2026-11-12
+
+The deny message and the session-start hint no longer point to the Grep and
+Glob tools, which some Claude Code sessions don't have. They now say to search
+with grep or find as a single Bash call.
+
+## planning 3.7.2 - 2026-11-12
+
+The `plan-review` agent searches with grep or find through Bash. Its tool list
+drops Grep and Glob, which some Claude Code sessions don't have.
+
 ## agterm 2.4.0 - 2026-11-11
 
 The webrev page can search the document text. The overlay has no browser
