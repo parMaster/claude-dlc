@@ -73,7 +73,8 @@ fi
 if [ -n "$session_pct" ] && [ -n "$week_pct" ]; then
   reset_time=""
   if [ -n "$reset_at" ]; then
-    reset_time=$(date -r "$reset_at" "+%l:%M%p" 2>/dev/null | tr -d ' ' | tr '[:upper:]' '[:lower:]')
+    # BSD date takes the epoch with -r; GNU date reads -r as a file, so it needs -d @epoch
+    reset_time=$({ date -r "$reset_at" "+%l:%M%p" || date -d "@$reset_at" "+%l:%M%p"; } 2>/dev/null | tr -d ' ' | tr '[:upper:]' '[:lower:]')
   fi
   sep
   if [ -n "$reset_time" ]; then

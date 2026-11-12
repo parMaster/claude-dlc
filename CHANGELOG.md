@@ -4,6 +4,11 @@ Personal Claude Code plugins. Version headings use values from `plugins/<name>/.
 
 Entries sorted newest first.
 
+## statusline 1.2.2 - 2026-11-13
+
+The session reset time (`↺2:40am`) now shows on Linux too. GNU `date` reads
+`-r` as a file path, so the script falls back to `date -d @epoch` there.
+
 ## strict-bash 1.4.1 - 2026-11-12
 
 The deny message and the session-start hint no longer point to the Grep and

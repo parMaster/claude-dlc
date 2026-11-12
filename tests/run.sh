@@ -111,6 +111,10 @@ result=$(render '{"cwd":"/tmp","model":{"display_name":"Opus 5.5"},"rate_limits"
 assert_contains "separates segments with a pipe" "│" "$result"
 assert_contains "shows weekly usage in parentheses" "33% (53%)" "$result"
 
+# 1700000000 is 22:13 UTC
+result=$(echo '{"cwd":"/tmp","rate_limits":{"five_hour":{"used_percentage":33,"resets_at":1700000000},"seven_day":{"used_percentage":53}}}' | TZ=UTC bash "$STATUSLINE_RENDER")
+assert_contains "shows the session reset time" "↺10:13pm" "$result"
+
 result=$(render '{"cwd":"/tmp","model":{"display_name":"Opus 5.5 (1M context)"}}')
 assert_contains "keeps the model name" "Opus 5.5" "$result"
 assert_not_contains "drops the context size suffix" "(1M context)" "$result"
